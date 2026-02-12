@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanning Text (SCT) - Silp Pilot</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        /* --- 1. CORE THEME (Rubik3D Standard) --- */
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --bg-color-light: #FAF7F2;
+            --bg-color-dark: #F5F2EA;
+            --surface-color: #FFFEF9;
+            --text-color: #3a2e2c;
+            --text-color-secondary: #8B4513;
+            --border-color: #E8DDD4;
+            --light-text: #fff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --diff-color: #ffc107;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%);
+            color: var(--text-color);
+        }
+
+        /* --- 2. HEADER --- */
+        .header {
+            background: rgba(255, 253, 250, 0.95);
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+            height: 60px;
+        }
+        .header h1 { color: var(--primary-color); font-size: 1.2rem; margin: 0; }
+        .header-buttons { display: flex; gap: 10px; align-items: center; }
+        .header-timer {
+            font-family: 'Segoe UI', monospace; font-size: 1.2rem; font-weight: bold;
+            color: var(--primary-color); margin-right: 10px; width: 60px; text-align: right; display: none;
+        }
+        .header-timer.danger { color: var(--danger-color); animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { opacity: 0.6; } }
+
+        /* --- 3. LAYOUT & CONTAINER --- */
+        .container {
+            width: 100%; height: 100%; padding-top: 60px;
+            display: flex; align-items: center; justify-content: center;
+            overflow-y: auto;
+        }
+        .test-container {
+            width: 95%; max-width: 1400px;
+            background: var(--surface-color); border-radius: 15px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.1); border: 1px solid var(--border-color);
+            text-align: center; display: flex; flex-direction: column; justify-content: center;
+            max-height: 98%; overflow-y: auto; position: relative;
+        }
+        .hidden { display: none !important; }
+        
+        /* --- 4. BUTTONS --- */
+        .btn {
+            font-size: 1rem; padding: 10px 20px; cursor: pointer;
+            border-radius: 25px; border: none; font-weight: bold;
+            transition: all 0.2s; display: inline-block;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn:disabled { background-color: #ccc !important; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary { background: var(--primary-color); color: var(--light-text); }
+        .btn-secondary { background: var(--secondary-color); color: var(--light-text); }
+        .outline-btn { background: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
+        
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; align-items: center; }
+        .action-buttons .btn { width: 100%; max-width: 280px; }
+        
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--border-color);
+        }
+
+        /* --- 5. MODALS (Rubik3D Style) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--surface-color); padding: 30px; border-radius: 20px;
+            max-width: 500px; width: 90%; 
+            border: 2px solid var(--border-color); text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-content h2 { color: var(--primary-color); margin-bottom: 15px; }
+        .modal-content p { color: var(--text-color); margin-bottom: 25px; font-size: 1.1rem; }
+        .modal-buttons { display: flex; justify-content: center; gap: 15px; }
+
+        /* How to Play Specifics */
+        .how-to-play-content { text-align: left; max-width: 700px; max-height: 85vh; overflow-y: auto; }
+        .visual-example {
+            background: var(--bg-color-dark); border: 1px solid var(--border-color);
+            padding: 10px; margin: 10px 0; border-radius: 8px; text-align: center;
+        }
+        .example-box-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 5px; }
+        .example-box {
+            background: white; border: 1px solid #aaa; padding: 5px 10px;
+            font-family: 'Courier New', monospace; font-weight: bold; border-radius: 4px;
+        }
+        .wrong-char { color: red; font-weight: 900; } /* Highlight Style */
+
+        /* --- 6. GAME LAYOUT --- */
+        .game-layout { display: flex; gap: 20px; text-align: left; height: 100%; overflow: hidden; }
+        
+        /* Sidebar (Rubik3D Exact Replica) */
+        .question-sidebar {
+            flex: 0 0 240px; background: var(--surface-color); padding: 15px;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; height: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-color-dark);
+        }
+        .sidebar-title { font-weight: bold; color: var(--primary-color); font-size: 1.1rem; }
+        
+        .nav-grid-container { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        
+        .nav-item {
+            aspect-ratio: 1; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: bold; cursor: pointer; 
+            transition: all 0.2s; border: 2px solid transparent;
+            background-color: var(--bg-color-dark); color: var(--text-color);
+        }
+        .nav-item:hover { transform: scale(1.05); filter: brightness(0.95); }
+        
+        /* Nav Item States */
+        .nav-item.current { border-color: var(--primary-color); background-color: #fff; color: var(--primary-color); }
+        .nav-item.answered { background-color: var(--secondary-color); color: white; }
+        .nav-item.correct { background-color: var(--success-color); color: white; }
+        .nav-item.incorrect { background-color: var(--danger-color); color: white; }
+
+        /* Sidebar Legend */
+        .legend-container { margin-top: 15px; display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 0.85rem; color: #666; }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; }
+
+        .game-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        /* Strings Area */
+        .strings-area {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            margin-bottom: 15px; flex-grow: 1; align-content: center;
+        }
+        .strings-area.hell { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .string-box {
+            background: #fff; border: 1px solid #999; border-radius: 8px;
+            padding: 20px 10px; text-align: center;
+            font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.5rem;
+            word-break: break-all; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+        .string-box .label {
+            position: absolute; top: -10px; left: 10px; background: var(--surface-color);
+            padding: 0 8px; font-size: 0.85rem; color: var(--primary-color); border-radius: 4px;
+            font-family: 'Segoe UI', sans-serif; border: 1px solid #ddd;
+        }
+        
+        /* Diff Highlight Class */
+        .diff-char { color: #dc3545; font-weight: 900; background-color: rgba(220, 53, 69, 0.1); border-radius: 2px; }
+
+        /* Choices */
+        .choices-area { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: auto; }
+        .choice-btn {
+            padding: 15px; background: var(--surface-color); border: 2px solid var(--border-color);
+            border-radius: 10px; cursor: pointer; position: relative;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s; height: 70px;
+        }
+        .choice-btn:hover { background: #F0EBE3; border-color: var(--primary-color); }
+        .choice-btn.selected { background: var(--secondary-color); border-color: var(--secondary-color); color: white; }
+        .choice-btn.correct { background: var(--success-color) !important; border-color: var(--success-color) !important; color: white; }
+        .choice-btn.incorrect { background: var(--danger-color) !important; border-color: var(--danger-color) !important; color: white; }
+        
+        .choice-label {
+            position: absolute; top: 6px; left: 10px;
+            font-size: 0.9rem; font-weight: bold; opacity: 0.7;
+        }
+        .choice-text { font-size: 1.8rem; font-weight: bold; }
+
+        /* Slider */
+        .slider-container { width: 100%; padding: 20px; text-align: center; display: none; }
+        .slider-container.active { display: block; }
+        input[type=range] { width: 100%; max-width: 400px; accent-color: var(--primary-color); height: 25px; }
+        .slider-value { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); display: block; margin-bottom: 10px; }
+
+        /* --- 7. RESULTS SCREEN (Rubik3D Pixel Perfect) --- */
+        .result-header { font-size: 1.8rem; color: var(--primary-color); margin-bottom: 10px; font-weight: 800; }
+        .result-sub { font-size: 1rem; color: #666; margin-bottom: 30px; }
+
+        .result-columns {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .result-card {
+            background: #fff; border-radius: 12px; padding: 20px;
+            border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .card-title { font-size: 1.1rem; color: var(--secondary-color); font-weight: 700; margin-bottom: 10px; text-align: left; }
+        
+        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stat-label { color: #555; font-size: 0.95rem; }
+        .stat-value { font-weight: 700; color: var(--primary-color); font-size: 1.1rem; }
+        
+        .score-big { font-size: 2.5rem; color: var(--primary-color); font-weight: 800; text-align: center; margin: 10px 0; }
+        .percentile-badge { 
+            background: var(--success-color); color: white; padding: 5px 15px; 
+            border-radius: 20px; font-size: 0.9rem; font-weight: bold; align-self: center;
+        }
+
+        /* --- 8. RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .game-layout { flex-direction: column; }
+            .question-sidebar { display: none; }
+            .strings-area { gap: 8px; }
+            .string-box { font-size: 1.1rem; padding: 15px 5px; }
+            .result-columns { grid-template-columns: 1fr; }
+            .choices-area { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .choice-btn { height: 60px; }
+            .choice-text { font-size: 1.4rem; }
+        }
+        
+        #landscape-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary-color); color: white; z-index: 99999;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        @media screen and (orientation: landscape) and (max-height: 500px) { #landscape-warning { display: flex; } }
+        
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-warning">
+        <div style="font-size: 50px; margin-bottom: 20px;">📱</div>
+        <h2>Please Rotate Device</h2>
+        <p>This game is designed for Portrait mode.</p>
+    </div>
+
+    <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
+
+    <div id="howToPlayModal" class="modal-overlay" onclick="toggleHowToPlay(false)">
+        <div class="modal-content how-to-play-content" onclick="event.stopPropagation()">
+            <h2>How to Play</h2>
+            
+            <h3>1. Standard Mode</h3>
+            <p>Compare two text strings. Count how many characters are <strong>different</strong>.</p>
+            <div class="visual-example">
+                <div class="example-box-row">
+                    <div class="example-box">A B <span class="wrong-char">C</span> D 5</div>
+                    <div class="example-box">A B <span class="wrong-char">F</span> D 5</div>
+                </div>
+                <p style="font-size:0.8rem; color:#666;">'C' vs 'F' is 1 difference.</p>
+            </div>
+
+            <h3>2. Hell Mode</h3>
+            <p>Find differences across 4 strings in a 2x2 grid.</p>
+            <div class="visual-example">
+                <div class="example-box-row">
+                    <div class="example-box" style="font-size:0.8rem;">ABC<span class="wrong-char">D</span></div>
+                    <div class="example-box" style="font-size:0.8rem;">ABC<span class="wrong-char">E</span></div>
+                </div>
+                <div class="example-box-row">
+                    <div class="example-box" style="font-size:0.8rem;">ABC<span class="wrong-char">D</span></div>
+                    <div class="example-box" style="font-size:0.8rem;">ABC<span class="wrong-char">D</span></div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="toggleHowToPlay(false)">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="confirmTitle">Confirm Submission</h2>
+            <p id="confirmText">Are you sure you want to submit your answers?</p>
+            <div class="modal-buttons">
+                <button id="confirmNo" class="btn btn-secondary" style="min-width: 100px;">No</button>
+                <button id="confirmYes" class="btn btn-primary" style="min-width: 100px;">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>📄 Scanning Text</h1>
+        <div class="header-buttons">
+            <div id="headerTimer" class="header-timer">00:00</div>
+            <button id="backToMenuBtn" class="btn outline-btn hidden" style="padding: 5px 15px; font-size: 0.8rem;">Back</button>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div id="startScreen" class="test-container" style="max-width: 600px;">
+            <h1>Scanning Text (SCT)</h1>
+            <p style="margin-bottom: 20px;">Compare strings and count the differences.</p>
+            
+            <div class="action-buttons">
+                <button onclick="selectMode('practice')" class="btn btn-secondary">Practice Mode</button>
+                <button onclick="selectMode('test')" class="btn btn-primary">Test Mode</button>
+                <button onclick="toggleHowToPlay(true)" class="btn outline-btn">How to Play</button>
+                <button class="btn outline-btn" onclick="location.href='index.html'">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="difficultyScreen" class="test-container hidden" style="max-width: 500px;">
+            <h2>Select Difficulty</h2>
+            <div class="action-buttons">
+                <button onclick="startGame('easy')" class="btn btn-secondary">Easy (15 chars)</button>
+                <button onclick="startGame('normal')" class="btn btn-secondary">Normal (20 chars)</button>
+                <button onclick="startGame('hard')" class="btn btn-primary">Hard (30 chars)</button>
+                <button onclick="startGame('hell')" class="btn" style="background:#5d0014; color:white;">Hell (4 Columns)</button>
+                <button onclick="switchScreen('start')" class="btn outline-btn">Back</button>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="test-container hidden" style="padding: 15px; max-width: 1200px;">
+            <div class="game-layout">
+                <div id="sidebar" class="question-sidebar">
+                    <div class="sidebar-header">
+                        <span class="sidebar-title">Questions</span>
+                    </div>
+                    
+                    <div class="nav-grid-container">
+                        <div id="navGrid" class="nav-grid"></div>
+                    </div>
+                    
+                    <div class="legend-container">
+                         <div class="legend-item"><div class="legend-box" style="border:2px solid var(--primary-color);"></div> Current</div>
+                         <div class="legend-item"><div class="legend-box" style="background:var(--secondary-color);"></div> Answered</div>
+                         <div class="legend-item"><div class="legend-box" style="background:var(--bg-color-dark);"></div> Not Answered</div>
+                         <div class="legend-item"><div class="legend-box" style="background:var(--success-color);"></div> Correct</div>
+                         <div class="legend-item"><div class="legend-box" style="background:var(--danger-color);"></div> Incorrect</div>
+                    </div>
+                </div>
+
+                <div class="game-content">
+                    <div class="status-bar" style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold; color:var(--primary-color);">
+                        <span id="qCount">Q 1/30</span>
+                        <span id="diffLabel">NORMAL</span>
+                    </div>
+
+                    <div id="stringsArea" class="strings-area"></div>
+
+                    <div id="choicesArea" class="choices-area"></div>
+
+                    <div id="sliderArea" class="slider-container">
+                        <span id="sliderVal" class="slider-value">8</span>
+                        <input type="range" id="ansSlider" min="0" max="16" value="8">
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div id="practiceControls" style="width:100%; display:none; justify-content:center; gap:15px;">
+                            <button id="checkAnsBtn" class="btn btn-primary hidden" style="min-width:150px;">Check Answer</button>
+                            <button id="pracNextBtn" class="btn btn-secondary hidden" style="min-width:150px;">Next ></button>
+                        </div>
+                        
+                        <div id="testControls" style="width:100%; display:flex; justify-content:space-between;">
+                            <button id="prevBtn" class="btn btn-secondary" style="min-width:100px;">&lt; Prev</button>
+                            <button id="submitBtn" class="btn btn-primary" style="min-width:120px;">Submit</button>
+                            <button id="nextBtn" class="btn btn-secondary" style="min-width:100px;">Next &gt;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsScreen" class="test-container hidden">
+            <h1 id="resultsTitle" class="result-header">Quiz Results</h1>
+            <p class="result-sub">Here is how you performed</p>
+            
+            <div class="result-columns">
+                <div class="result-card">
+                    <div class="card-title">Current Score</div>
+                    <div class="score-big" id="resScoreBig">-</div>
+                    
+                    <div class="stat-row">
+                        <span class="stat-label">Correct Answers</span>
+                        <span class="stat-value" id="resCorrect">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Questions</span>
+                        <span class="stat-value" id="resTotal">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-value" id="resAcc">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time Used</span>
+                        <span class="stat-value" id="resTime">-</span>
+                    </div>
+                    
+                    <div class="percentile-badge">
+                        Percentile: <span id="resPerc">-</span>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="card-title">Best Score</div>
+                    
+                    <div class="stat-row" style="margin-top:20px;">
+                         <span class="stat-label">Best Score</span>
+                         <span class="stat-value" id="bestScore">-</span>
+                    </div>
+                    <div class="stat-row">
+                         <span class="stat-label">Accuracy</span>
+                         <span class="stat-value" id="bestAcc">-</span>
+                    </div>
+                    <div class="stat-row">
+                         <span class="stat-label">Percentile</span>
+                         <span class="stat-value" id="bestPerc">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons" style="flex-direction: row; justify-content: center; flex-wrap: wrap;">
+                <button id="reviewBtn" class="btn btn-secondary" onclick="startReview()">Review Answers</button>
+                <button onclick="location.reload()" class="btn btn-primary">Back to Menu</button>
+                <button onclick="location.href='index.html'" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = "https://us-central1-silp-pilot-platform.cloudfunctions.net"; 
+        
+        let gameState = {
+            mode: 'test',
+            difficulty: 'normal',
+            questions: [],
+            answers: [],
+            currentIndex: 0,
+            startTime: 0,
+            timer: null,
+            timeLeft: 360,
+            practiceAnswered: false 
+        };
+
+        let userEmail = "guest@example.com";
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+            firebase.auth().onAuthStateChanged(u => {
+                if (u) userEmail = u.email;
+            });
+        }
+
+        const screens = {
+            start: document.getElementById('startScreen'),
+            difficulty: document.getElementById('difficultyScreen'),
+            game: document.getElementById('gameScreen'),
+            results: document.getElementById('resultsScreen')
+        };
+
+        // --- NAVIGATION & MODALS ---
+        function switchScreen(name) {
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            screens[name].classList.remove('hidden');
+            
+            const headerTimer = document.getElementById('headerTimer');
+            const backBtn = document.getElementById('backToMenuBtn');
+            
+            if (name === 'game') {
+                if (gameState.mode === 'practice') {
+                    headerTimer.style.display = 'none';
+                    backBtn.classList.remove('hidden');
+                    backBtn.onclick = () => location.reload(); 
+                } else {
+                    headerTimer.style.display = 'block';
+                    backBtn.classList.add('hidden');
+                }
+            } else {
+                backBtn.classList.add('hidden');
+                headerTimer.style.display = 'none';
+            }
+        }
+
+        function toggleHowToPlay(show) {
+            document.getElementById('howToPlayModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function showConfirmModal(title, text, onYes) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmText').textContent = text;
+            
+            modal.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = () => {
+                modal.style.display = 'none';
+                onYes();
+            };
+            document.getElementById('confirmNo').onclick = () => {
+                modal.style.display = 'none';
+            };
+        }
+
+        function selectMode(mode) {
+            gameState.mode = mode;
+            switchScreen('difficulty');
+        }
+
+        async function startGame(diff) {
+            gameState.difficulty = diff;
+            document.getElementById('loader').style.display = 'flex';
+            
+            try {
+                const response = await fetch(`${API_BASE}/getSCTQuizData?difficulty=${diff}`);
+                const result = await response.json();
+                
+                if (!result.success) throw new Error("Load Failed");
+                
+                gameState.questions = result.data;
+                gameState.answers = new Array(gameState.questions.length).fill(null);
+                gameState.currentIndex = 0;
+                gameState.timeLeft = (diff === 'hell') ? 360 : 360; 
+                gameState.practiceAnswered = false;
+                
+                setupGameUI();
+                switchScreen('game');
+                
+                if (gameState.mode === 'test') {
+                    gameState.startTime = Date.now();
+                    startTimer();
+                }
+
+            } catch (e) {
+                alert("Error: " + e.message);
+                switchScreen('start');
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        // --- UI SETUP ---
+        function setupGameUI() {
+            const sidebar = document.getElementById('sidebar');
+            const pracControls = document.getElementById('practiceControls');
+            const testControls = document.getElementById('testControls');
+
+            if (gameState.mode === 'practice') {
+                sidebar.style.display = 'none'; 
+                pracControls.style.display = 'flex';
+                testControls.style.display = 'none';
+            } else {
+                sidebar.style.display = 'flex';
+                pracControls.style.display = 'none';
+                testControls.style.display = 'flex';
+                renderNavGrid();
+            }
+
+            renderQuestion();
+            document.getElementById('diffLabel').textContent = gameState.difficulty.toUpperCase();
+            
+            document.getElementById('prevBtn').onclick = () => navigate(-1);
+            document.getElementById('nextBtn').onclick = () => navigate(1);
+            document.getElementById('submitBtn').onclick = () => {
+                showConfirmModal("Confirm Submission", "Are you sure you want to finish the test?", () => submitTest());
+            };
+            
+            document.getElementById('checkAnsBtn').onclick = checkPracticeAnswer;
+            document.getElementById('pracNextBtn').onclick = () => {
+                gameState.practiceAnswered = false;
+                navigate(1);
+            };
+        }
+
+        // --- HIGHLIGHT DIFF LOGIC ---
+        function highlightDiff(str, compareStr) {
+            let html = "";
+            for (let i = 0; i < str.length; i++) {
+                if (str[i] !== compareStr[i]) {
+                    html += `<span class="diff-char">${str[i]}</span>`;
+                } else {
+                    html += str[i];
+                }
+            }
+            return html;
+        }
+
+        function renderQuestion() {
+            const q = gameState.questions[gameState.currentIndex];
+            const stringsArea = document.getElementById('stringsArea');
+            const choicesArea = document.getElementById('choicesArea');
+            const sliderArea = document.getElementById('sliderArea');
+            
+            // Should we show differences?
+            const showDiff = (gameState.mode === 'review') || (gameState.mode === 'practice' && gameState.practiceAnswered);
+
+            // 1. Strings
+            stringsArea.innerHTML = '';
+            stringsArea.className = (gameState.difficulty === 'hell') ? 'strings-area hell' : 'strings-area';
+
+            if (gameState.difficulty === 'hell') {
+                // In Hell mode, compare all to Left1 (or compare to find diff logic)
+                // Simplified: highlight deviation from Left1 for visual aid
+                const l1 = q.left1;
+                stringsArea.innerHTML = `
+                    <div class="string-box"><div class="label">TOP-LEFT</div>${showDiff ? l1 : q.left1}</div>
+                    <div class="string-box"><div class="label">TOP-RIGHT</div>${showDiff ? highlightDiff(q.right1, l1) : q.right1}</div>
+                    <div class="string-box"><div class="label">BOT-LEFT</div>${showDiff ? highlightDiff(q.left2, l1) : q.left2}</div>
+                    <div class="string-box"><div class="label">BOT-RIGHT</div>${showDiff ? highlightDiff(q.right2, l1) : q.right2}</div>
+                `;
+            } else {
+                // Standard: Compare Left vs Right
+                stringsArea.innerHTML = `
+                    <div class="string-box"><div class="label">LEFT</div>${q.left}</div>
+                    <div class="string-box"><div class="label">RIGHT</div>${showDiff ? highlightDiff(q.right, q.left) : q.right}</div>
+                `;
+            }
+
+            // 2. Inputs
+            choicesArea.innerHTML = '';
+            sliderArea.classList.remove('active');
+            choicesArea.style.display = 'none';
+            
+            const myAns = gameState.answers[gameState.currentIndex];
+            const isReview = (gameState.mode === 'review');
+
+            // --- HELL MODE (Slider) ---
+            if (gameState.difficulty === 'hell') {
+                sliderArea.classList.add('active');
+                const slider = document.getElementById('ansSlider');
+                slider.value = (myAns !== null) ? myAns : 8;
+                document.getElementById('sliderVal').textContent = slider.value;
+                slider.disabled = (isReview || (gameState.mode === 'practice' && gameState.practiceAnswered));
+                
+                if (gameState.mode === 'practice') {
+                     slider.onchange = () => {
+                         if (!gameState.practiceAnswered) gameState.answers[gameState.currentIndex] = parseInt(slider.value);
+                     };
+                } else if (!isReview) {
+                    slider.oninput = (e) => {
+                         gameState.answers[gameState.currentIndex] = parseInt(e.target.value);
+                         document.getElementById('sliderVal').textContent = e.target.value;
+                    };
+                }
+            } 
+            // --- STANDARD MODE (Buttons) ---
+            else {
+                choicesArea.style.display = 'grid';
+                const options = q.shuffledOptions || [0,1,2,3];
+                const labels = ['A', 'B', 'C', 'D'];
+
+                options.forEach((opt, idx) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'choice-btn';
+                    btn.innerHTML = `
+                        <span class="choice-label">${labels[idx]}</span>
+                        <span class="choice-text">${opt}</span>
+                    `;
+
+                    if (isReview || (gameState.mode === 'practice' && gameState.practiceAnswered)) {
+                        if (opt === q.diff) btn.classList.add('correct');
+                        else if (opt === myAns) btn.classList.add('incorrect');
+                    }
+                    else {
+                        if (myAns === opt) btn.classList.add('selected');
+                        btn.onclick = () => handleStandardChoice(opt);
+                    }
+                    choicesArea.appendChild(btn);
+                });
+            }
+
+            updateControlsState();
+            if (gameState.mode !== 'practice') updateNavGrid();
+        }
+
+        function handleStandardChoice(val) {
+            if (gameState.mode === 'practice' && gameState.practiceAnswered) return;
+            gameState.answers[gameState.currentIndex] = val;
+            
+            if (gameState.mode === 'test') {
+                renderQuestion(); 
+                setTimeout(() => {
+                    if (gameState.currentIndex < gameState.questions.length - 1) navigate(1);
+                }, 200);
+            } else {
+                renderQuestion();
+            }
+        }
+
+        function updateControlsState() {
+            document.getElementById('qCount').textContent = `Q ${gameState.currentIndex + 1}/${gameState.questions.length}`;
+
+            if (gameState.mode === 'practice') {
+                const checkBtn = document.getElementById('checkAnsBtn');
+                const nextBtn = document.getElementById('pracNextBtn');
+                const hasAns = gameState.answers[gameState.currentIndex] !== null;
+
+                if (gameState.practiceAnswered) {
+                    checkBtn.classList.add('hidden');
+                    nextBtn.classList.remove('hidden');
+                    nextBtn.textContent = (gameState.currentIndex === gameState.questions.length - 1) ? "Finish" : "Next >";
+                } else {
+                    checkBtn.classList.remove('hidden');
+                    nextBtn.classList.add('hidden');
+                    checkBtn.disabled = !hasAns; 
+                }
+            } else {
+                document.getElementById('prevBtn').disabled = (gameState.currentIndex === 0);
+                document.getElementById('nextBtn').disabled = (gameState.currentIndex === gameState.questions.length - 1);
+            }
+        }
+
+        function checkPracticeAnswer() {
+            gameState.practiceAnswered = true;
+            renderQuestion();
+        }
+
+        function navigate(dir) {
+            const nextIdx = gameState.currentIndex + dir;
+            if (nextIdx >= 0 && nextIdx < gameState.questions.length) {
+                gameState.currentIndex = nextIdx;
+                renderQuestion();
+            } else if (nextIdx >= gameState.questions.length) {
+                if (gameState.mode === 'practice') submitTest();
+            }
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById('headerTimer');
+            if(gameState.timer) clearInterval(gameState.timer);
+            
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                const m = Math.floor(gameState.timeLeft / 60);
+                const s = gameState.timeLeft % 60;
+                timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                
+                if (gameState.timeLeft <= 60) timerEl.classList.add('danger');
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    submitTest(true); 
+                }
+            }, 1000);
+        }
+
+        async function submitTest(timesUp = false) {
+            clearInterval(gameState.timer);
+            document.getElementById('loader').style.display = 'flex';
+
+            let correct = 0;
+            let answered = 0;
+            gameState.questions.forEach((q, i) => {
+                if (gameState.answers[i] !== null) answered++;
+                if (gameState.answers[i] === q.diff) correct++;
+            });
+            const accuracy = (answered > 0) ? (correct / answered) * 100 : 0;
+            const timeUsed = 360 - gameState.timeLeft;
+            const m = Math.floor(timeUsed / 60);
+            const s = timeUsed % 60;
+            const timeStr = `${m}m ${s}s`;
+
+            try {
+                if (gameState.mode === 'test') {
+                    const payload = {
+                        userEmail: userEmail,
+                        difficulty: gameState.difficulty,
+                        correctCount: correct,
+                        totalQuestions: gameState.questions.length,
+                        answeredCount: answered,
+                        accuracy: accuracy,
+                        timeUsed: timeUsed,
+                        userAnswers: gameState.answers
+                    };
+
+                    const response = await fetch(`${API_BASE}/saveSCTScore`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const serverData = await response.json();
+                    
+                    showResults(correct, accuracy, timeStr, serverData.percentile || 0);
+                    fetchBestScore();
+                    document.getElementById('resultsTitle').textContent = timesUp ? "Time's Up!" : "Quiz Results";
+                    
+                } else {
+                    showResults(correct, accuracy, timeStr, '-');
+                    document.getElementById('resultsTitle').textContent = "Practice Completed";
+                }
+            } catch (e) {
+                console.error(e);
+                showResults(correct, accuracy, timeStr, '-');
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        async function fetchBestScore() {
+            try {
+                const res = await fetch(`${API_BASE}/getBestSCTScore?email=${userEmail}&difficulty=${gameState.difficulty}`);
+                const json = await res.json();
+                if (json.success && json.data) {
+                    const d = json.data;
+                    document.getElementById('bestScore').textContent = `${d.bestScore} / ${d.totalQuestions}`;
+                    document.getElementById('bestAcc').textContent = d.bestAccuracy.toFixed(1) + '%';
+                    document.getElementById('bestPerc').textContent = d.bestPercentile + '%';
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        function showResults(score, acc, time, perc) {
+            switchScreen('results');
+            document.getElementById('resScoreBig').textContent = Math.round((score/gameState.questions.length)*100);
+            document.getElementById('resCorrect').textContent = score;
+            document.getElementById('resTotal').textContent = gameState.questions.length;
+            document.getElementById('resAcc').textContent = acc.toFixed(1) + "%";
+            document.getElementById('resTime').textContent = time;
+            document.getElementById('resPerc').textContent = (perc === '-') ? '-' : perc + "%";
+        }
+
+        function startReview() {
+            gameState.mode = 'review';
+            gameState.currentIndex = 0;
+            setupGameUI(); 
+            switchScreen('game');
+        }
+
+        function renderNavGrid() {
+            const grid = document.getElementById('navGrid');
+            grid.innerHTML = '';
+            gameState.questions.forEach((_, i) => {
+                const item = document.createElement('div');
+                item.className = 'nav-item';
+                item.textContent = i + 1;
+                item.id = `nav-${i}`;
+                item.onclick = () => {
+                    gameState.currentIndex = i;
+                    renderQuestion();
+                };
+                grid.appendChild(item);
+            });
+        }
+
+        function updateNavGrid() {
+            gameState.questions.forEach((q, i) => {
+                const el = document.getElementById(`nav-${i}`);
+                el.className = 'nav-item'; 
+                if (i === gameState.currentIndex) el.classList.add('current');
+                
+                if (gameState.mode === 'review') {
+                    const myAns = gameState.answers[i];
+                    if (myAns === q.diff) el.classList.add('correct');
+                    else el.classList.add('incorrect');
+                } else {
+                    if (gameState.answers[i] !== null) el.classList.add('answered');
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

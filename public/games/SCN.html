@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanning Number</title>
+    <style>
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --bg-color-light: #FAF7F2;
+            --bg-color-dark: #F5F2EA;
+            --surface-color: #FFFEF9;
+            --text-color: #3a2e2c;
+            --text-color-secondary: #8B4513;
+            --border-color: #E8DDD4;
+            --light-text: #fff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overscroll-behavior: none;
+        }
+
+        /* --- APP-LIKE BEHAVIOR --- */
+        body, .btn, .nav-btn, .option-card, .grid-cell, .header, .question-container {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            background: rgba(255, 253, 250, 0.95);
+            padding: 0 15px;
+            box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin: 0;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        /* Hamburger Button */
+        .menu-toggle-btn {
+            display: none;
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Timer Styling */
+        .header-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 10px;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* [แก้ข้อ 1] เพิ่ม Animation การกระพริบเมื่อเวลาใกล้หมด */
+        .header-timer.danger {
+            color: var(--danger-color);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* --- CONTAINERS --- */
+        .container {
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .test-container {
+            background: var(--surface-color);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        /* --- GAME LAYOUT --- */
+        .game-layout {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 1400px;
+            height: 100%;
+            align-items: stretch;
+            position: relative;
+        }
+
+        .question-sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-grid-scroll {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .question-grid-nav {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .nav-btn {
+            aspect-ratio: 1;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+            .nav-btn:hover {
+                border-color: var(--primary-color);
+            }
+
+            .nav-btn.current {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+                transform: scale(1.1);
+                z-index: 2;
+            }
+
+            .nav-btn.answered {
+                background: var(--secondary-color);
+                color: white;
+                border-color: var(--secondary-color);
+            }
+
+            .nav-btn.disabled-nav {
+                cursor: not-allowed;
+                opacity: 0.5;
+                pointer-events: none;
+                background-color: #e0e0e0;
+                border-color: #ccc;
+            }
+
+            .nav-btn.correct {
+                background: var(--success-color);
+                color: white;
+            }
+
+            .nav-btn.incorrect {
+                background: var(--danger-color);
+                color: white;
+            }
+
+        .game-main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+            height: 100%;
+        }
+
+        #scanningGridContainer, #reviewScanningGridContainer {
+            flex-grow: 1;
+            background: white;
+            border: 2px solid var(--text-color);
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            overflow: hidden;
+            user-select: none;
+            max-height: 100%;
+        }
+
+        /* --- GRID CELL STYLING --- */
+        .grid-cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            font-size: clamp(0.8rem, 2.5vh, 2rem);
+            font-weight: bold;
+            color: var(--text-color);
+            line-height: 1;
+        }
+
+            .grid-cell:nth-child(10n) {
+                border-right: none;
+            }
+
+            .grid-cell:nth-last-child(-n+10) {
+                border-bottom: none;
+            }
+
+        .question-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid var(--text-color);
+            padding: 0 1px;
+            font-size: clamp(0.5rem, 1.2vh, 0.8rem);
+            color: var(--text-color);
+            line-height: 1;
+            z-index: 5;
+            min-width: 14px;
+            text-align: center;
+        }
+
+        .top-left {
+            top: -1px;
+            left: -1px;
+        }
+
+        .top-right {
+            top: -1px;
+            right: -1px;
+        }
+
+        .bottom-left {
+            bottom: -1px;
+            left: -1px;
+        }
+
+        .bottom-right {
+            bottom: -1px;
+            right: -1px;
+        }
+
+        .question-container {
+            height: auto;
+            min-height: 160px;
+            flex-shrink: 0;
+            background: var(--surface-color);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .options-wrapper {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .option-card {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        @media (hover: hover) {
+            .option-card:hover:not(.disabled) {
+                border-color: var(--primary-color);
+                background: var(--bg-color-light);
+            }
+        }
+
+        .option-card.selected {
+            border-color: var(--secondary-color);
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .option-key {
+            font-size: 0.8rem;
+            margin-bottom: 0px;
+            opacity: 0.8;
+        }
+
+        .option-val {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.1s;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+            }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .outline-btn {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+            .action-buttons .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+        /* --- RESULTS --- */
+        .results-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .practice-result-card {
+            max-width: 450px !important;
+            margin: 0 auto;
+        }
+
+            .practice-result-card .action-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+                .practice-result-card .action-buttons .btn {
+                    width: auto !important;
+                    min-width: 140px;
+                    max-width: 200px;
+                    padding: 10px 15px;
+                    font-size: 0.95rem;
+                }
+
+        .result-comparison {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .result-column {
+            flex: 1;
+            background: var(--bg-color-dark);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+            .result-column h3 {
+                text-align: center;
+                margin-bottom: 15px;
+                color: var(--text-color-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 10px;
+            }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px 20px;
+            align-items: center;
+        }
+
+        .r-label {
+            font-weight: 600;
+        }
+
+        .r-val {
+            text-align: right;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* --- UTILS --- */
+        .hidden {
+            display: none !important;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ccc;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .highlight-glow {
+            background-color: #fffacd !important;
+            box-shadow: inset 0 0 0 3px var(--secondary-color);
+            z-index: 10;
+        }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+            .modal-content h2 {
+                color: var(--primary-color);
+                margin-bottom: 1rem;
+            }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 992px) {
+            .menu-toggle-btn {
+                display: inline-block;
+            }
+
+            .question-sidebar {
+                position: fixed;
+                left: -320px;
+                top: 60px;
+                height: calc(100% - 60px);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            }
+
+                .question-sidebar.active {
+                    left: 0;
+                }
+
+            .container {
+                padding: 5px;
+            }
+
+            .game-layout {
+                gap: 0;
+            }
+
+            .question-container {
+                padding: 8px 10px;
+                min-height: 140px;
+            }
+
+            .question-text {
+                margin-bottom: 5px;
+                font-size: 1rem;
+            }
+
+            .header-timer {
+                font-size: 1.2rem;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .result-comparison {
+                flex-direction: column;
+            }
+        }
+
+        /* --- IPAD / TABLET SPECIFIC FIX --- */
+        @media (min-width: 768px) {
+            .grid-cell {
+                font-size: clamp(1.5rem, 4vh, 2.5rem);
+            }
+
+            .question-label {
+                font-size: clamp(0.8rem, 1.5vh, 1rem);
+                padding: 2px 3px;
+                min-width: 18px;
+            }
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+</head>
+<body>
+    <div id="loader-overlay" class="loader-overlay"><div class="loader-spinner"></div></div>
+
+    <div class="header">
+        <div class="header-left">
+            <button id="menuToggleBtn" class="menu-toggle-btn">☰</button>
+            <h1>🔢 Scanning Number</h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div class="header-timer" id="timerDisplay" style="display: none;">00:00</div>
+            <button id="reviewBackBtn" class="btn btn-primary hidden" style="padding: 5px 15px; font-size: 0.8rem; margin-left: 10px;">Back</button>
+        </div>
+    </div>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <div class="container">
+
+        <div id="startScreen" class="test-container">
+            <h1>Scanning Number Test</h1>
+            <p>Find the main number in the grid that corresponds to the small question number.</p>
+            <div class="action-buttons">
+                <button onclick="selectMode('practice')" class="btn btn-secondary">Practice Mode</button>
+                <button onclick="selectMode('test')" class="btn btn-primary">Test Mode</button>
+                <button onclick="showHowToPlay()" class="btn outline-btn">How to Play</button>
+                <button onclick="window.location.href='/index.html'" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="difficultyScreen" class="test-container hidden">
+            <h2 id="difficultyTitle">Select Difficulty</h2>
+            <div class="action-buttons">
+                <button onclick="startGame('easy')" class="btn btn-primary">Easy</button>
+                <button onclick="startGame('normal')" class="btn btn-primary">Normal</button>
+                <button onclick="startGame('hard')" class="btn btn-primary">Hard</button>
+            </div>
+        </div>
+
+        <div id="howToPlayScreen" class="test-container hidden" style="text-align: left;">
+            <h2 style="text-align: center;">How to Play</h2>
+            <ul>
+                <li>You will see a large <strong>10x10 grid</strong>.</li>
+                <li>Each cell has a <strong>Main Number</strong> (Big) and a <strong>Question Number</strong> (Small, in a frame).</li>
+                <li>The question asks: "Find the main number for question <strong>#X</strong>".</li>
+                <li>Look for the small number <strong>X</strong> in the corners, then choose the big number in that cell.</li>
+            </ul>
+
+            <div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 10px; text-align: center;">
+                <p style="margin-bottom: 10px; font-size: 0.9rem; color: #555;"><strong>Example:</strong> Question #15 asks for the main number.</p>
+                <div style="display: flex; justify-content: center;">
+                    <div class="grid-cell" style="width: 80px; height: 80px; border: 1px solid #ccc; background: white; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; font-weight: bold; color: var(--text-color);">
+                        42
+                        <div class="question-label top-left" style="position: absolute; top: -1px; left: -1px; background: rgba(255,255,255,0.9); border: 1px solid var(--text-color); padding: 0 2px; font-size: 0.7rem;">15</div>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9rem;">
+                    Look for small number <strong>15</strong> in the corner.<br>
+                    The answer is the big number <strong>42</strong>.
+                </p>
+            </div>
+
+            <ul>
+                <li style="margin-top:10px;">You have <strong>6 minutes</strong> to complete 100 questions.</li>
+                <li style="color: var(--danger-color); margin-top:10px;"><strong>Warning:</strong> Do not skip questions in Test Mode. You must answer sequentially. Skipping results in a FAIL (0 Score).</li>
+            </ul>
+            <div class="action-buttons">
+                <button onclick="backToStart()" class="btn btn-primary">Back</button>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="hidden" style="width: 100%; height: 100%;">
+            <div class="game-layout">
+                <aside class="question-sidebar" id="questionSidebar">
+                    <div class="sidebar-header">
+                        <div style="font-size: 1rem; font-weight:bold; color: var(--primary-color);">Question Menu</div>
+                    </div>
+                    <div class="nav-grid-scroll">
+                        <div id="questionGridNav" class="question-grid-nav"></div>
+                    </div>
+                </aside>
+
+                <main class="game-main-content">
+                    <div id="scanningGridContainer"></div>
+                    <div class="question-container">
+                        <div id="questionText" class="question-text">Loading...</div>
+                        <div id="optionsWrapper" class="options-wrapper"></div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button id="prevBtn" class="btn btn-secondary" style="flex: 1; font-size: 0.9rem; padding: 8px;">&lt; Prev</button>
+                            <button onclick="openSubmitModal()" class="btn btn-primary" style="flex: 1; font-size: 0.9rem; padding: 8px;">Submit</button>
+                            <button id="nextBtn" class="btn btn-secondary" style="flex: 1; font-size: 0.9rem; padding: 8px;">Next &gt;</button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <div id="resultsScreen" class="test-container results-container hidden">
+            <h2 id="resultsTitle">Test Completed</h2>
+
+            <div id="fail-message-box" class="hidden" style="background-color: #ffe6e6; color: #dc3545; padding: 10px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dc3545;">
+                <h3 style="margin: 0; font-size: 1.2rem;">❌ TEST FAILED</h3>
+                <p style="margin: 5px 0 0 0;">You skipped questions. Score adjusted to 0.</p>
+            </div>
+
+            <div id="testResults" class="result-comparison">
+                <div class="result-column">
+                    <h3>Current Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span class="r-val" id="currScore">N/A</span>
+                        <span class="r-label">Accuracy</span><span class="r-val" id="currAcc">N/A</span>
+                        <span class="r-label">Avg. Time/Q</span><span class="r-val" id="currAvgTime">N/A</span>
+                        <span class="r-label practice-only hidden">Total Time</span><span id="currTotalTime" class="r-val practice-only hidden">N/A</span>
+                        <span class="r-label percentile-row">Percentile</span><span class="r-val percentile-row" id="currPerc">N/A</span>
+                    </div>
+                </div>
+                <div id="bestResults" class="result-column hidden">
+                    <h3>Your Best Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span class="r-val" id="bestScore">N/A</span>
+                        <span class="r-label">Accuracy</span><span class="r-val" id="bestAcc">N/A</span>
+                        <span class="r-label">Percentile</span><span class="r-val" id="bestPerc">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="reviewBtn" onclick="showReview()" class="btn btn-secondary">Review Answers</button>
+                <button onclick="location.reload()" class="btn btn-primary">Back to Menu</button>
+                <button onclick="window.location.href='/index.html'" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="reviewScreen" class="hidden" style="width: 100%; height: 100%;">
+            <div class="game-layout">
+                <aside class="question-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Review Answers</h3>
+                    </div>
+                    <div class="nav-grid-scroll">
+                        <div id="reviewGridNav" class="question-grid-nav"></div>
+                    </div>
+                </aside>
+                <main class="game-main-content">
+                    <div id="reviewScanningGridContainer"></div>
+                    <div class="question-container">
+                        <div id="reviewQuestionText" class="question-text"></div>
+                        <div id="reviewOptionsWrapper" class="options-wrapper"></div>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <button id="reviewPrevQBtn" class="btn btn-secondary" style="flex: 1; font-size: 0.9rem; padding: 8px;">&lt; Prev</button>
+                            <button id="reviewNextQBtn" class="btn btn-secondary" style="flex: 1; font-size: 0.9rem; padding: 8px;">Next &gt;</button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Submission</h2>
+            <p>Are you sure you want to submit your answers?</p>
+            <div class="modal-buttons">
+                <button onclick="document.getElementById('confirmModal').classList.remove('active')" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmSubmit()" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- STATE ---
+        let state = {
+            userEmail: null,
+            mode: 'test',
+            difficulty: 'normal',
+            quizData: null,
+            questions: [],
+            userAnswers: {},
+            currentIdx: 0,
+            reviewIdx: 0,
+            startTime: null,
+            timerInterval: null,
+            timeLeft: 180,
+            gridHtml: ''
+        };
+
+        // --- HAMBURGER MENU LOGIC ---
+        const menuBtn = document.getElementById('menuToggleBtn');
+        const sidebar = document.getElementById('questionSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu();
+        });
+
+        overlay.addEventListener('click', closeMenu);
+
+        // --- AUTH ---
+        auth.onAuthStateChanged(async user => {
+            if(user) {
+                state.userEmail = user.email || user.providerData[0]?.email;
+                if (state.userEmail) {
+                     state.userEmail = state.userEmail.trim().toLowerCase();
+                     const parts = state.userEmail.split("@");
+                     if (parts.length === 2 && parts[1] === "gmail.com") {
+                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                     }
+                }
+                try {
+                    const res = await fetch("https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess", {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ email: state.userEmail, courseId: 'SCN' })
+                    });
+                    const result = await res.json();
+                    if(result.hasAccess) {
+                        document.getElementById('loader-overlay').classList.add('hidden');
+                    } else {
+                        alert("Access Denied");
+                        window.location.href = '/index.html';
+                    }
+                } catch(e) { console.error(e); alert("Connection Error"); }
+            } else {
+                window.location.href = '/Auth.html';
+            }
+        });
+
+        // --- NAVIGATION ---
+        function selectMode(m) {
+            state.mode = m;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('difficultyScreen').classList.remove('hidden');
+        }
+        function showHowToPlay() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('howToPlayScreen').classList.remove('hidden');
+        }
+        function backToStart() {
+            document.getElementById('howToPlayScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        // --- GAME ENGINE ---
+        async function startGame(diff) {
+            state.difficulty = diff;
+            document.getElementById('loader-overlay').classList.remove('hidden');
+            try {
+                const url = `https://us-central1-silp-pilot-platform.cloudfunctions.net/getSCNQuizData?difficulty=${diff}`;
+                const res = await fetch(url);
+                const json = await res.json();
+                if(json.success) {
+                    state.quizData = json.data;
+                    state.questions = json.data.questions;
+
+                    // FIX: FORCE 6 MINUTES (360 seconds) regardless of server response
+                    state.timeLeft = 360;
+
+                    state.userAnswers = {};
+
+                    setupGameUI(json.data.gridData);
+
+                    document.getElementById('difficultyScreen').classList.add('hidden');
+                    document.getElementById('gameScreen').classList.remove('hidden');
+                    document.getElementById('loader-overlay').classList.add('hidden');
+
+                    document.getElementById('timerDisplay').style.display = 'block';
+
+                    state.startTime = Date.now();
+                    startTimer();
+                    loadQuestion(0);
+                } else { throw new Error(json.error); }
+            } catch(e) {
+                console.error(e);
+                alert("Load Failed"); location.reload();
+            }
+        }
+
+        function setupGameUI(gridData) {
+            const container = document.getElementById('scanningGridContainer');
+            container.innerHTML = '';
+            const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+            for(let i=0; i<100; i++) {
+                const qNum = gridData.questionNumbers[i];
+                const aNum = gridData.answerNumbers[i];
+
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.id = `cell-${qNum}`;
+                cell.textContent = aNum;
+
+                const label = document.createElement('div');
+                let cornerClass = 'top-left';
+                if(state.difficulty !== 'easy') {
+                    cornerClass = corners[Math.floor(Math.random() * corners.length)];
+                }
+                label.className = `question-label ${cornerClass}`;
+                label.textContent = qNum;
+
+                cell.appendChild(label);
+                container.appendChild(cell);
+            }
+            state.gridHtml = container.innerHTML;
+            renderNavGrid();
+        }
+
+        function renderNavGrid() {
+            const nav = document.getElementById('questionGridNav');
+            nav.innerHTML = '';
+
+            const isNavDisabled = state.mode === 'test' && (state.difficulty === 'normal' || state.difficulty === 'hard');
+
+            state.questions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.textContent = q.id;
+                btn.id = `nav-btn-${q.id}`;
+
+                if (isNavDisabled) {
+                    btn.classList.add('disabled-nav');
+                } else {
+                    btn.onclick = () => {
+                        loadQuestion(idx);
+                        if(window.innerWidth <= 992) closeMenu();
+                    };
+                }
+                nav.appendChild(btn);
+            });
+        }
+
+        function updateNavStyles(currentIdx) {
+            state.questions.forEach((q, idx) => {
+                const btn = document.getElementById(`nav-btn-${q.id}`);
+                if(!btn) return;
+                btn.classList.remove('current', 'answered');
+                if (state.userAnswers[q.id]) btn.classList.add('answered');
+                if (idx === currentIdx) btn.classList.add('current');
+            });
+        }
+
+        function loadQuestion(idx) {
+            state.currentIdx = idx;
+            const q = state.questions[idx];
+
+            document.getElementById('questionText').innerHTML = q.text;
+
+            const wrapper = document.getElementById('optionsWrapper');
+            wrapper.innerHTML = '';
+            ['A','B','C','D'].forEach(key => {
+                const val = q.options[key];
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                // Check if there's a user answer for THIS question
+                if(state.userAnswers[q.id] === key) card.classList.add('selected');
+
+                card.innerHTML = `<div class="option-key">${key}</div><div class="option-val">${val}</div>`;
+                card.onclick = () => handleAnswer(q.id, key);
+                wrapper.appendChild(card);
+            });
+
+            document.getElementById('prevBtn').disabled = idx === 0;
+            document.getElementById('prevBtn').onclick = () => loadQuestion(idx - 1);
+
+            document.getElementById('nextBtn').disabled = idx === state.questions.length - 1;
+            document.getElementById('nextBtn').onclick = () => loadQuestion(idx + 1);
+
+            updateNavStyles(idx);
+        }
+
+        function handleAnswer(qId, key) {
+            state.userAnswers[qId] = key;
+
+            // Visual Feedback Logic
+            const cards = document.querySelectorAll('.option-card');
+            cards.forEach(c => c.classList.remove('selected'));
+
+            // Find the element by text and highlight it
+            cards.forEach(c => {
+                if(c.querySelector('.option-key').textContent === key) {
+                    c.classList.add('selected');
+                }
+            });
+
+            // Auto Advance
+            if(state.currentIdx < state.questions.length - 1) {
+                setTimeout(() => loadQuestion(state.currentIdx + 1), 200);
+            }
+        }
+
+        function startTimer() {
+            if(state.timerInterval) clearInterval(state.timerInterval);
+            const disp = document.getElementById('timerDisplay');
+            state.timerInterval = setInterval(() => {
+                let timeToShow = 0;
+                if(state.mode === 'test') {
+                    state.timeLeft--;
+                    if(state.timeLeft <= 0) { clearInterval(state.timerInterval); finishGame(true); return; }
+                    timeToShow = state.timeLeft;
+                    if(state.timeLeft <= 30) disp.classList.add('danger');
+                } else {
+                    timeToShow = Math.floor((Date.now() - state.startTime)/1000);
+                }
+                const m = Math.floor(timeToShow/60).toString().padStart(2,'0');
+                const s = (timeToShow%60).toString().padStart(2,'0');
+                disp.textContent = `${m}:${s}`;
+            }, 1000);
+        }
+
+        function openSubmitModal() {
+            closeMenu();
+            document.getElementById('confirmModal').classList.add('active');
+        }
+        function confirmSubmit() {
+            document.getElementById('confirmModal').classList.remove('active');
+            finishGame(false);
+        }
+
+        async function finishGame(timeUp) {
+            clearInterval(state.timerInterval);
+            document.getElementById('loader-overlay').classList.remove('hidden');
+
+            let correct = 0;
+            const total = state.questions.length;
+            const answeredCount = Object.keys(state.userAnswers).length;
+
+            let isFail = false;
+            if(state.mode === 'test') {
+                let lastIdx = -1;
+                state.questions.forEach((q, i) => {
+                    if(state.userAnswers[q.id]) lastIdx = i;
+                });
+                if(lastIdx > -1) {
+                    for(let i=0; i<lastIdx; i++) {
+                        if(!state.userAnswers[state.questions[i].id]) { isFail = true; break; }
+                    }
+                }
+            }
+
+            state.questions.forEach(q => {
+                if(state.userAnswers[q.id] === q.correctAnswer) correct++;
+            });
+            if(isFail) correct = 0;
+
+            const accuracy = answeredCount > 0 ? (correct/answeredCount)*100 : 0;
+            const timeUsed = state.mode === 'test' ? (360 - state.timeLeft) : Math.floor((Date.now()-state.startTime)/1000);
+
+            if(state.mode === 'test') {
+                const payload = {
+                    correctCount: correct,
+                    totalQuestions: total,
+                    totalAnswered: answeredCount,
+                    accuracy: parseFloat(accuracy.toFixed(2)),
+                    timeUsed: timeUsed,
+                    isFail: isFail,
+                    difficulty: state.difficulty,
+                    userEmail: state.userEmail
+                };
+
+                try {
+                    const saveRes = await fetch("https://us-central1-silp-pilot-platform.cloudfunctions.net/saveSCNScore", {
+                        method: 'POST', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const saveJson = await saveRes.json();
+
+                    const bestRes = await fetch(`https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCNScore?email=${state.userEmail}&difficulty=${state.difficulty}`);
+                    const bestJson = await bestRes.json();
+
+                    showResults(payload, saveJson.percentile, bestJson.data);
+                } catch(e) {
+                    console.error(e);
+                    showResults(payload, 'Error', null);
+                }
+            } else {
+                setTimeout(() => showResults({correctCount: correct, accuracy, timeUsed, totalAnswered: answeredCount}, 'N/A', null), 500);
+            }
+        }
+
+        function showResults(curr, percentile, best) {
+            document.getElementById('loader-overlay').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+
+            document.getElementById('timerDisplay').style.display = 'none';
+
+            const resultsScreen = document.getElementById('resultsScreen');
+            resultsScreen.classList.remove('hidden');
+            document.getElementById('reviewBackBtn').classList.add('hidden');
+
+            if (state.mode !== 'test') {
+                resultsScreen.classList.add('practice-result-card');
+            } else {
+                resultsScreen.classList.remove('practice-result-card');
+            }
+
+            const failBox = document.getElementById('fail-message-box');
+            if(curr.isFail) failBox.classList.remove('hidden'); else failBox.classList.add('hidden');
+
+            document.getElementById('resultsTitle').textContent = state.mode === 'test' ? "Test Results" : "Practice Complete";
+
+            document.getElementById('currScore').textContent = `${curr.correctCount}/${state.questions.length}`;
+            document.getElementById('currAcc').textContent = `${curr.accuracy.toFixed(2)}%`;
+
+            const m = Math.floor(curr.timeUsed/60).toString().padStart(2,'0');
+            const s = (curr.timeUsed%60).toString().padStart(2,'0');
+
+            const avgTime = curr.totalAnswered > 0 ? (curr.timeUsed/curr.totalAnswered).toFixed(2) + 's' : '0.00s';
+
+            if (state.mode === 'test') {
+                document.getElementById('bestResults').classList.remove('hidden');
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
+
+                document.getElementById('currAvgTime').textContent = avgTime;
+                document.getElementById('currPerc').textContent = percentile !== 'N/A' && percentile !== 'Error' ? `${percentile}%` : percentile;
+
+                if(best) {
+                    document.getElementById('bestScore').textContent = `${best.bestScore}/${best.totalQuestions}`;
+                    document.getElementById('bestAcc').textContent = `${best.bestAccuracy.toFixed(2)}%`;
+                    document.getElementById('bestPerc').textContent = `${best.bestPercentile}%`;
+                }
+            } else {
+                document.getElementById('bestResults').classList.add('hidden');
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.remove('hidden'));
+
+                document.getElementById('currAvgTime').textContent = avgTime;
+                document.getElementById('currTotalTime').textContent = `${m}:${s}`;
+            }
+        }
+
+        // --- REVIEW ---
+        function showReview() {
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('reviewScreen').classList.remove('hidden');
+            document.getElementById('reviewBackBtn').classList.remove('hidden');
+            document.getElementById('reviewBackBtn').onclick = () => {
+                document.getElementById('reviewScreen').classList.add('hidden');
+                document.getElementById('resultsScreen').classList.remove('hidden');
+                document.getElementById('reviewBackBtn').classList.add('hidden');
+            };
+
+            const nav = document.getElementById('reviewGridNav');
+            nav.innerHTML = '';
+            state.questions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                const isCorrect = state.userAnswers[q.id] === q.correctAnswer;
+                btn.className = `nav-btn ${isCorrect ? 'correct' : 'incorrect'}`;
+                btn.textContent = q.id;
+                btn.onclick = () => loadReviewQuestion(idx);
+                nav.appendChild(btn);
+            });
+
+            document.getElementById('reviewScanningGridContainer').innerHTML = state.gridHtml;
+
+            document.getElementById('reviewPrevQBtn').onclick = () => {
+                if (state.reviewIdx > 0) loadReviewQuestion(state.reviewIdx - 1);
+            };
+            document.getElementById('reviewNextQBtn').onclick = () => {
+                if (state.reviewIdx < state.questions.length - 1) loadReviewQuestion(state.reviewIdx + 1);
+            };
+
+            loadReviewQuestion(0);
+        }
+
+        function loadReviewQuestion(idx) {
+            state.reviewIdx = idx;
+            document.querySelectorAll('#reviewScanningGridContainer .highlight-glow').forEach(el => el.classList.remove('highlight-glow'));
+
+            const q = state.questions[idx];
+            document.getElementById('reviewQuestionText').innerHTML = q.text;
+            const wrapper = document.getElementById('reviewOptionsWrapper');
+            wrapper.innerHTML = '';
+
+            ['A','B','C','D'].forEach(key => {
+                const val = q.options[key];
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                if(key === q.correctAnswer) {
+                    card.style.borderColor = 'var(--success-color)';
+                    card.style.background = '#d4edda';
+                } else if(state.userAnswers[q.id] === key) {
+                    card.style.borderColor = 'var(--danger-color)';
+                    card.style.background = '#f8d7da';
+                } else {
+                    card.classList.add('disabled');
+                    card.style.opacity = '0.5';
+                }
+                card.innerHTML = `<div class="option-key">${key}</div><div class="option-val">${val}</div>`;
+                wrapper.appendChild(card);
+            });
+
+            const targetCell = document.querySelector(`#reviewScanningGridContainer #cell-${q.id}`);
+            if(targetCell) {
+                targetCell.classList.add('highlight-glow');
+                targetCell.scrollIntoView({behavior: 'smooth', block: 'center'});
+            }
+
+            document.getElementById('reviewPrevQBtn').disabled = idx === 0;
+            document.getElementById('reviewNextQBtn').disabled = idx === state.questions.length - 1;
+        }
+
+        // =========================================
+        // KEYBOARD SHORTCUTS & MAPPING (Perfect SCN Version)
+        // =========================================
+        document.addEventListener('keydown', (e) => {
+            // 1. ตรวจสอบสถานะหน้าจอว่าหน้าไหนเปิดอยู่
+            const isStartActive = !document.getElementById('startScreen').classList.contains('hidden');
+            const isDifficultyActive = !document.getElementById('difficultyScreen').classList.contains('hidden');
+            const isHowToPlayActive = !document.getElementById('howToPlayScreen').classList.contains('hidden');
+            const isGameActive = !document.getElementById('gameScreen').classList.contains('hidden');
+            const isResultsActive = !document.getElementById('resultsScreen').classList.contains('hidden');
+            const isReviewActive = !document.getElementById('reviewScreen').classList.contains('hidden');
+            const isModalActive = document.getElementById('confirmModal').classList.contains('active');
+
+            const key = e.key.toLowerCase();
+
+            // --- ESCAPE KEY (Global Back Function) ---
+            if (key === 'escape') {
+                e.preventDefault();
+
+                // 1. Modal Submit -> ปิด Modal
+                if (isModalActive) {
+                    document.getElementById('confirmModal').classList.remove('active');
+                    return;
+                }
+
+                // Sidebar (Mobile) -> ปิด
+                if (document.getElementById('questionSidebar').classList.contains('active')) {
+                    closeMenu();
+                    return;
+                }
+
+                // [แก้ข้อ 3] Review Mode -> Back to Results
+                if (isReviewActive) {
+                    document.getElementById('reviewBackBtn').click();
+                    return;
+                }
+
+                // [แก้ข้อ 5] Results Screen -> Back to Menu
+                if (isResultsActive) {
+                    location.reload(); // ปุ่ม Back to Menu ของเดิมใช้ reload
+                    return;
+                }
+
+                // [แก้ข้อ 6] Mode Selection (Difficulty) -> Back to Start
+                if (isDifficultyActive) {
+                    document.getElementById('difficultyScreen').classList.add('hidden');
+                    document.getElementById('startScreen').classList.remove('hidden');
+                    return;
+                }
+
+                // [แก้ข้อ 6] How to Play -> Back to Start
+                if (isHowToPlayActive) {
+                    backToStart();
+                    return;
+                }
+
+                // [แก้ข้อ 6] Start Screen -> Back to Main Page
+                if (isStartActive) {
+                    window.location.href = '/index.html';
+                    return;
+                }
+                return;
+            }
+
+            // --- SPACEBAR & ENTER (Action) ---
+            if (key === ' ' || key === 'enter') {
+                // [แก้ข้อ 2] Spacebar Logic
+                if (isGameActive) {
+                    e.preventDefault(); // กัน Scroll
+
+                    if (isModalActive) {
+                        // ถ้า Modal เปิดอยู่ กด Space/Enter = ยืนยัน Submit
+                        confirmSubmit();
+                    } else {
+                        // ถ้า Modal ปิดอยู่ กด Space/Enter = เปิด Modal Submit
+                        openSubmitModal();
+                    }
+                    return;
+                }
+            }
+
+            // --- NAVIGATION (Arrows) ---
+            if (key === 'arrowleft') {
+                // Game Mode: Previous Question
+                if (isGameActive && !isModalActive) {
+                    if (state.currentIdx > 0) loadQuestion(state.currentIdx - 1);
+                }
+                // [แก้ข้อ 4] Review Mode: Previous Question
+                else if (isReviewActive) {
+                    if (state.reviewIdx > 0) loadReviewQuestion(state.reviewIdx - 1);
+                }
+            }
+            else if (key === 'arrowright') {
+                // Game Mode: Next Question
+                if (isGameActive && !isModalActive) {
+                    if (state.currentIdx < state.questions.length - 1) loadQuestion(state.currentIdx + 1);
+                }
+                // [แก้ข้อ 4] Review Mode: Next Question
+                else if (isReviewActive) {
+                    if (state.reviewIdx < state.questions.length - 1) loadReviewQuestion(state.reviewIdx + 1);
+                }
+            }
+
+            // --- CHOICE SELECTION (1-4, A-D) ---
+            // เฉพาะตอนเล่นเกม และ Modal ต้องไม่บังอยู่
+            if (isGameActive && !isModalActive) {
+                const q = state.questions[state.currentIdx];
+                if (q) {
+                    if (key === '1' || key === 'a') handleAnswer(q.id, 'A');
+                    else if (key === '2' || key === 'b') handleAnswer(q.id, 'B');
+                    else if (key === '3' || key === 'c') handleAnswer(q.id, 'C');
+                    else if (key === '4' || key === 'd') handleAnswer(q.id, 'D');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

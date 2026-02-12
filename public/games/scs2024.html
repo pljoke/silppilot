@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanning Symbol (2024)</title>
+    <style>
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --bg-color-light: #FAF7F2;
+            --bg-color-dark: #F5F2EA;
+            --surface-color: #FFFEF9;
+            --text-color: #3a2e2c;
+            --text-color-secondary: #8B4513;
+            --border-color: #E8DDD4;
+            --light-text: #fff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --success-color-light: #d4edda;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+            padding-top: 80px;
+        }
+
+        .header {
+            background: rgba(255, 253, 250, 0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+            .header h1 {
+                font-size: 24px;
+                margin: 0;
+                color: var(--primary-color);
+            }
+
+        .center-container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        /* --- SCROLL CONTAINER --- */
+        #scan-area-container {
+            flex-grow: 1;
+            height: 85vh;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-color-dark);
+            border-radius: 15px;
+            overflow-y: auto;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            align-content: start;
+        }
+
+        .mini-scan-area {
+            border: 2px solid var(--border-color);
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 360px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+            .mini-scan-area.current-problem {
+                background-color: var(--surface-color);
+                border-color: var(--primary-color);
+                box-shadow: 0 0 15px rgba(114, 47, 55, 0.3);
+                transform: scale(1.02);
+                z-index: 10;
+            }
+
+        .test-panel {
+            width: 350px;
+            flex-shrink: 0;
+            text-align: center;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            background-color: var(--surface-color);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.1);
+            border: 1px solid var(--border-color);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        h2 {
+            color: var(--primary-color);
+        }
+
+        /* --- SHAPES --- */
+        .shape-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        .shape-outline, .shape-fill {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        .shape-outline {
+            background-color: var(--text-color);
+        }
+
+        .shape-fill {
+            background-color: var(--surface-color);
+            transform: scale(0.90);
+        }
+        /* Reduced scale slightly for better border */
+
+        /* UPDATED SHAPES: Mathematically Regular Polygons */
+        .triangle {
+            clip-path: polygon(50% 0%, 93% 75%, 7% 75%);
+        }
+
+        .square { /* Default square */
+        }
+
+        .circle {
+            border-radius: 50%;
+        }
+
+        .pentagon {
+            clip-path: polygon(50% 0%, 98% 35%, 79% 90%, 21% 90%, 2% 35%);
+        }
+
+        .hexagon {
+            clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+        }
+
+        .octagon {
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        }
+
+        .shape-text {
+            position: relative;
+            font-weight: 800;
+            color: var(--text-color);
+            z-index: 2;
+        }
+
+        #timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        #question-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            line-height: 1.2;
+            color: var(--primary-color);
+            background-color: var(--bg-color-dark);
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            font-size: 1rem;
+            padding: 12px 28px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+            .btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+            .btn:disabled {
+                background-color: #ccc !important;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--light-text);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: var(--light-text);
+        }
+
+        .outline-btn {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+            .outline-btn:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .options-container .btn {
+            font-size: 1.5rem;
+        }
+
+        .option-btn {
+            border: 3px solid transparent;
+        }
+
+            .option-btn.selected {
+                background-color: var(--secondary-color);
+                border-color: var(--primary-color);
+            }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #nav-bar {
+            margin-top: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+
+        .nav-item {
+            height: 30px;
+            line-height: 30px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid var(--border-color);
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .nav-answered {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .nav-current {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+            .navigation-buttons .btn {
+                width: 100%;
+            }
+
+        /* --- RESULTS SCREEN --- */
+        .results-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .practice-result-card {
+            max-width: 450px !important;
+            margin: 0 auto;
+        }
+
+        .result-comparison {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .result-column {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-color-dark);
+            text-align: left;
+        }
+
+            .result-column h3 {
+                text-align: center;
+                margin-bottom: 1rem;
+                color: var(--text-color-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 0.5rem;
+            }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap-x: 2rem;
+            gap-y: 1.25rem;
+            align-items: center;
+        }
+
+        .r-label {
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .r-value {
+            font-weight: 800;
+            text-align: right;
+            color: var(--primary-color);
+        }
+
+        /* Custom Modal */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(250, 247, 242, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader-spinner {
+            border: 8px solid var(--border-color);
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Review Screen */
+        .review-layout {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .review-scan-area-grid {
+            flex: 1;
+            height: 85vh;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 15px;
+            background-color: var(--bg-color-dark);
+        }
+
+        .review-answers-list {
+            width: 280px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            padding-right: 1rem;
+            height: 85vh;
+        }
+
+        .review-item {
+            background-color: var(--surface-color);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-status-correct {
+            color: var(--success-color);
+        }
+
+        .review-status-incorrect {
+            color: var(--danger-color);
+        }
+
+        .highlight-correct {
+            z-index: 10;
+            filter: drop-shadow(0 0 10px var(--success-color));
+            transform: scale(1.1);
+        }
+
+            .highlight-correct .shape-fill {
+                background-color: var(--success-color-light);
+            }
+
+            .highlight-correct .shape-text {
+                color: var(--success-color);
+                font-weight: bolder;
+            }
+
+        @media (max-width: 992px) {
+            .result-comparison {
+                flex-direction: column;
+            }
+
+            .main-container {
+                flex-direction: column-reverse;
+            }
+
+            #scan-area-container {
+                height: 50vh;
+            }
+
+            .test-panel {
+                width: 100%;
+                height: auto;
+            }
+
+            .review-layout {
+                flex-direction: column;
+            }
+
+            .review-answers-list {
+                width: 100%;
+                height: 300px;
+            }
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+</head>
+<body>
+    <div id="mainHeader" class="header hidden">
+        <h1>💠 Scanning Symbol (2024)</h1>
+    </div>
+
+    <div id="loader-overlay" class="loader-overlay"><div class="loader-spinner"></div></div>
+
+    <div id="center-container" class="center-container">
+        <div id="menu-screen" class="panel-content" style="max-width: 500px; margin: auto;">
+            <h1>Scanning Skill Test (2024)</h1>
+            <p>This version presents 40 individual problems. Find the symbol in each small box.</p>
+            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                <button id="practice-btn" class="btn btn-secondary">Practice Mode</button>
+                <button id="quiz-btn" class="btn btn-primary">Test Mode</button>
+                <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
+                <button id="back-main-btn" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="how-to-play-screen" class="panel-content hidden" style="max-width: 600px; margin: auto;">
+            <h2>How to Play</h2>
+            <p>Find the matching shape and number in the box. The letter inside is the answer.</p>
+
+            <div style="margin: 20px 0; padding: 20px; background: var(--bg-color-dark); border-radius: 10px; text-align: left;">
+                <p><strong>Example:</strong> If the question is <strong>5△</strong> (Number 5 in a Triangle)</p>
+                <div style="position: relative; height: 120px; background: white; border: 1px solid #ccc; margin-top: 10px; border-radius: 8px;">
+                    <div class="shape-container" style="left: 20%; top: 50%; transform: translate(-50%, -50%); width: 54px; height: 54px;">
+                        <div class="shape-outline square"></div>
+                        <div class="shape-fill square"></div>
+                        <span class="shape-text" style="font-size: 12px;">5B</span>
+                    </div>
+                    <div class="shape-container" style="left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 54px; height: 54px;">
+                        <div class="shape-outline triangle"></div>
+                        <div class="shape-fill triangle" style="background: var(--success-color-light);"></div>
+                        <span class="shape-text" style="color: var(--success-color); font-size: 12px;">5C</span>
+                    </div>
+                    <div class="shape-container" style="left: 80%; top: 50%; transform: translate(-50%, -50%); width: 54px; height: 54px;">
+                        <div class="shape-outline circle"></div>
+                        <div class="shape-fill circle"></div>
+                        <span class="shape-text" style="font-size: 12px;">2C</span>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; text-align: center;">You must find the Triangle with number 5. The answer inside is <strong>C</strong>.</p>
+            </div>
+
+            <button id="back-from-howto-btn" class="btn btn-primary">Back</button>
+        </div>
+
+        <div id="difficulty-screen" class="panel-content hidden" style="max-width: 500px; margin: auto;">
+            <h2>Select Difficulty</h2>
+            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                <button onclick="selectDifficulty('easy')" class="btn btn-primary">Easy (2 Shapes)</button>
+                <button onclick="selectDifficulty('normal')" class="btn btn-primary">Normal (3 Shapes)</button>
+                <button onclick="selectDifficulty('hard')" class="btn btn-primary">Hard (4 Shapes)</button>
+            </div>
+        </div>
+
+        <div id="instruction-screen" class="panel-content hidden" style="max-width: 500px; margin: auto;">
+            <h2 id="instruction-title">Instructions</h2>
+            <ul>
+                <li>For each question, find the matching letter in the highlighted box on the left.</li>
+                <li>The boxes scroll, and the current box will be highlighted automatically.</li>
+                <li id="skip-rule-text" style="color: var(--danger-color);"><strong>Do not skip questions!</strong> Any skipped question between answered ones will result in a <strong>FAIL (0 Score)</strong>.</li>
+                <li id="instruction-time-limit">You have <strong>6 minutes</strong> to complete all 40 questions.</li>
+            </ul>
+            <button id="start-btn" class="btn btn-primary">Start</button>
+        </div>
+
+        <div id="results-screen" class="panel-content hidden results-container">
+            <h2 id="results-title">Test Completed</h2>
+            <div id="fail-message-box" class="hidden" style="background-color: #ffe6e6; color: #dc3545; padding: 10px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dc3545;">
+                <h3 style="margin: 0; font-size: 1.2rem;">❌ TEST FAILED</h3>
+                <p style="margin: 5px 0 0 0;">You skipped questions. Score adjusted to 0.</p>
+            </div>
+            <div id="test-results" class="result-comparison">
+                <div class="result-column">
+                    <h3>Current Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span id="current-score-text" class="r-value">N/A</span>
+                        <span class="r-label">Accuracy</span><span id="current-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label">Avg. Time / Q</span><span id="avg-time-text" class="r-value">N/A</span>
+
+                        <!-- Practice Only Rows (Default Hidden) -->
+                        <span class="r-label practice-only hidden">Total Time</span><span id="total-time-text" class="r-value practice-only hidden">N/A</span>
+
+                        <!-- Test Only Rows (Default Hidden) -->
+                        <span class="r-label percentile-row hidden">Percentile</span><span id="current-percentile-text" class="r-value percentile-row hidden">N/A</span>
+                    </div>
+                </div>
+                <div id="best-score-column" class="result-column">
+                    <h3>Your Best Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span id="best-score-text" class="r-value">N/A</span>
+                        <span class="r-label">Accuracy</span><span id="best-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label">Percentile</span><span id="best-percentile-text" class="r-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top:1.5rem; flex-wrap: wrap;">
+                <button id="review-btn" class="btn btn-secondary">Review Answers</button>
+                <button id="restart-btn" class="btn btn-primary">Back to Menu</button>
+                <button onclick="goBackToSystem()" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="panel-content hidden">
+            <div class="review-layout">
+                <div id="review-scan-area-container" class="review-scan-area-grid"></div>
+                <div class="review-answers-list">
+                    <h2>Review Answers</h2>
+                    <div id="review-questions-container" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+            <button id="back-to-results-btn" class="btn btn-primary" style="margin-top: 1.5rem; max-width: 380px; align-self: center;">Back to Results</button>
+        </div>
+    </div>
+
+    <div id="game-container" class="main-container hidden">
+        <div id="scan-area-container"></div>
+        <div id="test-panel" class="test-panel">
+            <div id="game-screen" class="panel-content">
+                <div>
+                    <h2 id="game-mode-title"></h2>
+                    <div id="timer-display">00:00</div>
+                    <div id="question-display"></div>
+                    <div class="options-container">
+                        <button class="btn btn-primary option-btn" id="btn1"></button>
+                        <button class="btn btn-primary option-btn" id="btn2"></button>
+                        <button class="btn btn-primary option-btn" id="btn3"></button>
+                        <button class="btn btn-primary option-btn" id="btn4"></button>
+                    </div>
+                    <div class="navigation-buttons">
+                        <button id="prev-btn" class="btn outline-btn">Previous</button>
+                        <button id="next-btn" class="btn btn-secondary" disabled>Next</button>
+                    </div>
+                    <div id="nav-bar"></div>
+                </div>
+                <button id="finish-btn" class="btn btn-secondary" style="margin-top: 1.5rem;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Submission</h2>
+            <p>Are you sure you want to submit your answers?</p>
+            <div class="modal-buttons">
+                <button id="cancelSubmitBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmSubmitBtn" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME CONFIGURATION & STATE ---
+        const SHAPE_MAP = { 'triangle': '△', 'square': '□', 'circle': '○', 'pentagon': '⬠', 'hexagon': '⬡', 'octagon': '🛑' };
+        const TOTAL_QUESTIONS = 40;
+        const TIME_LIMIT = 360; // 6 minutes
+
+        let state = {
+            userEmail: null,
+            gameMode: 'quiz',
+            difficulty: 'normal',
+            questions: [],
+            masterData: {},
+            currentQuestionIdx: 0,
+            userAnswers: new Array(TOTAL_QUESTIONS).fill(null),
+            timeLeft: TIME_LIMIT,
+            timerInterval: null,
+            startTime: null,
+            practiceStartTime: null,
+            quizDataLoaded: false,
+            problemHtmlCache: {}
+        };
+
+        // --- AUTH & INIT ---
+        const loader = document.getElementById('loader-overlay');
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                state.userEmail = user.email || user.providerData[0]?.email;
+
+                if (!state.userEmail && window.location.hostname === 'localhost') {
+                    state.userEmail = "kritsadawongtiwanon@gmail.com";
+                }
+
+                if (state.userEmail) {
+                    state.userEmail = state.userEmail.trim().toLowerCase();
+                    const parts = state.userEmail.split("@");
+                    if (parts.length === 2 && parts[1] === "gmail.com") {
+                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                    }
+                }
+
+                try {
+                    const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
+                    const response = await fetch(checkAccessUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: state.userEmail, courseId: 'scs2024' })
+                    });
+                    const result = await response.json();
+
+                    if (result.hasAccess) {
+                        loader.style.display = 'none';
+                        document.getElementById('mainHeader').classList.remove('hidden');
+                    } else {
+                        alert(`Access Denied: ${result.reason}. Redirecting...`);
+                        window.location.href = '/index.html';
+                    }
+                } catch (error) {
+                    console.error("Auth Error:", error);
+                    alert("Connection Error. Redirecting...");
+                    window.location.href = '/index.html';
+                }
+
+            } else {
+                window.location.href = '/Auth.html';
+            }
+        });
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('practice-btn').addEventListener('click', () => setMode('practice'));
+        document.getElementById('quiz-btn').addEventListener('click', () => setMode('quiz'));
+
+        document.getElementById('how-to-play-btn').addEventListener('click', showHowToPlay);
+        document.getElementById('back-from-howto-btn').addEventListener('click', backToMenuFromHowTo);
+
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('prev-btn').addEventListener('click', () => navigate(-1));
+        document.getElementById('next-btn').addEventListener('click', () => navigate(1));
+        const modal = document.getElementById('confirmModal');
+        document.getElementById('finish-btn').addEventListener('click', () => modal.classList.add('active'));
+        document.getElementById('cancelSubmitBtn').addEventListener('click', () => modal.classList.remove('active'));
+        document.getElementById('confirmSubmitBtn').addEventListener('click', () => {
+            modal.classList.remove('active');
+            submitQuiz(false);
+        });
+        document.getElementById('restart-btn').addEventListener('click', backToMenu);
+        document.getElementById('back-main-btn').addEventListener('click', () => window.location.href = '/index.html');
+        document.getElementById('review-btn').addEventListener('click', showReview);
+        document.getElementById('back-to-results-btn').addEventListener('click', () => {
+            document.getElementById('review-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+        });
+        document.querySelectorAll('.option-btn').forEach((btn, index) => {
+            btn.addEventListener('click', () => handleAnswer(index));
+        });
+        function goBackToSystem() {
+            window.location.href = '/index.html';
+        }
+
+        // --- GAME LOGIC ---
+
+        function setMode(mode) {
+            state.gameMode = mode;
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('difficulty-screen').classList.remove('hidden');
+        }
+
+        function showHowToPlay() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('how-to-play-screen').classList.remove('hidden');
+        }
+
+        function backToMenuFromHowTo() {
+            document.getElementById('how-to-play-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        }
+
+        function selectDifficulty(diff) {
+            state.difficulty = diff;
+            const title = document.getElementById('instruction-title');
+            const timeLimitMsg = document.getElementById('instruction-time-limit');
+            const startBtn = document.getElementById('start-btn');
+            const skipText = document.getElementById('skip-rule-text'); // เพิ่มตัวแปรนี้
+
+            if (state.gameMode === 'practice') {
+                title.textContent = "Practice Instructions";
+                timeLimitMsg.style.display = 'none';
+                skipText.style.display = 'none'; // ซ่อนกฎใน Practice
+                startBtn.textContent = "Start Practice";
+            } else {
+                title.textContent = "Test Instructions";
+                timeLimitMsg.style.display = 'list-item';
+                skipText.style.display = 'list-item'; // แสดงกฎใน Quiz
+                startBtn.textContent = "Start Test";
+            }
+
+            document.getElementById('difficulty-screen').classList.add('hidden');
+            document.getElementById('instruction-screen').classList.remove('hidden');
+        }
+
+        async function startGame() {
+            loader.style.display = 'flex';
+            state.currentQuestionIdx = 0;
+            state.userAnswers = new Array(TOTAL_QUESTIONS).fill(null);
+            state.timeLeft = TIME_LIMIT;
+            state.problemHtmlCache = {};
+            try {
+                const functionUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getSCS2024QuizData";
+                const response = await fetch(`${functionUrl}?difficulty=${state.difficulty}`);
+                const result = await response.json();
+                if (result.success) {
+                    state.masterData = result.data.masterData;
+                    state.questions = result.data.questions;
+
+                    // Ensure shapeTypes includes new shapes if server sends them,
+                    // or add locally if needed. For now assume server data is primary
+                    // but we can inject 'octagon' if not present to support frontend diversity if desired.
+                    // However, question generation relies on masterData keys.
+                    // If backend doesn't send 'octagon' data, we can't easily add it without backend update.
+                    // Assuming user just wants VISUAL variety in distractors, we can hack it,
+                    // but better to stick to what backend provides for correctness.
+                    // IF backend provides 'octagon' in shapeTypes, it will appear.
+                    // IF NOT, we just use what we have.
+                    // BUT user asked to "add octagon shape" implying visual.
+                    // Since Logic 2 uses client-side generation for distractors based on 'shapeTypes',
+                    // We can manually add 'octagon' to shapeTypes for *distractors* if we had master data for it.
+                    // Without master data for octagon numbers, we can't generate valid octagon distractors (need number+letter).
+                    // So we will stick to server provided shapes for logical consistency.
+                    // *However*, the CSS is now ready for it.
+                    state.shapeTypes = result.data.shapeTypes;
+
+                    setupGameUI();
+                } else {
+                    throw new Error(result.error);
+                }
+
+            } catch (error) {
+                console.error("Start Game Error:", error);
+                alert("Failed to load quiz data: " + error.message);
+                loader.style.display = 'none';
+                return;
+            }
+        }
+
+        function setupGameUI() {
+            document.getElementById('instruction-screen').classList.add('hidden');
+            document.getElementById('center-container').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('game-mode-title').textContent = state.gameMode === 'quiz' ? `Scanning Quiz (${state.difficulty})` : `Practice (${state.difficulty})`;
+
+            const grid = document.getElementById('scan-area-container');
+            grid.innerHTML = '';
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                const box = document.createElement('div');
+                box.className = 'mini-scan-area';
+                box.id = `mini-scan-area-${i}`;
+                box.innerHTML = generateProblemBoxHTML(i);
+                state.problemHtmlCache[i] = box.innerHTML;
+                grid.appendChild(box);
+            }
+
+            const navBar = document.getElementById('nav-bar');
+            navBar.innerHTML = '';
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                const item = document.createElement('div');
+                item.className = 'nav-item';
+                item.id = `nav-item-${i}`;
+                item.textContent = i + 1;
+                item.onclick = () => navigateToQuestion(i);
+                navBar.appendChild(item);
+            }
+
+            loader.style.display = 'none';
+            state.startTime = Date.now();
+            state.practiceStartTime = Date.now();
+            startTimer();
+            navigateToQuestion(0);
+        }
+
+        // *** UPDATED: RANDOM SIZE & ROTATION LOGIC ***
+        function generateProblemBoxHTML(index) {
+            const question = state.questions[index];
+            const correctInfo = {
+                type: question.shape,
+                number: question.number,
+                letter: state.masterData[question.shape][question.number]
+            };
+
+            let html = '';
+
+            // 1. Shapes List
+            let itemsToPlace = [{ info: correctInfo, isTarget: true }];
+
+            const numDistractors = state.difficulty === 'easy' ? 30 : (state.difficulty === 'normal' ? 45 : 60);
+
+            for (let k = 0; k < numDistractors; k++) {
+                const rShape = state.shapeTypes[Math.floor(Math.random() * state.shapeTypes.length)];
+                const rNum = Math.floor(Math.random() * 40) + 1;
+                if (rShape === correctInfo.type && rNum === correctInfo.number) { k--; continue; }
+                const info = { type: rShape, number: rNum, letter: state.masterData[rShape][rNum] };
+                itemsToPlace.push({ info: info, isTarget: false });
+            }
+
+            // 2. Placement Logic
+            const CONTAINER_H = 360;
+            const PADDING = 4;
+            const MAX_TRIES = 500;
+            const REF_WIDTH = 800;
+            const SAFE_DIST = 55;
+
+            // Size Configurations
+            const SIZES = [
+                { w: 40, f: 10 }, // Small
+                { w: 52, f: 12 }, // Normal
+                { w: 64, f: 14 }  // Large
+            ];
+
+            const placed = []; // Store {x: %, y: px}
+
+            itemsToPlace.forEach(item => {
+                // Pick a random size for EACH item
+                const sizeCfg = SIZES[Math.floor(Math.random() * SIZES.length)];
+                const sizeVal = sizeCfg.w;
+
+                for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+                    const maxXPct = 100 - ((sizeVal + PADDING) / REF_WIDTH * 100);
+                    const rawX_pct = Math.random() * maxXPct;
+                    const rawY_px = Math.random() * (CONTAINER_H - sizeVal - (PADDING * 2)) + PADDING;
+
+                    // Center for collision
+                    const centerX = (rawX_pct / 100) * REF_WIDTH + (sizeVal / 2);
+                    const centerY = rawY_px + (sizeVal / 2);
+
+                    let overlap = false;
+                    for (let p of placed) {
+                        const pCenterX = (p.x / 100) * REF_WIDTH + (p.size / 2);
+                        const pCenterY = p.y + (p.size / 2);
+
+                        const dx = centerX - pCenterX;
+                        const dy = centerY - pCenterY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < SAFE_DIST) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlap) {
+                        placed.push({ x: rawX_pct, y: rawY_px, size: sizeVal });
+                        const id = item.isTarget ? `p${index}-target` : `p${index}-d-${placed.length}`;
+
+                        // Full 0-360 Rotation
+                        const rot = Math.floor(Math.random() * 360);
+
+                        // Inline styles for specific size/rotation
+                        html += `
+                                       <div class="shape-container" id="${id}" data-rotation="${rot}"
+                                            style="left: ${rawX_pct}%; top: ${rawY_px}px;
+                                                   width: ${sizeVal}px; height: ${sizeVal}px;
+                                                   transform: rotate(${rot}deg);">
+                                            <div class="shape-outline ${item.info.type}"></div>
+                                            <div class="shape-fill ${item.info.type}"></div>
+                                            <span class="shape-text"
+                                                  style="font-size: ${sizeCfg.f}px;
+                                                         transform: rotate(-${rot}deg);">${item.info.number}${item.info.letter}</span>
+                                        </div>
+                                    `;
+                        break;
+                    }
+                }
+            });
+
+            return html;
+        }
+
+        function navigateToQuestion(index) {
+            state.currentQuestionIdx = index;
+            const q = state.questions[index];
+            document.getElementById('question-display').textContent = `${q.number}${SHAPE_MAP[q.shape]}`;
+
+            const btns = document.querySelectorAll('.option-btn');
+            q.options.forEach((opt, i) => {
+                btns[i].textContent = opt;
+                btns[i].dataset.value = opt;
+                btns[i].classList.remove('selected');
+                if (state.userAnswers[index] && state.userAnswers[index].userAnswer === opt) {
+                    btns[i].classList.add('selected');
+                }
+            });
+            document.querySelectorAll('.mini-scan-area').forEach(el => el.classList.remove('current-problem'));
+            const currentBox = document.getElementById(`mini-scan-area-${index}`);
+            if (currentBox) {
+                currentBox.classList.add('current-problem');
+
+                // Smooth Scroll Logic
+                const container = document.getElementById('scan-area-container');
+                const targetPos = currentBox.offsetTop - container.offsetTop - (container.clientHeight / 2) + (currentBox.clientHeight / 2);
+                container.scrollTo({
+                    top: targetPos,
+                    behavior: 'smooth'
+                });
+            }
+
+            updateNavBar();
+            document.getElementById('prev-btn').disabled = index === 0;
+            document.getElementById('next-btn').disabled = index === TOTAL_QUESTIONS - 1;
+        }
+
+        function updateNavBar() {
+            document.querySelectorAll('.nav-item').forEach((el, i) => {
+                el.className = 'nav-item';
+                if (state.userAnswers[i]) el.classList.add('nav-answered');
+                if (i === state.currentQuestionIdx) el.classList.add('nav-current');
+            });
+        }
+
+        function handleAnswer(btnIndex) {
+            const btns = document.querySelectorAll('.option-btn');
+            const selectedValue = btns[btnIndex].dataset.value;
+            const currentIndex = state.currentQuestionIdx;
+            const q = state.questions[currentIndex];
+            const isCorrect = selectedValue === q.correctAnswer;
+            const isNewAnswer = !state.userAnswers[currentIndex];
+
+            state.userAnswers[currentIndex] = {
+                userAnswer: selectedValue,
+                correctAnswer: q.correctAnswer,
+                isCorrect: isCorrect,
+                timeTaken: (Date.now() - state.startTime) / 1000
+            };
+            updateNavBar();
+            btns.forEach(b => b.classList.remove('selected'));
+            btns[btnIndex].classList.add('selected');
+
+            // Auto Advance
+            if (isNewAnswer) {
+                const nextUnanswered = state.userAnswers.findIndex((ans, i) => ans === null && i > currentIndex);
+                if (nextUnanswered !== -1) {
+                    setTimeout(() => {
+                        navigateToQuestion(nextUnanswered);
+                    }, 250);
+                } else if (state.userAnswers.every(a => a !== null)) {
+                    document.getElementById('finish-btn').disabled = false;
+                }
+            }
+        }
+
+        function navigate(dir) {
+            const newIdx = state.currentQuestionIdx + dir;
+            if (newIdx >= 0 && newIdx < TOTAL_QUESTIONS) {
+                navigateToQuestion(newIdx);
+            }
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            const display = document.getElementById('timer-display');
+
+            state.timerInterval = setInterval(() => {
+                if (state.gameMode === 'quiz') {
+                    state.timeLeft--;
+                    const m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+                    const s = (state.timeLeft % 60).toString().padStart(2, '0');
+                    display.textContent = `${m}:${s}`;
+                    if (state.timeLeft <= 0) {
+                        clearInterval(state.timerInterval);
+                        submitQuiz(true);
+                    }
+                } else {
+                    const elapsed = Math.floor((Date.now() - state.practiceStartTime) / 1000);
+                    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const s = (elapsed % 60).toString().padStart(2, '0');
+                    display.textContent = `${m}:${s}`;
+                }
+            }, 1000);
+        }
+
+        async function submitQuiz(isTimeUp) {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            loader.style.display = 'flex';
+
+            // --- FAIL LOGIC START ---
+            let isFailBySkip = false;
+            if (state.gameMode === 'quiz') {
+                let lastIdx = -1;
+                // หาข้อสุดท้ายที่ทำ
+                for (let i = TOTAL_QUESTIONS - 1; i >= 0; i--) {
+                    if (state.userAnswers[i] !== null) {
+                        lastIdx = i;
+                        break;
+                    }
+                }
+                // ตรวจหาช่องว่าง (null) ก่อนข้อสุดท้าย
+                if (lastIdx !== -1) {
+                    for (let i = 0; i < lastIdx; i++) {
+                        if (state.userAnswers[i] === null) {
+                            isFailBySkip = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            // --- FAIL LOGIC END ---
+
+            const answeredCount = state.userAnswers.filter(a => a !== null).length;
+
+            // ถ้า Fail ให้ correctCount เป็น 0
+            const realCorrectCount = state.userAnswers.filter(a => a && a.isCorrect).length;
+            const correctCount = isFailBySkip ? 0 : realCorrectCount;
+
+            // ถ้า Fail ให้ accuracy เป็น 0
+            const accuracy = (isFailBySkip || answeredCount === 0) ? 0 : (realCorrectCount / answeredCount) * 100;
+
+            let timeUsed;
+            if (state.gameMode === 'quiz') {
+                timeUsed = TIME_LIMIT - state.timeLeft;
+            } else {
+                timeUsed = Math.floor((Date.now() - state.practiceStartTime) / 1000);
+            }
+
+            if (state.gameMode === 'quiz') {
+                const scoreData = {
+                    score: correctCount, // ส่ง 0 ถ้า Fail
+                    questionsAnswered: answeredCount,
+                    accuracy: parseFloat(accuracy.toFixed(2)),
+                    timeUsed: timeUsed,
+                    isFail: isFailBySkip, // ส่งสถานะ Fail ไป Backend
+                    difficulty: state.difficulty,
+                    userEmail: state.userEmail
+                };
+                try {
+                    const saveUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/saveSCS2024Score";
+                    const getBestUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCS2024Score";
+
+                    const saveResp = await fetch(saveUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(scoreData)
+                    });
+                    const saveResult = await saveResp.json();
+
+                    const bestResp = await fetch(`${getBestUrl}?email=${encodeURIComponent(state.userEmail)}&difficulty=${state.difficulty}`);
+                    const bestResult = await bestResp.json();
+
+                    // ส่ง isFailBySkip ไปแสดงผล
+                    showResults(correctCount, accuracy, timeUsed, answeredCount, saveResult.percentile, bestResult.data, isFailBySkip);
+
+                } catch (e) {
+                    console.error("Submit Error:", e);
+                    showResults(correctCount, accuracy, timeUsed, answeredCount, "Error", null, isFailBySkip);
+                }
+
+            } else {
+                // Practice Mode
+                setTimeout(() => {
+                    showResults(correctCount, accuracy, timeUsed, answeredCount, "N/A", null, false);
+                }, 500);
+            }
+        }
+
+        function showResults(score, accuracy, timeUsed, answered, percentile, bestData, isFail = false) {
+            loader.style.display = 'none';
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('center-container').classList.remove('hidden');
+
+            const resultsScreen = document.getElementById('results-screen');
+            resultsScreen.classList.remove('hidden');
+
+            // --- LOGIC แสดงกล่อง Fail ---
+            const failBox = document.getElementById('fail-message-box');
+            if (isFail) {
+                failBox.classList.remove('hidden');
+            } else {
+                failBox.classList.add('hidden');
+            }
+            // ---------------------------
+
+            if (state.gameMode !== 'quiz') {
+                resultsScreen.classList.add('practice-result-card');
+                failBox.classList.add('hidden'); // ซ่อนเสมอใน Practice
+            } else {
+                resultsScreen.classList.remove('practice-result-card');
+            }
+
+            document.getElementById('results-title').textContent =
+                state.gameMode === 'quiz' ? "Quiz Results" : "Practice Finished";
+
+            document.getElementById('current-score-text').textContent = `${score} / ${TOTAL_QUESTIONS}`;
+            document.getElementById('current-accuracy-text').textContent = `${accuracy.toFixed(2)}%`;
+            document.getElementById('avg-time-text').textContent = `${(answered > 0 ? timeUsed / answered : 0).toFixed(2)}s`;
+            document.getElementById('current-percentile-text').textContent = (percentile === -1 || percentile === "Error") ? "N/A" : `${percentile}%`;
+
+            // Show Total Time for Practice Mode
+            const m = Math.floor(timeUsed / 60).toString().padStart(2, '0');
+            const s = (timeUsed % 60).toString().padStart(2, '0');
+            document.getElementById('total-time-text').textContent = `${m}:${s}`;
+
+            // *** FIX 3: Use classList to toggle visibility correctly for Grid Items ***
+            if (bestData && state.gameMode === 'quiz') {
+                document.getElementById('best-score-column').style.display = 'block';
+                document.getElementById('best-score-text').textContent = `${bestData.bestScore} / ${bestData.totalQuestions}`;
+                document.getElementById('best-accuracy-text').textContent = `${bestData.bestAccuracy.toFixed(2)}%`;
+                document.getElementById('best-percentile-text').textContent = `${bestData.bestPercentile.toFixed(2)}%`;
+
+                // Show Percentile Row (remove hidden)
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+                // Hide Practice Rows (add hidden)
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
+            } else {
+                document.getElementById('best-score-column').style.display = 'none';
+                // Hide Percentile Row (add hidden)
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+                // Show Practice Rows (remove hidden)
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.remove('hidden'));
+            }
+        }
+
+        function backToMenu() {
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('review-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        }
+
+        function showReview() {
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('review-screen').classList.remove('hidden');
+
+            const grid = document.getElementById('review-scan-area-container');
+            const list = document.getElementById('review-questions-container');
+
+            grid.innerHTML = '';
+            list.innerHTML = '';
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                const box = document.createElement('div');
+                box.className = 'mini-scan-area';
+                box.id = `review-box-${i}`;
+                box.innerHTML = state.problemHtmlCache[i] || '';
+                grid.appendChild(box);
+            }
+
+            state.userAnswers.forEach((ans, i) => {
+                if (!ans) return;
+                const q = state.questions[i];
+
+                const item = document.createElement('div');
+                item.className = 'review-item';
+                item.innerHTML = `
+                                <div class="review-header">
+                                    <span>Q${i + 1}: ${q.number}${SHAPE_MAP[q.shape]}</span>
+                                    <span class="${ans.isCorrect ? 'review-status-correct' : 'review-status-incorrect'}">
+                                         ${ans.isCorrect ? 'Correct' : 'Incorrect'}
+                                    </span>
+                                </div>
+                                <div>Your: ${ans.userAnswer}, Correct: ${q.correctAnswer}</div>
+                            `;
+
+                item.onmouseenter = () => {
+                    const box = document.getElementById(`review-box-${i}`);
+                    const targetShape = box.querySelector(`[id^="p${i}-target"]`);
+                    if (targetShape) {
+                        targetShape.classList.add('highlight-correct');
+
+                        // อ่านค่า Rotation เดิม และสั่งขยาย (Scale 1.5)
+                        const rot = targetShape.dataset.rotation || 0;
+                        targetShape.style.transform = `rotate(${rot}deg) scale(1.5)`;
+                        targetShape.style.zIndex = 100; // ดันขึ้นมาให้เห็นชัดสุด
+
+                        // Smooth Scroll (เหมือนเดิม)
+                        const container = document.getElementById('review-scan-area-container');
+                        const targetPos = box.offsetTop - container.offsetTop - (container.clientHeight / 2) + (box.clientHeight / 2);
+                        container.scrollTo({ top: targetPos, behavior: 'smooth' });
+                    }
+                };
+                item.onmouseleave = () => {
+                    // คืนค่าเดิมเมื่อเอาเมาส์ออก
+                    const targetShapes = document.querySelectorAll('.highlight-correct');
+                    targetShapes.forEach(el => {
+                        el.classList.remove('highlight-correct');
+                        const rot = el.dataset.rotation || 0;
+                        el.style.transform = `rotate(${rot}deg)`; // กลับไปหมุนมุมเดิม ไม่ขยาย
+                        el.style.zIndex = '';
+                    });
+                };
+
+                list.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>

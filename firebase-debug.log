@@ -1,0 +1,158 @@
+[debug] [2026-02-03T09:38:29.197Z] ----------------------------------------------------------------------
+[debug] [2026-02-03T09:38:29.200Z] Command:       C:\nvm4w\nodejs\node.exe C:\Users\Pam\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js serve --only functions,hosting
+[debug] [2026-02-03T09:38:29.200Z] CLI Version:   15.0.0
+[debug] [2026-02-03T09:38:29.200Z] Platform:      win32
+[debug] [2026-02-03T09:38:29.200Z] Node Version:  v22.19.0
+[debug] [2026-02-03T09:38:29.201Z] Time:          Tue Feb 03 2026 16:38:29 GMT+0700 (Indochina Time)
+[debug] [2026-02-03T09:38:29.201Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-03T09:38:30.967Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-03T09:38:30.968Z] > authorizing via signed-in user (kritsada.wongtiwanon@gmail.com)
+[debug] [2026-02-03T09:38:30.968Z] [iam] checking project silp-pilot-platform for permissions ["firebase.projects.get"]
+[debug] [2026-02-03T09:38:30.969Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:30.969Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:30.969Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform:testIamPermissions [none]
+[debug] [2026-02-03T09:38:30.970Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform:testIamPermissions x-goog-quota-user=projects/silp-pilot-platform
+[debug] [2026-02-03T09:38:30.970Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-03T09:38:32.063Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform:testIamPermissions 200
+[debug] [2026-02-03T09:38:32.063Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-03T09:38:32.064Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.064Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.064Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform [none]
+[debug] [2026-02-03T09:38:32.339Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform 200
+[debug] [2026-02-03T09:38:32.339Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/silp-pilot-platform {"projectNumber":"307814159914","projectId":"silp-pilot-platform","lifecycleState":"ACTIVE","name":"silp-pilot-platform","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-11-14T16:56:40.304011Z"}
+[debug] [2026-02-03T09:38:32.344Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.344Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.350Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/silp-pilot-platform/sites 
+[debug] [2026-02-03T09:38:32.360Z] defaultcredentials: writing to file C:\Users\Pam\AppData\Roaming\firebase\kritsada_wongtiwanon_gmail.com_application_default_credentials.json
+[debug] [2026-02-03T09:38:32.361Z] Setting GAC to C:\Users\Pam\AppData\Roaming\firebase\kritsada_wongtiwanon_gmail.com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to C:\\Users\\Pam\\AppData\\Roaming\\firebase\\kritsada_wongtiwanon_gmail.com_application_default_credentials.json"}}
+[debug] [2026-02-03T09:38:32.362Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.362Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:32.362Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/adminSdkConfig [none]
+[debug] [2026-02-03T09:38:33.050Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/adminSdkConfig 200
+[debug] [2026-02-03T09:38:33.050Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/adminSdkConfig {"projectId":"silp-pilot-platform","storageBucket":"silp-pilot-platform.firebasestorage.app"}
+[debug] [2026-02-03T09:38:33.902Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/silp-pilot-platform/sites 200
+[debug] [2026-02-03T09:38:33.902Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/silp-pilot-platform/sites {"sites":[{"name":"projects/silp-pilot-platform/sites/silp-pilot-platform","defaultUrl":"https://silp-pilot-platform.web.app","appId":"1:307814159914:web:b6b47ab4ac9d7c3816d553","type":"DEFAULT_SITE"}]}
+[debug] [2026-02-03T09:38:33.902Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:33.902Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:33.902Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/webApps/1:307814159914:web:b6b47ab4ac9d7c3816d553/config [none]
+[debug] [2026-02-03T09:38:34.491Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/webApps/1:307814159914:web:b6b47ab4ac9d7c3816d553/config 200
+[debug] [2026-02-03T09:38:34.491Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform/webApps/1:307814159914:web:b6b47ab4ac9d7c3816d553/config {"projectId":"silp-pilot-platform","appId":"1:307814159914:web:b6b47ab4ac9d7c3816d553","storageBucket":"silp-pilot-platform.firebasestorage.app","apiKey":"AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA","authDomain":"silp-pilot-platform.firebaseapp.com","messagingSenderId":"307814159914","measurementId":"G-PLWSHCRFGY","projectNumber":"307814159914","version":"2"}
+[debug] [2026-02-03T09:38:34.500Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:34.500Z] Checked if tokens are valid: true, expires at: 1770113958033
+[debug] [2026-02-03T09:38:34.501Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform [none]
+[debug] [2026-02-03T09:38:34.805Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform 200
+[debug] [2026-02-03T09:38:34.805Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/silp-pilot-platform {"projectId":"silp-pilot-platform","projectNumber":"307814159914","displayName":"silp-pilot-platform","name":"projects/silp-pilot-platform","resources":{"hostingSite":"silp-pilot-platform"},"state":"ACTIVE","etag":"1_3ae74dba-c63d-4356-8e56-728b539ec237"}
+[info] i  functions: Watching "C:\Users\Pam\Desktop\silp-pilot-platform\functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"C:\\Users\\Pam\\Desktop\\silp-pilot-platform\\functions\" for Cloud Functions..."}}
+[info] i  hosting[silp-pilot-platform]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
+[info] +  hosting[silp-pilot-platform]: Local server: http://localhost:5000 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5000\u001b[22m\u001b[24m"}}
+[debug] [2026-02-03T09:38:34.828Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-02-03T09:38:36.265Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^7.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2026-02-03T09:38:36.265Z] Building nodejs source
+[debug] [2026-02-03T09:38:36.265Z] Failed to find version of module node: reached end of search path C:\Users\Pam\Desktop\silp-pilot-platform\functions\node_modules
+[info] +  functions: Using node@22 from host. 
+[debug] [2026-02-03T09:38:36.268Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-03T09:38:36.273Z] Found firebase-functions binary at 'C:\Users\Pam\Desktop\silp-pilot-platform\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8273
+
+[debug] [2026-02-03T09:38:37.181Z] Got response from /__/functions.yaml {"endpoints":{"getFoldingBoxQuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getFoldingBoxQuizData"},"saveFoldingBoxScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveFoldingBoxScore"},"getBestFoldingBoxScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestFoldingBoxScore"},"getTutorialData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getTutorialData"},"checkUserAccess":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"checkUserAccess"},"addStudentAfterPayment":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"addStudentAfterPayment"},"getSCS2024QuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getSCS2024QuizData"},"saveSCS2024Score":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveSCS2024Score"},"getBestSCS2024Score":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestSCS2024Score"},"getSCSQuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getSCSQuizData"},"saveSCSScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveSCSScore"},"getBestSCSScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestSCSScore"},"getSCNQuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getSCNQuizData"},"saveSCNScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveSCNScore"},"getBestSCNScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestSCNScore"},"getRubik3DQuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getRubik3DQuizData"},"saveRubik3DScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveRubik3DScore"},"getBestRubik3DScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestRubik3DScore"},"getSCTQuizData":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getSCTQuizData"},"saveSCTScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"saveSCTScore"},"getBestSCTScore":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"getBestSCTScore"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] +  functions: Loaded functions definitions from source: getFoldingBoxQuizData, saveFoldingBoxScore, getBestFoldingBoxScore, getTutorialData, checkUserAccess, addStudentAfterPayment, getSCS2024QuizData, saveSCS2024Score, getBestSCS2024Score, getSCSQuizData, saveSCSScore, getBestSCSScore, getSCNQuizData, saveSCNScore, getBestSCNScore, getRubik3DQuizData, saveRubik3DScore, getBestRubik3DScore, getSCTQuizData, saveSCTScore, getBestSCTScore. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: getFoldingBoxQuizData, saveFoldingBoxScore, getBestFoldingBoxScore, getTutorialData, checkUserAccess, addStudentAfterPayment, getSCS2024QuizData, saveSCS2024Score, getBestSCS2024Score, getSCSQuizData, saveSCSScore, getBestSCSScore, getSCNQuizData, saveSCNScore, getBestSCNScore, getRubik3DQuizData, saveRubik3DScore, getBestRubik3DScore, getSCTQuizData, saveSCTScore, getBestSCTScore."}}
+[info] +  functions[us-central1-getFoldingBoxQuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getFoldingBoxQuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getFoldingBoxQuizData)."}}
+[info] +  functions[us-central1-saveFoldingBoxScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveFoldingBoxScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveFoldingBoxScore)."}}
+[info] +  functions[us-central1-getBestFoldingBoxScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestFoldingBoxScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestFoldingBoxScore)."}}
+[info] +  functions[us-central1-getTutorialData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getTutorialData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getTutorialData)."}}
+[info] +  functions[us-central1-checkUserAccess]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/checkUserAccess). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/checkUserAccess)."}}
+[info] +  functions[us-central1-addStudentAfterPayment]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/addStudentAfterPayment). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/addStudentAfterPayment)."}}
+[info] +  functions[us-central1-getSCS2024QuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCS2024QuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCS2024QuizData)."}}
+[info] +  functions[us-central1-saveSCS2024Score]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCS2024Score). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCS2024Score)."}}
+[info] +  functions[us-central1-getBestSCS2024Score]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCS2024Score). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCS2024Score)."}}
+[info] +  functions[us-central1-getSCSQuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCSQuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCSQuizData)."}}
+[info] +  functions[us-central1-saveSCSScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCSScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCSScore)."}}
+[info] +  functions[us-central1-getBestSCSScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCSScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCSScore)."}}
+[info] +  functions[us-central1-getSCNQuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCNQuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCNQuizData)."}}
+[info] +  functions[us-central1-saveSCNScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCNScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCNScore)."}}
+[info] +  functions[us-central1-getBestSCNScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCNScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCNScore)."}}
+[info] +  functions[us-central1-getRubik3DQuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getRubik3DQuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getRubik3DQuizData)."}}
+[info] +  functions[us-central1-saveRubik3DScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveRubik3DScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveRubik3DScore)."}}
+[info] +  functions[us-central1-getBestRubik3DScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestRubik3DScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestRubik3DScore)."}}
+[info] +  functions[us-central1-getSCTQuizData]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCTQuizData). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getSCTQuizData)."}}
+[info] +  functions[us-central1-saveSCTScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCTScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/saveSCTScore)."}}
+[info] +  functions[us-central1-getBestSCTScore]: http function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCTScore). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/silp-pilot-platform/us-central1/getBestSCTScore)."}}
+[info] i  hosting: ::1 - - [03/Feb/2026:09:38:47 +0000] "GET /games/GSC.html HTTP/1.1" 200 - "http://localhost:5000/games/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [03/Feb/2026:09:38:47 +0000] \"GET /games/GSC.html HTTP/1.1\" 200 - \"http://localhost:5000/games/index.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [03/Feb/2026:09:38:47 +0000] "GET /favicon.ico HTTP/1.1" 200 - "http://localhost:5000/games/GSC.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [03/Feb/2026:09:38:47 +0000] \"GET /favicon.ico HTTP/1.1\" 200 - \"http://localhost:5000/games/GSC.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\""}}
+[debug] [2026-02-03T09:40:09.008Z] File C:\Users\Pam\Desktop\silp-pilot-platform\functions\index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File C:\\Users\\Pam\\Desktop\\silp-pilot-platform\\functions\\index.js changed, reloading triggers"}}
+[debug] [2026-02-03T09:40:10.009Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-02-03T09:40:11.112Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^7.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2026-02-03T09:40:11.112Z] Building nodejs source
+[debug] [2026-02-03T09:40:11.112Z] Failed to find version of module node: reached end of search path C:\Users\Pam\Desktop\silp-pilot-platform\functions\node_modules
+[info] +  functions: Using node@22 from host. 
+[debug] [2026-02-03T09:40:11.113Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-03T09:40:11.118Z] Found firebase-functions binary at 'C:\Users\Pam\Desktop\silp-pilot-platform\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8364
+
+[error] C:\Users\Pam\Desktop\silp-pilot-platform\functions\index.js:511
+const normalizeGmail = (email) => {
+      ^
+
+SyntaxError: Identifier 'normalizeGmail' has already been declared
+    at wrapSafe (node:internal/modules/cjs/loader:1638:18)
+    at Module._compile (node:internal/modules/cjs/loader:1680:20)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at loadModule (C:\Users\Pam\Desktop\silp-pilot-platform\functions\node_modules\firebase-functions\lib\runtime\loader.js:20:10)
+
+[debug] [2026-02-03T09:40:11.488Z] Got response code 400; body Failed to generate manifest from function source: Identifier 'normalizeGmail' has already been declared
+[error] !!  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}

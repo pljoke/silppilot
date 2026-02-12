@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Silp Pilot Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #FAF7F2; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-10 rounded-2xl border border-[#E8DDD4] shadow-md max-w-md w-full text-center">
+        <h1 class="text-4xl font-extrabold text-[#722F37] mb-4">Silp Pilot Platform</h1>
+        <p class="text-lg text-[#8B4513] opacity-80 mb-8">กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
+        
+        <button id="loginBtn" class="w-full bg-[#722F37] text-white py-3 px-6 rounded-lg font-bold text-lg hover:bg-[#8B4513] transition-colors">
+            Login with Google
+        </button>
+
+        <p id="authError" class="text-red-600 mt-6"></p>
+    </div>
+
+    <script>
+        const loginBtn = document.getElementById('loginBtn');
+        const authError = document.getElementById('authError');
+
+        // ตรวจสอบสถานะ: ถ้า Login แล้ว ให้ไปหน้า index ทันที
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = '/index.html';
+            }
+        });
+
+        loginBtn.addEventListener('click', () => {
+            authError.textContent = '';
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .catch(error => {
+                    console.error("Login Error:", error);
+                    authError.textContent = `Login Failed: ${error.message}`;
+                });
+        });
+    </script>
+</body>
+</html>

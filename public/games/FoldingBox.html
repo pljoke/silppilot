@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folding Box</title>
+    <style>
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --bg-color-light: #FAF7F2;
+            --bg-color-dark: #F5F2EA;
+            --surface-color: #FFFEF9;
+            --text-color: #3a2e2c;
+            --text-color-secondary: #8B4513;
+            --border-color: #E8DDD4;
+            --light-text: #fff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* เพิ่มส่วนนี้: ห้าม Highilight และห้ามเลือก Text */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%);
+            color: var(--text-color);
+            padding: 20px;
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header {
+            background: rgba(255, 253, 250, 0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+            .header h1 {
+                color: var(--primary-color);
+                font-size: 24px;
+            }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .container {
+            width: 100%;
+            padding-top: 80px;
+        }
+
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--surface-color);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--text-color-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .question-sidebar {
+            flex: 0 0 240px;
+            background: var(--bg-color-dark);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+        }
+
+        .game-content {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-color-dark);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+            .timer.danger {
+                color: var(--danger-color);
+                animation: pulse 1s infinite;
+            }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 8px;
+        }
+
+        .question-nav-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: var(--bg-color-light);
+            color: var(--text-color-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+            .question-nav-btn.answered {
+                background-color: var(--primary-color);
+                color: var(--light-text);
+            }
+
+            .question-nav-btn.current {
+                background-color: var(--secondary-color);
+                color: var(--light-text);
+                transform: scale(1.1);
+            }
+
+            .question-nav-btn.correct {
+                background-color: var(--success-color);
+                color: white;
+            }
+
+            .question-nav-btn.incorrect {
+                background-color: var(--danger-color);
+                color: white;
+            }
+
+        .legend {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .question-section {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: var(--bg-color-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 40px);
+            grid-template-rows: repeat(4, 40px);
+            gap: 2px;
+            justify-content: center;
+        }
+
+        .pattern-cell {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            background-color: var(--surface-color);
+            color: var(--primary-color);
+        }
+
+            .pattern-cell.empty {
+                border: none;
+                background: transparent;
+            }
+
+        .cube-container {
+            perspective: 1000px;
+            display: inline-block;
+        }
+
+        .cube {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            transform-style: preserve-3d;
+            transform: rotateX(-25deg) rotateY(45deg);
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 32px;
+            opacity: 1.0;
+            color: var(--primary-color);
+            backface-visibility: hidden;
+        }
+
+            .cube-face.front {
+                transform: translateZ(40px);
+                background-color: #F5F2EA;
+            }
+
+            .cube-face.left {
+                transform: rotateY(-90deg) translateZ(40px);
+                background-color: #E8DDD4;
+            }
+
+            .cube-face.top {
+                transform: rotateX(90deg) translateZ(40px);
+                background-color: #D4C7B8;
+            }
+
+        .choices-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .choice-button {
+            padding: 1rem;
+            border: 3px solid var(--border-color);
+            background-color: #FAF7F2;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+            /* [แก้ไข] ใส่ media query ครอบไว้ เพื่อไม่ให้เกิด Sticky Hover บนมือถือ */
+            @media (hover: hover) {
+                .choice-button:hover:not(.disabled) {
+                    background-color: #F0EBE3;
+                    border-color: var(--primary-color);
+                    transform: translateY(-2px);
+                }
+            }
+            /* เพิ่มตัวนี้เพื่อความชัวร์ ให้กดแล้วคืนค่าทันที */
+            .choice-button:active {
+                background-color: #F0EBE3;
+                border-color: var(--primary-color);
+            }
+
+            .choice-button.selected {
+                border-color: var(--secondary-color);
+                background-color: var(--border-color); /* เปลี่ยนเป็นสีที่เข้มขึ้นเล็กน้อย */
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* เพิ่มเงาด้านในให้ดูมีมิติ */
+            }
+
+            .choice-button.disabled {
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
+            .choice-button.correct {
+                border-color: var(--success-color) !important;
+                background-color: #d4edda !important;
+            }
+
+            .choice-button.incorrect.user-selected {
+                border-color: var(--danger-color) !important;
+                background-color: #f8d7da !important;
+            }
+
+            .choice-button.incorrect:not(.user-selected) {
+                opacity: 0.6;
+            }
+
+            .choice-button.user-selected {
+                box-shadow: 0 0 0 3px var(--secondary-color) inset;
+            }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+            .navigation-controls.center {
+                justify-content: center;
+            }
+
+        .btn {
+            font-size: 1rem;
+            padding: 12px 28px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+            .btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                opacity: 0.9;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+            .btn:disabled {
+                background-color: #ccc !important;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--light-text);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: var(--light-text);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: var(--light-text);
+        }
+
+        .outline-btn {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+            .outline-btn:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+            align-items: center;
+        }
+
+        .results-container .action-buttons {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .start-screen-card .action-buttons .btn,
+        .difficulty-screen-card .action-buttons .btn {
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .start-screen-card, .tutorial-screen-card {
+            max-width: 600px;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .results-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .result-summary {
+            text-align: left;
+            background: var(--bg-color-dark);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+            .result-summary p {
+                font-size: 1.25rem;
+                margin: 12px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .result-summary p strong {
+                    font-size: 1.5rem;
+                    color: var(--primary-color);
+                }
+
+        .result-comparison {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .result-column {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-color-dark);
+            text-align: left;
+        }
+
+            .result-column h3 {
+                color: var(--text-color-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 0.5rem;
+                margin-bottom: 1rem;
+                text-align: center;
+            }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap-x: 2rem;
+            gap-y: 1.25rem;
+            align-items: center;
+        }
+
+            .result-grid span:nth-child(odd) {
+                font-weight: 600;
+            }
+
+            .result-grid span:nth-child(even) {
+                font-weight: bold;
+                text-align: right;
+            }
+
+        .results-container .action-buttons {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(250, 247, 242, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader-spinner {
+            border: 8px solid var(--border-color);
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .practice-mode-active .question-sidebar {
+            display: none;
+        }
+
+        .tutorial-example {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-color-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* --- START: Styles for Interactive Review Cube --- */
+        /* --- START: Absolute Positioning for Buttons --- */
+        .review-cube-area {
+            /* Keep existing styles: margin, padding, background, border-radius, border */
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            padding: 20px;
+            background: var(--bg-color-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            /* position: relative; */ /* Removed grid, keep text-align center */
+        }
+
+            .review-cube-area h3 {
+                /* Keep existing styles */
+                margin-bottom: 1.5rem;
+                color: var(--text-color-secondary);
+            }
+
+        .cube-control-wrapper {
+            position: relative; /* Make this the reference for absolute buttons */
+            display: inline-block; /* Allow centering using text-align on parent */
+            width: 200px; /* Approximate width needed for cube + buttons */
+            height: 200px; /* Approximate height needed */
+            margin: 0 auto; /* Center the wrapper */
+        }
+
+        .cube-container-interactive {
+            /* Position the cube container in the center of the wrapper */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center trick */
+            perspective: 1200px;
+            margin-bottom: 0; /* No extra margin needed */
+        }
+
+        .interactive-cube {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            /* เอา transition ออกเพื่อให้หมุนตามมือทันที */
+            /* transition: transform 0.5s ease-out; */
+            transform: rotateX(-25deg) rotateY(45deg);
+            cursor: grab; /* รูปมือแบ */
+        }
+
+            .interactive-cube:active {
+                cursor: grabbing; /* รูปมือกำเวลาคลิก */
+            }
+
+            .interactive-cube .face {
+                /* Keep existing face styles */
+                position: absolute;
+                width: 100px;
+                height: 100px;
+                border: 2px solid var(--primary-color);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 40px;
+                font-weight: bold;
+                color: var(--primary-color);
+                background-color: rgba(255, 254, 249, 0.85);
+                backface-visibility: hidden;
+                user-select: none;
+            }
+                /* Keep face positioning styles */
+                .interactive-cube .face.front {
+                    transform: rotateY( 0deg) translateZ(50px);
+                    background-color: #F5F2EA;
+                }
+
+                .interactive-cube .face.back {
+                    transform: rotateY(180deg) translateZ(50px);
+                    background-color: #E8DDD4;
+                }
+
+                .interactive-cube .face.left {
+                    transform: rotateY(-90deg) translateZ(50px);
+                    background-color: #E8DDD4;
+                }
+
+                .interactive-cube .face.right {
+                    transform: rotateY( 90deg) translateZ(50px);
+                    background-color: #E8DDD4;
+                }
+
+                .interactive-cube .face.top {
+                    transform: rotateX( 90deg) translateZ(50px);
+                    background-color: #D4C7B8;
+                }
+
+                .interactive-cube .face.bottom {
+                    transform: rotateX(-90deg) translateZ(50px);
+                    background-color: #D4C7B8;
+                }
+
+
+        /* General button style (keep mostly the same) */
+        .rot-btn {
+            position: absolute; /* Position relative to wrapper */
+            font-size: 1.5rem;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            border: 2px solid var(--secondary-color);
+            background-color: var(--surface-color);
+            color: var(--secondary-color);
+            border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            user-select: none;
+            z-index: 10; /* Ensure buttons are above cube visually */
+        }
+
+            .rot-btn:hover {
+                background-color: var(--secondary-color);
+                color: var(--surface-color);
+            }
+
+        /* Specific positions using top, left, bottom, right */
+        .rot-up-abs {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+        }
+
+        .rot-down-abs {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+        }
+
+        .rot-left-abs {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%); /* Center vertically */
+        }
+
+        .rot-right-abs {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%); /* Center vertically */
+        }
+
+        .rot-zanti-abs {
+            bottom: 0;
+            left: 0;
+            /* transform: translate(-10%, 10%); */ /* Adjust slightly if needed */
+        }
+
+        .rot-zclock-abs {
+            bottom: 0;
+            right: 0;
+            /* transform: translate(10%, 10%); */ /* Adjust slightly if needed */
+        }
+        /* --- END: Absolute Positioning --- */
+
+        /* Remove the old flexbox div styling if it exists */
+
+        /* Assign buttons to grid areas */
+        #rotateUpBtn {
+            grid-area: up;
+        }
+
+        #rotateDownBtn {
+            grid-area: down;
+        }
+
+        #rotateLeftBtn {
+            grid-area: left;
+        }
+
+        #rotateRightBtn {
+            grid-area: right;
+        }
+
+        /* Keep button styles the same */
+
+        /* --- START: Styles for Rotation Controls --- */
+        /* --- START: Styles for Rotation Controls (Revised Grid) --- */
+        .rotation-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 45px); /* Fixed size columns */
+            grid-template-rows: repeat(3, 45px); /* Fixed size rows */
+            gap: 10px;
+            justify-content: center; /* Center the grid itself */
+            align-items: center; /* Center items in cells */
+            width: auto; /* Allow width to adjust */
+            margin: 1.5rem auto 0 auto;
+        }
+
+        /* Assign buttons to specific grid cells (row / column) */
+        #rotateUpBtn {
+            grid-row: 1;
+            grid-column: 2;
+        }
+
+        #rotateLeftBtn {
+            grid-row: 2;
+            grid-column: 1;
+        }
+
+        #rotateRightBtn {
+            grid-row: 2;
+            grid-column: 3;
+        }
+
+        #rotateZAntiClockwiseBtn {
+            grid-row: 3;
+            grid-column: 1;
+        }
+
+        #rotateDownBtn {
+            grid-row: 3;
+            grid-column: 2;
+        }
+
+        #rotateZClockwiseBtn {
+            grid-row: 3;
+            grid-column: 3;
+        }
+
+
+        .rotation-controls button {
+            /* Keep existing button styles (font-size, width, height, border, etc.) */
+            font-size: 1.5rem;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            border: 2px solid var(--secondary-color);
+            background-color: var(--surface-color);
+            color: var(--secondary-color);
+            border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; /* Remove padding if any */
+        }
+
+            .rotation-controls button:hover {
+                background-color: var(--secondary-color);
+                color: var(--surface-color);
+            }
+        /* Remove the specific > div rule if it exists */
+        /* .rotation-controls > div { ... } */
+        /* --- END: Styles for Rotation Controls (Revised Grid) --- */
+
+        /* Optional: Adjust review-cube-area if needed */
+        .review-cube-area {
+            text-align: center; /* Ensure contents are centered */
+        }
+
+        .cube-container-interactive {
+            margin-bottom: 1.5rem; /* Ensure space below cube */
+        }
+        /* --- END: Styles for Interactive Review Cube --- */
+        .pattern-cell {
+            /* ... existing styles ... */
+            user-select: none; /* Add this */
+        }
+
+        .cube-face { /* This applies to choice cubes */
+            /* ... existing styles ... */
+            user-select: none; /* Add this */
+        }
+
+        .interactive-cube .face { /* This applies to the interactive review cube */
+        }
+        /* Optional: Add to the containers as well for extra safety */
+        .cube-container, .cube-container-interactive {
+            user-select: none;
+        }
+
+        /* --- START: ADDED FOR HELL MODE --- */
+        .choice-button.selected {
+            border-color: var(--secondary-color);
+            background-color: #F0EBE3; /* ใช้สีที่เข้มขึ้นเล็กน้อย */
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.15); /* เพิ่มเงาด้านในให้ดูมีมิติ */
+        }
+
+        /* --- MOBILE & TABLET OPTIMIZATION (FIXED ALL ISSUES) --- */
+        @media (max-width: 992px) {
+            /* 1. Hamburger & Header */
+            .hamburger-btn { display: block; }
+            .header h1 { font-size: 1.1rem; } 
+            
+            /* Sidebar */
+            .question-sidebar {
+                position: fixed;
+                top: 70px; 
+                left: -280px;
+                width: 260px;
+                height: calc(100% - 70px);
+                z-index: 1000;
+                transition: left 0.3s ease;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+                margin: 0;
+                display: block !important; 
+                background: var(--bg-color-dark); 
+            }
+            .question-sidebar.active { left: 0; }
+            .sidebar-overlay {
+                display: none;
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 999;
+            }
+            .sidebar-overlay.active { display: block; }
+
+            /* 2. [แก้ข้อ 2] ลดขนาด Font ปุ่มและ Text */
+            body { font-size: 0.9rem !important; }
+            .btn { 
+                font-size: 0.85rem !important; /* ลดขนาดตัวอักษรปุ่ม */
+                padding: 10px 15px !important; /* ลดความอ้วนของปุ่ม */
+            }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            h3 { font-size: 1rem; }
+            
+            /* 3. [แก้ข้อ 1] ลดระยะห่างของโจทย์ (Pattern) */
+            .pattern-cell {
+                width: 28px !important; /* ลดขนาดช่องลงอีกนิด */
+                height: 28px !important;
+                font-size: 16px !important;
+            }
+            .pattern-grid {
+                grid-template-columns: repeat(4, 28px) !important;
+                grid-template-rows: repeat(4, 28px) !important;
+                gap: 1px !important; /* ลดช่องว่างระหว่างช่อง */
+            }
+            /* ลด padding ของกล่องโจทย์ */
+            .question-section {
+                padding: 10px !important;
+                margin-bottom: 10px !important;
+            }
+            /* ลดระยะห่างของ How to Play */
+            #howToPlayScreen .tutorial-example {
+                transform: scale(0.65);
+                transform-origin: center center;
+                margin: -20px 0 !important; /* ดึงให้ชิดกันมากขึ้น */
+            }
+            #howToPlayScreen {
+                padding: 10px !important;
+            }
+            
+            /* 4. Hell Mode Choice Size */
+            .choices-container.hell-review-mode {
+                gap: 4px !important;
+                padding: 0 2px;
+                margin-top: 5px !important;
+            }
+            .choices-container.hell-review-mode .choice-button {
+                height: 70px !important; 
+            }
+            .choices-container.hell-review-mode .choice-button .cube-container {
+                transform: scale(0.45) !important; 
+            }
+
+            /* 5. [แก้ข้อ 3] Results Screen Layout (บังคับเรียงบน-ล่าง) */
+            .result-comparison {
+                flex-direction: column !important; /* เรียงแนวตั้ง */
+                gap: 15px !important;
+            }
+            .result-column {
+                width: 100% !important; /* เต็มความกว้าง */
+                margin-bottom: 10px;
+            }
+            /* ปรับปุ่มในหน้า Results ให้เรียงสวย */
+            .results-container .action-buttons {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            .results-container .action-buttons .btn {
+                width: 100% !important; /* ปุ่มเต็มความกว้าง */
+                max-width: none !important;
+            }
+
+            /* Review Cube Area */
+            .review-cube-area {
+                padding: 5px !important;
+                margin: 5px 0 !important;
+            }
+            .review-cube-area .cube-control-wrapper {
+                height: 110px !important;
+                transform: scale(0.8);
+            }
+            .cube-container-interactive, .interactive-cube { touch-action: none; }
+        }
+
+        /* --- NEW STYLES: Header & Mobile & Hell Mode --- */
+
+        /* 1. Timer in Header */
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* 2. Hamburger Menu (Mobile Only) */
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        /* 4. Responsive Sidebar (Mobile/Tablet) & Mobile Fit Fix */
+        @media (max-width: 992px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            /* ซ่อน Sidebar ปกติ */
+            .question-sidebar {
+                position: fixed;
+                top: 70px; /* ใต้ Header */
+                left: -280px; /* ซ่อนทางซ้าย */
+                width: 260px;
+                height: calc(100% - 70px);
+                z-index: 1000;
+                transition: left 0.3s ease;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+                margin: 0;
+                /* [แก้ข้อ 3] บังคับให้แสดงผล (เพื่อให้เลื่อนออกมาได้ แม้เป็น Practice Mode) */
+                display: block !important;
+            }
+
+                .question-sidebar.active {
+                    left: 0; /* เลื่อนออกมา */
+                }
+
+            /* Overlay ฉากหลังเวลาเปิดเมนู */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+
+                .sidebar-overlay.active {
+                    display: block;
+                }
+
+            /* [แก้ข้อ 2] ปรับขนาด Choice บนมือถือให้ Fit หน้าจอเดียว */
+            .choices-container {
+                /* ลดระยะห่างระหว่างปุ่ม */
+                gap: 8px !important;
+                margin-top: 10px !important;
+                /* ปรับ Grid ให้ชิดขอบ */
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            .choice-button {
+                /* ลดความสูงปุ่มลงเหลือ 80px (จากเดิม 90px หรือ auto) */
+                height: 80px !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+            }
+
+                /* ย่อลูกเต๋าลงอีกเพื่อให้ใส่ในปุ่ม 80px ได้ */
+                .choice-button .cube-container {
+                    transform: scale(0.55) !important;
+                    transform-origin: center center !important;
+                    margin: 0 !important;
+                    /* บังคับให้กล่องไม่ดันที่ */
+                    width: 80px !important;
+                    height: 80px !important;
+                    display: flex !important;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+            /* ซ่อนส่วน Practice Review Cube (เฉลย) ถ้ามันกินที่เกินไป หรือย่อให้เล็กสุดๆ */
+            .review-cube-area {
+                padding: 5px !important;
+                margin-top: 10px !important;
+                margin-bottom: 10px !important;
+            }
+
+                .review-cube-area .cube-control-wrapper {
+                    height: 120px !important; /* ลดความสูงพื้นที่หมุนเฉลย */
+                    transform: scale(0.8);
+                }
+        }
+
+        /* --- [FIX 4] Header Timer New Style (เหมือน SCN) --- */
+        .header-center {
+            /* ลบ class นี้ หรือปล่อยว่างไว้ เพราะเราจะย้าย Timer ไปทางขวา */
+            display: none;
+        }
+
+        .header-timer {
+            display: none; /* ซ่อนปกติ โชว์เฉพาะตอนสอบ */
+            font-family: 'Segoe UI', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            background: transparent; /* ไม่มีพื้นหลัง */
+            border: none; /* ไม่มีกรอบ */
+            padding: 0;
+            margin-right: 15px; /* เว้นระยะห่างจากปุ่ม */
+            width: 80px; /* Fix ความกว้างเพื่อไม่ให้เลขขยับไปมา */
+            text-align: right;
+        }
+
+            .header-timer.danger {
+                color: var(--danger-color);
+                animation: pulse 1s infinite;
+            }
+
+        /* --- [FIX 3] Hell Mode Layout แยก Quiz vs Review --- */
+
+        /* Quiz Mode: Hell Mode ให้ใช้ 2 คอลัมน์เหมือนปกติ (ไม่ต้องแก้ CSS เพิ่ม เพราะ default คือ 2) */
+
+        /* [FIXED FINAL V3 - SAFETY FIRST] Review Mode (Hell Only) */
+        .choices-container.hell-review-mode {
+            /* จัด Grid 2 คอลัมน์ */
+            grid-template-columns: 1fr 1fr !important;
+            gap: 15px !important;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+            .choices-container.hell-review-mode .choice-button {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                /* [แก้ตรงนี้] ลดความสูงจาก 160px เหลือ 90px ให้พอดีตัวลูกเต๋า */
+                height: 90px !important;
+                padding: 0 !important;
+                /* คงค่านี้ไว้ เพื่อให้ส่วนปลายแหลมของลูกเต๋าไม่ถูกตัด */
+                overflow: visible !important;
+                transform: none !important;
+            }
+
+                .choices-container.hell-review-mode .choice-button .cube-container {
+                    /* ย่อลูกเต๋า 80px ลงเหลือ 70% เพื่อให้พอดีช่อง */
+                    transform: scale(0.7) !important;
+                    transform-origin: center center !important;
+                    /* Reset ค่าต่างๆ */
+                    margin: 0 !important;
+                    display: block !important;
+                    width: 80px !important; /* ยืนยันขนาดเดิม */
+                    height: 80px !important; /* ยืนยันขนาดเดิม */
+                    pointer-events: none; /* ป้องกันการคลิกโดนลูกเต๋า */
+                }
+
+        /* ปรับส่วนเฉลยด้านล่างให้เล็กและชิดขึ้นเล็กน้อย */
+        .review-area-hell-compact {
+            margin-top: 10px !important;
+            padding: 5px !important;
+            transform: scale(0.9);
+            transform-origin: top center;
+        }
+
+            .review-area-hell-compact .cube-control-wrapper {
+                height: 140px !important;
+            }
+
+        /* Review Area Hell Mode: ย่อขนาด Correctly Folded Box เพื่อให้ Fit หน้าจอ */
+        .review-area-hell-compact {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            padding: 5px !important;
+            transform: scale(0.85); /* ย่อส่วนลง 15% */
+            transform-origin: top center;
+        }
+
+            .review-area-hell-compact h3 {
+                margin-bottom: 0.5rem !important;
+                font-size: 1rem;
+            }
+
+            .review-area-hell-compact .cube-control-wrapper {
+                height: 120px !important; /* ลดความสูง container */
+            }
+        /* --- KEYBOARD HINTS (Visual Indicators) --- */
+        .choice-button {
+            position: relative; /* เพื่อให้วางตัวอักษร A,B,C ลอยอยู่มุมได้ */
+        }
+
+        .key-hint {
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--secondary-color);
+            opacity: 0.6;
+            pointer-events: none; /* กดทะลุได้ ไม่บังปุ่ม */
+            z-index: 5;
+        }
+        /* ปรับสีตัวอักษรเมื่อปุ่มถูกเลือก หรือเป็นสถานะต่างๆ */
+        .choice-button.selected .key-hint,
+        .choice-button.correct .key-hint,
+        .choice-button.incorrect .key-hint {
+            color: var(--secondary-color); /* ปรับสีตามความเหมาะสม */
+            opacity: 0.8;
+        }
+
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const functions = firebase.functions();
+    </script>
+</head>
+<body data-home-url="<?= ScriptApp.getService().getUrl() ?>">
+    <div id="loader-overlay" class="loader-overlay"><div class="loader-spinner"></div></div>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div> <!-- เพิ่ม Overlay -->
+
+    <div id="mainHeader" class="header">
+        <div style="display:flex; align-items:center;">
+            <button id="hamburgerBtn" class="hamburger-btn">☰</button>
+            <h1>📦 Folding Box</h1>
+        </div>
+
+        <div class="header-buttons" style="display: flex; align-items: center;">
+            <div id="headerTimer" class="header-timer">00:00</div>
+
+            <button id="backToMenuBtn" class="btn btn-secondary header-btn hidden">Back</button>
+            <button id="backToResultsBtn" class="btn btn-primary header-btn hidden">Back</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="app-container">
+            <div id="startScreen" class="test-container start-screen-card">
+                <h1>Folding Box</h1>
+                <p>From the 2D pattern, identify which 3D box configuration is possible when folded.</p>
+                <div class="action-buttons">
+                    <button id="practiceModeBtn" class="btn btn-secondary">Practice Mode</button>
+                    <button id="testModeBtn" class="btn btn-primary">Test Mode</button>
+                    <button id="howToPlayBtn" class="btn outline-btn">How to Play</button>
+                    <button class="btn outline-btn back-to-system-btn">Back to Main Page</button>
+                </div>
+            </div>
+
+            <div id="howToPlayScreen" class="test-container tutorial-screen-card hidden">
+                <h2>How to Play</h2>
+                <div style="text-align: left;">
+                    <p style="text-align: center;">
+                        Your goal is to find which of the 3D boxes can
+                        be formed from the given 2D pattern.
+                    </p>
+                    <div class="tutorial-example">
+                        <div id="tutorial-pattern"></div>
+                        <span>➔</span>
+                        <div id="tutorial-cube"></div>
+                    </div>
+                    <strong>Instructions:</strong>
+                    <ul>
+                        <li>Look at the 2D pattern and its symbols.</li>
+                        <li>
+                            Imagine folding the pattern into a cube.
+                            Pay attention to which faces are opposite and which are adjacent.
+                        </li>
+                        <li>Choose the 3D box (A, B, C, or D) that shows a possible orientation of the faces when folded.</li>
+                    </ul>
+                </div>
+                <div class="action-buttons" style="margin-top: 2rem;">
+                    <button id="backToStartBtn" class="btn btn-primary">Back</button>
+                </div>
+            </div>
+
+            <div id="difficultyScreen" class="test-container difficulty-screen-card hidden">
+                <h2 id="difficultyTitle" style="font-size: 2rem;">Select Difficulty</h2>
+                <div class="action-buttons">
+                    <button id="easyBtn" data-difficulty="easy" class="btn btn-primary">Easy</button>
+                    <button id="normalBtn" data-difficulty="normal" class="btn btn-primary">Normal</button>
+                    <button id="hardBtn" data-difficulty="hard" class="btn btn-primary">Hard</button>
+                    <button id="hellBtn" data-difficulty="hell" class="btn btn-primary">Hell (Multi-Answer)</button>
+                </div>
+            </div>
+
+            <div id="gameScreen" class="test-container hidden">
+                <div class="game-layout">
+                    <div class="question-sidebar">
+                        <h3>Questions</h3>
+                        <div id="questionGrid" class="question-grid"></div>
+                        <div id="legendContainer" class="legend">
+                            <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--bg-color-light)"></div> Not Answered</div>
+                        </div>
+                    </div>
+                    <div class="game-content">
+                        <div class="status-bar">
+                            <div id="questionCounter"></div>
+                            <!-- ลบ Timer เดิมตรงนี้ออกไปแล้ว -->
+                        </div>
+                        <div class="question-section">
+                            <p>When folded into a 3D box, which configuration is possible?</p>
+                            <div id="patternDisplay"></div>
+                        </div>
+                        <div id="choicesContainer" class="choices-container"></div>
+                        <div id="practice-review-cube-area" class="review-cube-area hidden">
+                            <h3>Correctly Folded Box:</h3>
+                            <div class="cube-control-wrapper" style="width: 100%; height: 150px;">
+                                <div class="cube-container-interactive" style="cursor: grab;">
+                                    <div class="interactive-cube" id="practice-review-interactive-cube">
+                                        <div class="face front"></div>
+                                        <div class="face back"></div>
+                                        <div class="face left"></div>
+                                        <div class="face right"></div>
+                                        <div class="face top"></div>
+                                        <div class="face bottom"></div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 120px; font-size: 0.8rem; color: #888;">(Click & Drag to Rotate)</p>
+                            </div>
+                        </div>
+                        <div id="navigationControls" class="navigation-controls"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultsScreen" class="test-container results-container
+hidden">
+                <h2 id="resultsTitle"></h2>
+                <div id="practiceResults" class="result-summary hidden">
+                    <p>Score: <strong id="practiceScore">0 / 35</strong></p>
+                    <p>Accuracy: <strong id="practiceAccuracy">0.00%</strong></p>
+                </div>
+                <div id="testResults" class="result-comparison hidden">
+                    <div class="result-column">
+                        <h3>Current Score</h3>
+                        <div class="result-grid">
+                            <span>Score</span><span id="currentScoreDisplay">N/A</span>
+                            <span>Accuracy</span><span id="currentAccuracyDisplay">N/A</span>
+                            <span>Avg. Time / Q</span><span id="avgTimeDisplay">N/A</span>
+                            <span>Percentile</span><span id="currentPercentileDisplay">N/A</span>
+                        </div>
+                    </div>
+                    <div class="result-column">
+                        <h3>Your Best Score</h3>
+                        <div class="result-grid">
+                            <span>Score</span><span id="bestScoreDisplay">N/A</span>
+                            <span>Accuracy</span><span id="bestAccuracyDisplay">N/A</span>
+                            <span>Percentile</span><span id="bestPercentileDisplay">N/A</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="reviewBtn" class="btn btn-secondary hidden">Review Answers</button>
+                    <button id="retakeBtn" class="btn btn-primary">Back to Menu</button>
+                    <button class="btn outline-btn back-to-system-btn">Back to Main Page</button>
+                </div>
+                .
+            </div>
+
+            <div id="reviewScreen" class="test-container hidden">
+                <div class="game-layout">
+                    <div class="question-sidebar">
+                        <h3>Review Nav</h3>
+                        <div id="reviewNavGrid" class="question-grid"></div>
+                    </div>
+                    <div class="game-content">
+                        <div class="status-bar"><div id="reviewQuestionCounter"></div></div>
+                        <div class="question-section">
+                            <div id="reviewPatternDisplay"></div>
+                        </div>
+                        <div id="reviewChoicesContainer" class="choices-container"></div>
+                        <div class="review-cube-area">
+                            <h3>Correctly Folded Box:</h3>
+                            <div class="cube-control-wrapper" style="width: 100%; height: 150px;">
+                                <div class="cube-container-interactive" style="cursor: grab;">
+                                    <div class="interactive-cube" id="reviewInteractiveCube">
+                                        <div class="face front"></div>
+                                        <div class="face back"></div>
+                                        <div class="face left"></div>
+                                        <div class="face right"></div>
+                                        <div class="face top"></div>
+                                        <div class="face bottom"></div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 120px; font-size: 0.8rem; color: #888;">(Click & Drag to Rotate)</p>
+                            </div>
+
+                            <div class="navigation-controls">
+                                <button id="reviewPrevBtn" class="btn btn-secondary">&lt; Prev</button>
+                                <button id="reviewNextBtn" class="btn btn-secondary">Next &gt;</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmModal" class="modal">
+            <div class="modal-content">
+                <h2>Confirm Submission</h2><p>Are you sure?</p>
+                <div class="action-buttons" style="flex-direction:row; justify-content:center;">
+                    <button id="cancelSubmitBtn" class="btn btn-secondary">Cancel</button>
+                    <button id="confirmSubmitBtn" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- START: ADDED FOR MOCKUP TEST ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const isMockupMode = urlParams.get('mode') === 'mockup';
+            // --- END: ADDED FOR MOCKUP TEST ---
+
+            // Constants & State
+            const TOTAL_QUESTIONS = 35, TIME_LIMIT = 360;
+
+            let questions = [], userAnswers = [], currentQuestionIndex = 0, reviewQuestionIndex = 0, timerInterval = null, timeLeft = TIME_LIMIT;
+            let gameState = { mode: 'test', difficulty: 'normal' }; // <-- MODIFIED
+            let currentSymbolMapping = {};
+
+            // --- ⭐️ START: โค้ด Auth (ฉบับ Fetch API) ⭐️ ---
+            let currentUserEmail = null;
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // 1. User Login แล้ว
+                    loader.style.display = 'flex';
+                    currentUserEmail = user.email || user.providerData[0]?.email;
+
+                    // กรณี Test ถ้าไม่มีอีเมลให้ใช้ Hardcode (ลบออกเมื่อขึ้น Production)
+                    if (!currentUserEmail) currentUserEmail = "kritsada.wongtiwanon@gmail.com";
+
+                    console.log("Checking Access for:", currentUserEmail);
+
+                    // 2. เรียก Cloud Function แบบ Fetch (เหมือน saveScore)
+                    const CHECK_ACCESS_URL = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
+
+                    fetch(CHECK_ACCESS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: currentUserEmail,
+                            courseId: 'foldingBox'
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.hasAccess === true) {
+                                console.log("Authorization Success: Access Granted.");
+                                loader.style.display = 'none';
+                            } else {
+                                console.log("Authorization Failed:", result.reason);
+                                alert(`Access Denied: ${result.reason}. Redirecting...`);
+                                window.location.href = '/index.html';
+                            }
+                        })
+                        .catch(error => {
+                            console.error("API Error:", error);
+                            alert(`Connection Error: ${error.message}`);
+                            window.location.href = '/index.html';
+                        });
+
+                } else {
+                    console.log("User not logged in. Redirecting...");
+                    window.location.href = '/Auth.html';
+                }
+            });
+            // --- ⭐️ END: โค้ด Auth ⭐️ ---
+
+            // ตัวแปรสำหรับจัดการการลากเมาส์
+            let isDragging = false;
+            let previousMouseX = 0;
+            let previousMouseY = 0;
+
+            // ฟังก์ชันสำหรับเปิดใช้งานการหมุนด้วยเมาส์ให้กับ Cube ที่ระบุ
+            function enableMouseRotation(cubeId) {
+                const cube = document.getElementById(cubeId);
+                if (!cube) return;
+
+                // จับ event ที่ container (parent) เพื่อให้พื้นที่จับกว้างขึ้นและใช้งานง่าย
+                const container = cube.parentElement;
+
+                // Mouse Events
+                container.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMouseX = e.clientX;
+                    previousMouseY = e.clientY;
+                    cube.style.cursor = 'grabbing';
+                    e.preventDefault(); // ป้องกันการเลือก text
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+
+                    const deltaX = e.clientX - previousMouseX;
+                    const deltaY = e.clientY - previousMouseY;
+
+                    // ปรับองศาการหมุน (ความเร็ว 0.5)
+                    // ลากซ้ายขวา -> หมุนรอบแกน Y
+                    // ลากขึ้นลง -> หมุนรอบแกน X
+                    currentYRotation += deltaX * 0.5;
+                    currentXRotation -= deltaY * 0.5;
+
+                    cube.style.transform = `rotateX(${currentXRotation}deg) rotateY(${currentYRotation}deg) rotateZ(${currentZRotation}deg)`;
+
+                    previousMouseX = e.clientX;
+                    previousMouseY = e.clientY;
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        cube.style.cursor = 'grab';
+                    }
+                });
+
+                // Touch Events (สำหรับมือถือ/แท็บเล็ต)
+                container.addEventListener('touchstart', (e) => {
+                    isDragging = true;
+                    previousMouseX = e.touches[0].clientX;
+                    previousMouseY = e.touches[0].clientY;
+                    e.preventDefault();
+                }, { passive: false });
+
+                window.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    const deltaX = e.touches[0].clientX - previousMouseX;
+                    const deltaY = e.touches[0].clientY - previousMouseY;
+
+                    currentYRotation += deltaX * 0.5;
+                    currentXRotation -= deltaY * 0.5;
+
+                    cube.style.transform = `rotateX(${currentXRotation}deg) rotateY(${currentYRotation}deg) rotateZ(${currentZRotation}deg)`;
+
+                    previousMouseX = e.touches[0].clientX;
+                    previousMouseY = e.touches[0].clientY;
+                    e.preventDefault();
+                }, { passive: false });
+
+                window.addEventListener('touchend', () => {
+                    isDragging = false;
+                });
+            }
+
+            const screens = {
+                start: document.getElementById('startScreen'),
+                difficulty: document.getElementById('difficultyScreen'),
+                howToPlay: document.getElementById('howToPlayScreen'),
+                game: document.getElementById('gameScreen'),
+                results: document.getElementById('resultsScreen'),
+                review: document.getElementById('reviewScreen')
+            };
+            const loader = document.getElementById('loader-overlay');
+            const modal = document.getElementById('confirmModal');
+            const mainHeader = document.getElementById('mainHeader');
+            const quizSystemUrl = document.body.dataset.homeUrl;
+
+            // เรียกใช้งานฟังก์ชันเมื่อโหลดเสร็จ
+            document.addEventListener('DOMContentLoaded', () => {
+
+                // --- START: MODIFIED FOR MOCKUP TEST ---
+                if (isMockupMode) {
+                    startGame('test');
+                    return;
+                }
+                // --- END: MODIFIED FOR MOCKUP TEST ---
+                // --- Mobile Sidebar Toggle ---
+                const sidebar = document.querySelector('.question-sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                const hamburger = document.getElementById('hamburgerBtn');
+
+                function toggleSidebar() {
+                    // ค้นหา Sidebar "ทุกตัว" ในหน้าเว็บ (เพราะเรามี 2 อัน)
+                    const allSidebars = document.querySelectorAll('.question-sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+
+                    // สั่ง Toggle class active ให้ Sidebar ทุกตัว (ตัวที่อยู่ในหน้า hidden ก็จะทำงานแต่ไม่เห็นผล ซึ่งถูกต้องแล้ว)
+                    allSidebars.forEach(sidebar => {
+                        sidebar.classList.toggle('active');
+                    });
+
+                    overlay.classList.toggle('active');
+                }
+
+                hamburger.addEventListener('click', toggleSidebar);
+                overlay.addEventListener('click', toggleSidebar); // กดฉากหลังเพื่อปิด
+
+                // ปิด Sidebar อัตโนมัติเมื่อเลือกข้อ (บนมือถือ)
+                document.getElementById('questionGrid').addEventListener('click', (e) => {
+                    if (window.innerWidth <= 992 && e.target.tagName === 'BUTTON') {
+                        toggleSidebar();
+                    }
+                });
+
+                document.getElementById('practiceModeBtn').addEventListener('click', () => selectMode('practice'));
+                document.getElementById('testModeBtn').addEventListener('click', () => selectMode('test'));
+                document.getElementById('howToPlayBtn').addEventListener('click', showTutorial);
+                document.getElementById('backToStartBtn').addEventListener('click', () => switchScreen('start'));
+                document.getElementById('retakeBtn').addEventListener('click', backToStart);
+                document.getElementById('backToMenuBtn').addEventListener('click', backToStart);
+                document.getElementById('cancelSubmitBtn').addEventListener('click', () => modal.classList.remove('active'));
+                document.getElementById('confirmSubmitBtn').addEventListener('click', () => { modal.classList.remove('active'); submitQuiz(false); });
+                document.querySelectorAll('.back-to-system-btn').forEach(btn => btn.addEventListener('click', () => { loader.style.display = 'flex'; window.open(quizSystemUrl, '_top'); }));
+                document.getElementById('reviewBtn').addEventListener('click', showReview);
+                document.getElementById('backToResultsBtn').addEventListener('click', () => switchScreen('results'));
+                document.getElementById('reviewPrevBtn').addEventListener('click', () => jumpToReviewQuestion(reviewQuestionIndex - 1));
+                document.getElementById('reviewNextBtn').addEventListener('click', () => jumpToReviewQuestion(reviewQuestionIndex + 1));
+
+                // Difficulty Buttons
+                document.getElementById('easyBtn').addEventListener('click', () => startGame('easy'));
+                document.getElementById('normalBtn').addEventListener('click', () => startGame('normal'));
+                document.getElementById('hardBtn').addEventListener('click', () => startGame('hard'));
+                document.getElementById('hellBtn').addEventListener('click', () => startGame('hell'));
+
+                // --- เปิดใช้งานระบบหมุนด้วยเมาส์ ---
+                enableMouseRotation('reviewInteractiveCube');
+                enableMouseRotation('practice-review-interactive-cube');
+            });
+
+            function switchScreen(screenName) {
+                Object.values(screens).forEach(s => s.classList.add('hidden'));
+                screens[screenName].classList.remove('hidden');
+
+                // --- START: MODIFIED FOR MOCKUP TEST ---
+                if (isMockupMode) {
+                    mainHeader.style.display = 'none';
+                } else {
+                    document.querySelector('.container').style.paddingTop = '80px';
+                }
+                // --- END: MODIFIED FOR MOCKUP TEST ---
+
+                const backToMenuBtn = document.getElementById('backToMenuBtn');
+                const backToResultsBtn = document.getElementById('backToResultsBtn');
+
+                backToMenuBtn.classList.toggle('hidden', !(screenName === 'game' && gameState.mode === 'practice'));
+                backToResultsBtn.classList.toggle('hidden', !(screenName === 'review' && gameState.mode === 'test'));
+            }
+
+            function backToStart() {
+                if (timerInterval) clearInterval(timerInterval);
+                switchScreen('start');
+            }
+
+            // --- START: ADDED FUNCTION ---
+            function selectMode(mode) {
+                gameState.mode = mode;
+                document.getElementById('difficultyTitle').textContent = `Select ${mode.charAt(0).toUpperCase() + mode.slice(1)} Difficulty`;
+                switchScreen('difficulty');
+            }
+            // --- END: ADDED FUNCTION ---
+
+            async function showTutorial() {
+                loader.style.display = 'flex';
+                try {
+                    // เรียก API แทนการ Hardcode
+                    const res = await fetch("https://us-central1-silp-pilot-platform.cloudfunctions.net/getTutorialData");
+                    const result = await res.json();
+
+                    if (result.success) {
+                        switchScreen('howToPlay');
+                        currentSymbolMapping = result.data.symbolMapping;
+                        document.getElementById('tutorial-pattern').innerHTML = create2DPattern(result.data.pattern);
+                        document.getElementById('tutorial-cube').innerHTML = create3DCube(result.data.cube);
+                    }
+                } catch (e) {
+                    console.error("Tutorial load failed", e);
+                    alert("Could not load tutorial.");
+                } finally {
+                    loader.style.display = 'none';
+                }
+            }
+
+            async function startGame(difficulty) {
+                gameState.difficulty = difficulty;
+                document.getElementById('loader-overlay').style.display = 'flex';
+
+                try {
+                    const FUNCTION_URL = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getFoldingBoxQuizData";
+                    const response = await fetch(`${FUNCTION_URL}?difficulty=${difficulty}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // [FIX 3] เรียก onQuizDataReceived อย่างเดียวพอ
+                        // (ข้างในนั้นมี logic เรียก startTimer อยู่แล้ว ไม่ต้องเรียกซ้ำตรงนี้)
+                        onQuizDataReceived(result.data);
+
+                    } else {
+                        alert("Error: " + (result.error || "Unknown error from server"));
+                        switchScreen('start');
+                        document.getElementById('loader-overlay').style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error("Connection failed:", error);
+                    alert("Failed to connect to server. Please check your internet connection.");
+                    switchScreen('start');
+                    document.getElementById('loader-overlay').style.display = 'none';
+                }
+                // ย้าย finally ออก หรือจัดการ loader ใน if/else แทน เพื่อป้องกัน loader ปิดก่อน render เสร็จ
+            }
+
+            /**
+            * This function is the success handler for our server-side call.
+            * It receives the question data from the server.
+            */
+            function onQuizDataReceived(data) {
+                userAnswers = new Array(TOTAL_QUESTIONS).fill(null);
+                currentQuestionIndex = 0;
+
+                if (data.error) {
+                    alert(data.error);
+                    document.getElementById('loader-overlay').style.display = 'none';
+                    return;
+                }
+
+                questions = data;
+                document.body.classList.toggle('practice-mode-active', gameState.mode === 'practice');
+                switchScreen('game');
+
+                // [FIX 2 & 3] แก้ไข ID ผิด และ Logic Timer
+                const timerEl = document.getElementById('headerTimer');
+                if (gameState.mode === 'test') {
+                    timerEl.style.display = 'block';
+                    startTimer();
+                } else {
+                    timerEl.style.display = 'none';
+                }
+
+                displayQuestion();
+                document.getElementById('loader-overlay').style.display = 'none';
+            }
+
+            /**
+             * Analyzes the 2D pattern grid to find opposite faces.
+             * Assumes a standard 'cross' or similar foldable net pattern.
+             * Returns a mapping like { '1': '6', '6': '1', '2': '4', ... }
+             */
+            function findOpposites(pattern) {
+                const coords = {}; // Store { number: [row, col] }
+                for (let r = 0; r < pattern.length; r++) {
+                    for (let c = 0; c < pattern[r].length; c++) {
+                        if (pattern[r][c]) {
+                            coords[pattern[r][c]] = [r, c];
+                        }
+                    }
+                }
+
+                const numbers = Object.keys(coords);
+                if (numbers.length !== 6) {
+                    console.error("Pattern does not contain exactly 6 faces:", pattern);
+                    return {}; // Cannot determine opposites
+                }
+
+                const opposites = {};
+
+                for (let i = 0; i < numbers.length; i++) {
+                    const num1 = numbers[i];
+                    if (opposites[num1]) continue; // Already found pair
+
+                    const [r1, c1] = coords[num1];
+
+                    for (let j = i + 1; j < numbers.length; j++) {
+                        const num2 = numbers[j];
+                        const [r2, c2] = coords[num2];
+
+                        // Check for distance 2 in same row or col (common in cross patterns)
+                        if ((r1 === r2 && Math.abs(c1 - c2) === 2) || (c1 === c2 && Math.abs(r1 - r2) === 2)) {
+                            // Check if there's a face *between* them
+                            const betweenRow = (r1 + r2) / 2;
+                            const betweenCol = (c1 + c2) / 2;
+                            let foundBetween = false;
+                            for (const num3 in coords) {
+                                if (coords[num3][0] === betweenRow && coords[num3][1] === betweenCol) {
+                                    foundBetween = true;
+                                    break;
+                                }
+                            }
+                            if (foundBetween) {
+                                opposites[num1] = num2;
+                                opposites[num2] = num1;
+                                break; // Found opposite for num1
+                            }
+                        }
+                        // Check for L-shape distance (less common, but possible in some nets)
+                        // Example: 1 step row, 2 steps col OR 2 steps row, 1 step col might indicate opposites in compact nets
+                        // This logic can get complex, sticking to simple cross for now.
+                    }
+                }
+
+                // Try to deduce the last pair if 4 are found
+                if (Object.keys(opposites).length === 4) {
+                    const remaining = numbers.filter(n => !opposites[n]);
+                    if (remaining.length === 2) {
+                        opposites[remaining[0]] = remaining[1];
+                        opposites[remaining[1]] = remaining[0];
+                    }
+                }
+
+                // Basic validation - check if all numbers 1-6 are keys
+                const allKeys = Object.keys(opposites);
+                if (allKeys.length !== 6 || !['1', '2', '3', '4', '5', '6'].every(n => allKeys.includes(n))) {
+                    console.warn("Could not reliably determine all opposites for pattern:", pattern, "Found:", opposites);
+                    // Fallback or default logic might be needed here if patterns are complex
+                }
+
+
+                return opposites;
+            }
+
+            const getBaseNumber = (faceIdentifier) => {
+                if (typeof faceIdentifier !== 'string') return String(faceIdentifier);
+                const num = faceIdentifier.slice(0, -1);
+                if (['U', 'D', 'L', 'R'].includes(faceIdentifier.slice(-1))) {
+                    return num;
+                }
+                return String(faceIdentifier); // Fallback for 'old' type
+            };
+            const getOrientation = (faceIdentifier) => {
+                const orientation = faceIdentifier.slice(-1);
+                if (['U', 'D', 'L', 'R'].includes(orientation)) {
+                    return orientation;
+                }
+                return 'U'; // Default for 'old' type (doesn't matter)
+            };
+            const getOppositeOrientation = (orientation) => {
+                if (orientation === 'U') return 'D';
+                if (orientation === 'D') return 'U';
+                if (orientation === 'L') return 'R';
+                if (orientation === 'R') return 'L';
+                return 'U'; // Fallback
+            };
+
+            const getChoiceFaceHtml = (faceIdentifier, faceIndex) => {
+                faceIdentifier = String(faceIdentifier);
+
+                // [FIX 1] ป้องกัน Crash ถ้า Mapping ไม่มีอยู่จริง
+                if (!currentSymbolMapping) return '?';
+
+                const isRotated = ['U', 'D', 'L', 'R'].includes(faceIdentifier.slice(-1));
+                let baseRotation = 0;
+                let symbol = '';
+
+                if (isRotated) {
+                    const number = faceIdentifier.slice(0, -1);
+                    const orientation = faceIdentifier.slice(-1);
+                    symbol = currentSymbolMapping[number] || '?';
+
+                    const logicTable = {
+                        'U': [90, 0, 0], 'D': [270, 180, 180],
+                        'L': [0, 270, 270], 'R': [180, 90, 90]
+                    };
+                    baseRotation = (faceIndex >= 0 && faceIndex <= 2 && logicTable[orientation]) ?
+                        logicTable[orientation][faceIndex] : 0;
+                } else {
+                    symbol = currentSymbolMapping[getBaseNumber(faceIdentifier)] || '';
+                    baseRotation = 0;
+                }
+
+                return `<span style="display:inline-block; transform: rotate(${baseRotation}deg);">${symbol}</span>`;
+            };
+
+            /**
+             * For Review Cube (Full 6 faces)
+             * Applies simple rotation based on the face's defined orientation.
+             * faceIndex 0=Top, 1=Left, 2=Front, 3=Back, 4=Right, 5=Bottom
+             */
+            const getReviewFaceHtml = (faceIdentifier, faceIndex) => {
+                const isRotated = typeof faceIdentifier === 'string' && ['U', 'D', 'L', 'R'].includes(faceIdentifier.slice(-1));
+                let baseRotation = 0;
+                let symbol = '';
+
+                if (isRotated) {
+                    const number = faceIdentifier.slice(0, -1);
+                    const orientation = faceIdentifier.slice(-1);
+                    symbol = currentSymbolMapping[number] || '?';
+
+                    // Simple map: 'U' is 0 deg, 'R' is 90 deg, etc.
+                    const rotationMap = {
+                        'U': 0,
+                        'R': 90,
+                        'D': 180,
+                        'L': 270
+                    };
+                    baseRotation = rotationMap[orientation] !== undefined ? rotationMap[orientation] : 0;
+
+                } else {
+                    // 'old' type
+                    symbol = currentSymbolMapping[getBaseNumber(faceIdentifier)] || '';
+                    baseRotation = 0;
+                }
+
+                // --- START: MODIFIED LOGIC ---
+                // Apply +90 for Top face (index 0) and -90 for Bottom face (index 5)
+                if (faceIndex === 0) {
+                    baseRotation += 90;
+                } else if (faceIndex === 5) {
+                    baseRotation -= 90; // <-- ADDED: Specific rotation for Bottom face
+                }
+                // --- END: MODIFIED LOGIC ---
+
+                return `<span style="display:inline-block; transform: rotate(${baseRotation}deg);">${symbol}</span>`;
+            };
+
+            // --- START: ADDED REUSABLE FUNCTION ---
+            function populateInteractiveCube(cubeId, question) {
+                const interactiveCube = document.getElementById(cubeId);
+                if (!interactiveCube) return;
+
+                currentSymbolMapping = question.symbolMapping; // Ensure correct map is loaded
+
+                const faceElements = {
+                    front: interactiveCube.querySelector('.face.front'),
+                    back: interactiveCube.querySelector('.face.back'),
+                    left: interactiveCube.querySelector('.face.left'),
+                    right: interactiveCube.querySelector('.face.right'),
+                    top: interactiveCube.querySelector('.face.top'),
+                    bottom: interactiveCube.querySelector('.face.bottom')
+                };
+                Object.values(faceElements).forEach(face => face.innerHTML = '');
+
+                let topFaceId = null, leftFaceId = null, frontFaceId = null;
+                let bottomFaceId = null, rightFaceId = null, backFaceId = null;
+
+                // *** START MODIFICATION ***
+                // Prioritize 'foldedbox' if it exists, regardless of 'type'
+                // This fixes both Problem 1 and Problem 2's source
+                if (question.foldedbox && question.foldedbox.length === 6) {
+                    topFaceId = question.foldedbox[0];
+                    leftFaceId = question.foldedbox[1];
+                    frontFaceId = question.foldedbox[2];
+                    backFaceId = question.foldedbox[3];
+                    rightFaceId = question.foldedbox[4];
+                    bottomFaceId = question.foldedbox[5];
+                } else {
+                    // Fallback (old logic) - This should no longer be used if you updated gs_Rev11.txt
+                    console.error("Missing 'foldedbox' data for question:", question);
+                    const opposites = findOpposites(question.pattern);
+                    let firstCorrectAnswer = question.correctChoice || (question.correctChoices ? question.correctChoices[0] : ['1', '2', '3']);
+
+                    topFaceId = String(firstCorrectAnswer[0]);
+                    leftFaceId = String(firstCorrectAnswer[1]);
+                    frontFaceId = String(firstCorrectAnswer[2]);
+
+                    if (Object.keys(opposites).length === 6) {
+                        bottomFaceId = opposites[topFaceId] || null;
+                        rightFaceId = opposites[leftFaceId] || null;
+                        backFaceId = opposites[frontFaceId] || null;
+                    }
+                }
+                // *** END MODIFICATION ***
+
+
+                // Use the correct function: getReviewFaceHtml
+                if (faceElements.top) faceElements.top.innerHTML = getReviewFaceHtml(topFaceId, 0);
+                if (faceElements.left) faceElements.left.innerHTML = getReviewFaceHtml(leftFaceId, 1);
+                if (faceElements.front) faceElements.front.innerHTML = getReviewFaceHtml(frontFaceId, 2);
+                if (faceElements.back) faceElements.back.innerHTML = getReviewFaceHtml(backFaceId, 3);
+                if (faceElements.right) faceElements.right.innerHTML = getReviewFaceHtml(rightFaceId, 4);
+                if (faceElements.bottom) faceElements.bottom.innerHTML = getReviewFaceHtml(bottomFaceId, 5);
+
+
+                // Reset rotation
+                currentXRotation = -25;
+                currentYRotation = 45;
+                currentZRotation = 0;
+                interactiveCube.style.transform = `rotateX(${currentXRotation}deg) rotateY(${currentYRotation}deg) rotateZ(${currentZRotation}deg)`;
+            }
+            // --- END: ADDED REUSABLE FUNCTION ---
+
+            function renderReviewQuestion() {
+                const q = questions[reviewQuestionIndex];
+                if (!q) return; // ป้องกัน Error
+
+                currentSymbolMapping = q.symbolMapping;
+                document.getElementById('reviewQuestionCounter').textContent = `Question ${reviewQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                document.getElementById('reviewPatternDisplay').innerHTML = create2DPattern(q);
+
+                populateInteractiveCube('reviewInteractiveCube', q);
+
+                // จัดการ Layout สำหรับ Hell Mode
+                const reviewContainer = document.getElementById('reviewChoicesContainer');
+                const reviewCubeArea = document.querySelector('#reviewScreen .review-cube-area');
+
+                if (gameState.difficulty === 'hell') {
+                    reviewContainer.classList.add('hell-review-mode');
+                    if (reviewCubeArea) reviewCubeArea.classList.add('review-area-hell-compact');
+                } else {
+                    reviewContainer.classList.remove('hell-review-mode');
+                    if (reviewCubeArea) reviewCubeArea.classList.remove('review-area-hell-compact');
+                }
+
+                // --- ส่วนแสดงผล Choice ---
+                let choicesHTML = '';
+                const userAnswer = userAnswers[reviewQuestionIndex];
+                // [แก้ไข] ประกาศตัวแปร keyLabels ตรงนี้ เพื่อไม่ให้เกิด Error
+                const keyLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+                if (q.correctChoices) {
+                    // --- HELL MODE REVIEW ---
+                    const userChoiceIndices = userAnswer || [];
+                    const correctChoiceKeys = new Set(q.correctChoices.map(c => [...c].sort().join('-')));
+                    const allChoiceKeys = q.choices.map(c => [...c].sort().join('-'));
+
+                    q.choices.forEach((choice, index) => {
+                        const choiceKey = allChoiceKeys[index];
+                        const isCorrect = correctChoiceKeys.has(choiceKey);
+                        const isUserSelected = userChoiceIndices.includes(index);
+
+                        let choiceClass = 'disabled';
+                        if (isCorrect) choiceClass += ' correct';
+                        if (isUserSelected) choiceClass += ' user-selected';
+                        if (isUserSelected && !isCorrect) choiceClass += ' incorrect';
+
+                        const keyLabel = keyLabels[index] || '';
+                        choicesHTML += `<div class="choice-button ${choiceClass}">
+                                            <span class="key-hint">${keyLabel}</span>
+                                            ${create3DCube(choice)}
+                                        </div>`;
+                    });
+                } else {
+                    // --- EASY/NORMAL/HARD REVIEW ---
+                    const userAnswerIndex = userAnswer;
+                    q.choices.forEach((choice, index) => {
+                        const isCorrect = JSON.stringify(choice) === JSON.stringify(q.correctChoice);
+                        let choiceClass = 'disabled';
+                        if (isCorrect) choiceClass += ' correct';
+
+                        if (index === userAnswerIndex) {
+                            choiceClass += ' user-selected';
+                            if (!isCorrect) choiceClass += ' incorrect';
+                        } else if (!isCorrect) {
+                            choiceClass += ' incorrect'; // ทำให้ข้อผิดจางลง
+                        }
+
+                        const keyLabel = keyLabels[index] || '';
+                        choicesHTML += `<div class="choice-button ${choiceClass}">
+                                            <span class="key-hint">${keyLabel}</span>
+                                            ${create3DCube(choice)}
+                                        </div>`;
+                    });
+                }
+
+                document.getElementById('reviewChoicesContainer').innerHTML = choicesHTML;
+
+                // เรียก Render Nav หลังจากวาด Choice เสร็จแล้ว
+                renderReviewNav();
+
+                document.getElementById('reviewPrevBtn').disabled = reviewQuestionIndex === 0;
+                document.getElementById('reviewNextBtn').disabled = reviewQuestionIndex === TOTAL_QUESTIONS - 1;
+            }
+
+
+
+            function displayQuestion() {
+                const container = document.getElementById('choicesContainer');
+                const practiceArea = document.getElementById('practice-review-cube-area');
+
+                // 1. ล้างค่าเดิมทิ้งก่อน (Reset)
+                container.classList.remove('hell-mode', 'hell-review-mode');
+                practiceArea.classList.remove('review-area-hell-compact');
+                practiceArea.classList.add('hidden');
+
+                // 2. [จุดที่แก้ไข] เช็คเงื่อนไข: ถ้าเป็น Practice Mode AND Hell Level
+                // ให้ใส่ Class ย่อส่วน (.hell-review-mode) ทันทีตั้งแต่เริ่ม!
+                if (gameState.mode === 'practice' && gameState.difficulty === 'hell') {
+                    container.classList.add('hell-review-mode');
+                    practiceArea.classList.add('review-area-hell-compact');
+                }
+
+                const q = questions[currentQuestionIndex];
+
+                // ใช้ mapping จากโจทย์ข้อนั้นๆ เลย
+                if (q.symbolMapping) {
+                    currentSymbolMapping = q.symbolMapping;
+                } else {
+                    console.error("Symbol mapping missing from server data!");
+                    currentSymbolMapping = {};
+                }
+
+                document.getElementById('questionCounter').textContent = `Question ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                document.getElementById('patternDisplay').innerHTML = create2DPattern(q);
+
+                let choicesHTML = '';
+                const isHell = gameState.difficulty === 'hell';
+                const currentAnswers = userAnswers[currentQuestionIndex];
+                const keyLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // รองรับถึง Hell Mode (8 ตัว)
+
+                q.choices.forEach((choice, index) => {
+                    let isSelected = false;
+                    if (isHell) {
+                        isSelected = (currentAnswers || []).includes(index);
+                    } else {
+                        isSelected = (currentAnswers === index);
+                    }
+
+                    // [เพิ่ม] สร้าง Label A, B, C... ตาม Index
+                    const keyLabel = keyLabels[index] || '';
+
+                    choicesHTML += `
+                        <div class="choice-button ${isSelected ? 'selected' : ''}" onclick="selectAnswer(${index})">
+                            <span class="key-hint">${keyLabel}</span> ${create3DCube(choice)}
+                        </div>`;
+                });
+                document.getElementById('choicesContainer').innerHTML = choicesHTML;
+
+                updateNavigation();
+            }
+
+            function create2DPattern(q) {
+                let patternHTML = '<div class="pattern-grid">';
+                q.pattern.forEach(row => row.forEach(cell => {
+                    patternHTML += `<div class="pattern-cell ${cell ? '' : 'empty'}">${cell ? currentSymbolMapping[cell] : ''}</div>`;
+                }));
+                return patternHTML + '</div>';
+            }
+
+            function create3DCube(faces) {
+                // faces[0] = Top face identifier (e.g., "1U")
+                // faces[1] = Left face identifier (e.g., "2U")
+                // faces[2] = Front face identifier (e.g., "3U")
+
+                // Call this 3 times using the correct function for *choices*
+                const topFace = getChoiceFaceHtml(faces[0], 0);    // faceIndex 0 (Top)
+                const leftFace = getChoiceFaceHtml(faces[1], 1);  // faceIndex 1 (Left)
+                const frontFace = getChoiceFaceHtml(faces[2], 2); // faceIndex 2 (Front)
+
+                return `<div class="cube-container"><div class="cube">
+                                                                                                                                                                                                                                    <div class="cube-face top">${topFace}</div>
+                                                                                                                                                                                                                                    <div class="cube-face left">${leftFace}</div>
+                                                                                                                                                                                                                                    <div class="cube-face front">${frontFace}</div>
+                                                                                                                                                                                                                                </div></div>`;
+            }
+
+            function selectAnswer(choiceIndex) {
+                const isHell = gameState.difficulty === 'hell';
+
+                if (isHell) {
+                    let currentAnswers = userAnswers[currentQuestionIndex] || [];
+                    const answerIndexInArray = currentAnswers.indexOf(choiceIndex);
+
+                    if (answerIndexInArray > -1) {
+                        // Deselect
+                        currentAnswers.splice(answerIndexInArray, 1);
+                    } else {
+                        // Select
+                        currentAnswers.push(choiceIndex);
+                    }
+                    userAnswers[currentQuestionIndex] = currentAnswers;
+                } else {
+                    // Easy, Medium, Hard (Single select)
+                    userAnswers[currentQuestionIndex] = choiceIndex;
+                }
+
+                // Re-render choices to show new selection state
+                displayQuestion();
+
+                // Update side nav in Test Mode
+                if (gameState.mode === 'test') {
+                    renderSideNav();
+                }
+
+                // Update nav controls (e.g., enable "Check Answer" in Practice)
+                updateNavigation();
+                // --- ⬇️ START: FIX (Auto-advance) ⬇️ ---
+                if (gameState.mode === 'test' && gameState.difficulty !== 'hell') {
+                    if (currentQuestionIndex < TOTAL_QUESTIONS - 1) {
+                        setTimeout(() => {
+                            currentQuestionIndex++;
+                            displayQuestion();
+                        }, 200); // หน่วงเวลา 200ms ให้ user เห็นว่าเลือกแล้ว
+                    } else {
+                        // ไม่ต้องทำอะไร ถ้าเป็นข้อสุดท้าย ให้ user กด Submit เอง
+                    }
+                }
+                // --- ⬆️ END: FIX ⬆️ ---
+            }
+
+
+            function updateNavigation() {
+                const nav = document.getElementById('navigationControls');
+                nav.innerHTML = '';
+                nav.className = 'navigation-controls';
+
+                if (gameState.mode === 'practice') {
+                    nav.classList.add('center');
+                    const choicesContainer = document.getElementById('choicesContainer');
+                    const hasBeenChecked = choicesContainer.querySelector('.choice-button.correct, .choice-button.incorrect');
+
+                    if (hasBeenChecked) {
+                        if (currentQuestionIndex < TOTAL_QUESTIONS - 1) {
+                            // [แก้ข้อ 5] เปลี่ยนข้อความปุ่ม
+                            nav.innerHTML = `<button class="btn btn-secondary" onclick="currentQuestionIndex++; displayQuestion();">Next &gt;</button>`;
+                        } else {
+                            nav.innerHTML = `<button class="btn btn-primary" onclick="submitQuiz()">Finish Practice</button>`;
+                        }
+                    } else {
+                        nav.innerHTML = `<button class="btn btn-success" ${!userAnswers.hasOwnProperty(currentQuestionIndex) ? 'disabled' : ''} onclick="handleCheckAnswer()">Check Answer</button>`;
+                    }
+                } else {
+                    renderSideNav();
+                    // [แก้ข้อ 2] ใช้ Flexbox จัดปุ่มให้เรียงกันและยืดเต็มพื้นที่
+                    nav.innerHTML = `
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <button class="btn btn-secondary" style="flex: 1; padding: 8px;" ${currentQuestionIndex === 0 ? 'disabled' : ''} onclick="currentQuestionIndex--; displayQuestion();">&lt; Prev</button>
+                            <button class="btn btn-primary" style="flex: 1.5; padding: 8px;" onclick="modal.classList.add('active')">Submit</button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 8px;" ${currentQuestionIndex === TOTAL_QUESTIONS - 1 ? 'disabled' : ''} onclick="currentQuestionIndex++; displayQuestion();">Next &gt;</button>
+                        </div>
+                    `;
+                }
+            }
+
+            function renderSideNav() {
+                const navGrid = document.getElementById('questionGrid');
+                navGrid.innerHTML = '';
+                for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = `question-nav-btn ${userAnswers[i] !== null ? 'answered' : ''} ${i === currentQuestionIndex ? 'current' : ''}`;
+                    btn.textContent = i + 1;
+                    btn.onclick = () => { currentQuestionIndex = i; displayQuestion(); };
+                    navGrid.appendChild(btn);
+                }
+            }
+
+            function handleCheckAnswer() {
+                const q = questions[currentQuestionIndex];
+                if (gameState.difficulty === 'hell') {
+                    // สั่งเปลี่ยน Layout ให้เป็นแบบย่อ
+                    document.getElementById('choicesContainer').classList.add('hell-review-mode');
+                    document.getElementById('practice-review-cube-area').classList.add('review-area-hell-compact');
+
+                    // --- HELL MODE CHECK ---
+                    // [แก้บรรทัดนี้] เติม []; ต่อท้ายให้จบประโยค
+                    const userChoiceIndices = userAnswers[currentQuestionIndex] || [];
+
+                    const correctChoices = q.correctChoices || [];
+
+                    // Convert choice objects to string keys for comparison
+                    const correctChoiceKeys = new Set(correctChoices.map(c => [...c].sort().join('-')));
+                    const allChoiceKeys = q.choices.map(c => [...c].sort().join('-'));
+
+                    document.querySelectorAll('.choice-button').forEach((item, index) => {
+                        item.classList.add('disabled');
+                        const choiceKey = allChoiceKeys[index];
+                        const isCorrectChoice = correctChoiceKeys.has(choiceKey);
+                        const isUserSelected = userChoiceIndices.includes(index);
+
+                        if (isCorrectChoice) {
+                            item.classList.add('correct');
+                        } else {
+                            item.classList.add('incorrect'); // Mark all non-corrects
+                        }
+                        if (isUserSelected) {
+                            item.classList.add('user-selected');
+                            // (incorrect class is already applied if !isCorrectChoice)
+                        }
+                    });
+
+                } else {
+                    // --- Easy/Medium/Hard CHECK ---
+                    const userAnswerIndex = userAnswers[currentQuestionIndex];
+                    document.querySelectorAll('.choice-button').forEach((item, index) => {
+                        item.classList.add('disabled');
+                        const isCorrect = JSON.stringify(q.choices[index]) === JSON.stringify(q.correctChoice);
+                        if (isCorrect) item.classList.add('correct');
+                        if (index === userAnswerIndex) {
+                            item.classList.add('user-selected');
+                            if (!isCorrect) item.classList.add('incorrect');
+                        }
+                    });
+                }
+                // --- START: ADDED TO SHOW/POPULATE PRACTICE REVIEW CUBE ---
+                if (gameState.mode === 'practice') {
+                    populateInteractiveCube('practice-review-interactive-cube', q);
+                    document.getElementById('practice-review-cube-area').classList.remove('hidden');
+                }
+                // --- START: ADDED TO SHOW/POPULATE PRACTICE REVIEW CUBE ---
+                if (gameState.mode === 'practice') {
+                    populateInteractiveCube('practice-review-interactive-cube', q);
+                    document.getElementById('practice-review-cube-area').classList.remove('hidden');
+                }
+                // --- END: ADDED ---
+                updateNavigation(); // Show "Next Question"
+            }
+
+            function startTimer() {
+                // [FIX 3] เคลียร์ Timer เก่าทิ้งก่อนเสมอ เพื่อป้องกัน Loop ซ้อน
+                if (timerInterval) clearInterval(timerInterval);
+
+                timeLeft = TIME_LIMIT;
+                timerInterval = null;
+
+                const timerEl = document.getElementById('headerTimer');
+                timerEl.style.display = 'block';
+
+                updateDisplay();
+                timerInterval = setInterval(() => {
+                    timeLeft--; // ลดค่าลงก่อนเช็ค
+                    if (timeLeft < 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz(true);
+                    } else {
+                        updateDisplay();
+                    }
+                }, 1000);
+
+                function updateDisplay() {
+                    const m = Math.floor(timeLeft / 60);
+                    const s = timeLeft % 60;
+                    timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    timerEl.classList.toggle('danger', timeLeft <= 30);
+                }
+            }
+            // เพิ่ม: ซ่อน Timer เมื่อจบเกม หรือกด Back
+            function hideTimer() {
+                document.getElementById('headerTimer').style.display = 'none';
+            }
+
+            function submitQuiz(isTimeUp = false) {
+                if (timerInterval) clearInterval(timerInterval);
+                loader.style.display = 'flex';
+
+                // --- 1. คำนวณคะแนนก่อนทำอย่างอื่นเลย (ย้ายมาไว้บนสุด) ---
+                let correctCount = 0;
+                userAnswers.forEach((userAnswer, qIndex) => {
+                    if (userAnswer === null) return;
+                    const q = questions[qIndex];
+                    if (q.correctChoices) { // Hell Mode
+                        const userChoiceIndices = userAnswer;
+                        const correctChoices = q.correctChoices;
+                        const correctChoiceKeys = new Set(correctChoices.map(c => [...c].sort().join('-')));
+                        const userChoiceKeys = new Set(userChoiceIndices.map(i => [...q.choices[i]].sort().join('-')));
+                        if (userChoiceKeys.size === correctChoiceKeys.size && [...userChoiceKeys].every(key => correctChoiceKeys.has(key))) {
+                            correctCount++;
+                        }
+                    } else if (q.correctChoice) { // Normal Mode
+                        if (JSON.stringify(q.choices[userAnswer]) === JSON.stringify(q.correctChoice)) {
+                            correctCount++;
+                        }
+                    }
+                });
+
+                const answeredCount = userAnswers.filter(a => a !== null).length;
+                const accuracy = answeredCount > 0 ? (correctCount / answeredCount) * 100 : 0;
+                // ---------------------------------------------------------
+
+                // --- START: MODIFIED FOR MOCKUP TEST ---
+                if (isMockupMode) {
+                    const scoreData = {
+                        correctCount: correctCount,
+                        totalQuestions: TOTAL_QUESTIONS,
+                        answeredCount: answeredCount,
+                        accuracy: parseFloat(accuracy.toFixed(2))
+                    };
+                    window.parent.postMessage({ type: 'testComplete', payload: { scoreData } }, '*');
+                    loader.style.display = 'none';
+                } else {
+                    const timeUsed = gameState.mode === 'test' ? TIME_LIMIT - timeLeft : 0;
+
+                    if (gameState.mode === 'test') {
+                        // --- ส่งข้อมูลไป Firebase ---
+                        const scoreData = {
+                            correctCount,
+                            totalQuestions: TOTAL_QUESTIONS,
+                            accuracy: parseFloat(accuracy.toFixed(2)),
+                            timeUsed,
+                            answeredCount,
+                            difficulty: gameState.difficulty,
+                            userEmail: currentUserEmail,
+                            userAnswers: userAnswers
+                        };
+
+                        if (!currentUserEmail) {
+                            alert("Error: User not authenticated. Please log in.");
+                            loader.style.display = 'none';
+                            return;
+                        }
+
+                        const SAVE_SCORE_URL = "https://us-central1-silp-pilot-platform.cloudfunctions.net/saveFoldingBoxScore";
+                        const GET_BEST_SCORE_URL = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestFoldingBoxScore";
+
+                        fetch(SAVE_SCORE_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(scoreData)
+                        })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (!result.success) { throw new Error(result.message || "Failed to save score."); }
+
+                                const percentile = result.percentile ? `${result.percentile.toFixed(2)}%` : 'N/A';
+                                showResults({ correctCount, accuracy, percentile, isTimeUp, timeUsed, answeredCount });
+
+                                return fetch(`${GET_BEST_SCORE_URL}?email=${encodeURIComponent(currentUserEmail)}&difficulty=${gameState.difficulty}`);
+                            })
+                            .then(response => response.json())
+                            .then(bestScoreResult => {
+                                if (bestScoreResult.success) { onBestScoreReceived(bestScoreResult.data); }
+                                else { onBestScoreReceived(null); }
+                            })
+                            .catch(err => {
+                                console.error("Score save/fetch process failed:", err);
+                                // ตอนนี้ correctCount, accuracy, answeredCount มีค่าแน่นอนแล้ว
+                                showResults({ correctCount, accuracy, percentile: 'Error', isTimeUp, timeUsed, answeredCount });
+                                onBestScoreReceived(null);
+                                loader.style.display = 'none';
+                            });
+
+                    } else {
+                        // Practice mode
+                        setTimeout(() => {
+                            showResults({ correctCount, accuracy });
+                            loader.style.display = 'none';
+                        }, 500);
+                    }
+                }
+            }
+
+
+            // --- END: MODIFIED FOR MOCKUP TEST ---
+
+            function showResults({ correctCount, accuracy, percentile, isTimeUp = false, timeUsed = 0, answeredCount = 0 }) {
+                switchScreen('results');
+                // [FIX 3] ซ่อน Timer ทันทีที่เข้าหน้าผลลัพธ์
+                if (timerInterval) clearInterval(timerInterval);
+                document.getElementById('headerTimer').style.display = 'none';
+                switchScreen('results');
+
+                document.getElementById('resultsTitle').textContent = isTimeUp ? "Time's Up!" : (gameState.mode === 'practice' ? "Practice Complete!" : "Quiz Results");
+                if (gameState.mode === 'practice') {
+                    document.getElementById('practiceResults').classList.remove('hidden');
+                    document.getElementById('testResults').classList.add('hidden');
+                    document.getElementById('reviewBtn').classList.add('hidden');
+                    document.getElementById('practiceScore').textContent = `${correctCount} / ${TOTAL_QUESTIONS}`;
+                    document.getElementById('practiceAccuracy').textContent = `${accuracy.toFixed(2)}%`;
+                } else {
+                    document.getElementById('practiceResults').classList.add('hidden');
+                    document.getElementById('testResults').classList.remove('hidden');
+                    document.getElementById('reviewBtn').classList.remove('hidden');
+                    document.getElementById('currentScoreDisplay').textContent = `${correctCount} / ${TOTAL_QUESTIONS}`;
+                    document.getElementById('currentAccuracyDisplay').textContent = `${accuracy.toFixed(2)}%`;
+                    document.getElementById('avgTimeDisplay').textContent = `${answeredCount > 0 ? (timeUsed / answeredCount).toFixed(2) : 0}s`;
+                    document.getElementById('currentPercentileDisplay').textContent = percentile;
+                }
+            }
+
+            function onBestScoreReceived(data) {
+                if (data && data.bestScore !== null) {
+                    document.getElementById('bestScoreDisplay').textContent = `${data.bestScore} / ${data.totalQuestions}`;
+                    document.getElementById('bestAccuracyDisplay').textContent = `${data.bestAccuracy.toFixed(2)}%`;
+                    document.getElementById('bestPercentileDisplay').textContent = `${data.bestPercentile.toFixed(2)}%`;
+                } else {
+                    ['bestScoreDisplay', 'bestAccuracyDisplay', 'bestPercentileDisplay'].forEach(id => document.getElementById(id).textContent = 'N/A');
+                }
+                loader.style.display = 'none';
+            }
+
+            function showReview() {
+                switchScreen('review');
+                reviewQuestionIndex = 0;
+                renderReviewQuestion();
+            }
+
+            function jumpToReviewQuestion(index) {
+                if (index >= 0 && index < TOTAL_QUESTIONS) {
+                    reviewQuestionIndex = index;
+                    renderReviewQuestion();
+                }
+            }
+
+
+
+            // --- IMPORTANT: Ensure getFaceHtmlWithRotation is Correctly Defined ---
+            // Make sure this function exists *outside* of create3DCube, perhaps defined once before create3DCube.
+            // Ensure it handles faceIndex -1 correctly (applies 0 rotation).
+
+            function rotateCube(axis, direction, cubeId) { // <-- ADDED cubeIdfunction updateNavigation() {
+                const rotationAmount = 90;
+                const interactiveCube = document.getElementById(cubeId); // <-- MODIFIED
+                if (!interactiveCube) return;
+
+                if (axis === 'x') {
+                    currentXRotation += rotationAmount * direction;
+                } else if (axis === 'y') {
+                    currentYRotation += rotationAmount * direction;
+                } else if (axis === 'z') {
+                    currentZRotation += rotationAmount * direction;
+                }
+
+                interactiveCube.style.transform = `rotateX(${currentXRotation}deg) rotateY(${currentYRotation}deg) rotateZ(${currentZRotation}deg)`;
+            }
+
+            function renderReviewNav() {
+                const navGrid = document.getElementById('reviewNavGrid');
+                navGrid.innerHTML = '';
+                for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'question-nav-btn';
+                    btn.textContent = i + 1;
+                    // --- START: MODIFIED FOR HELL MODE ---
+                    let isCorrect = false;
+                    const userAnswer = userAnswers[i];
+                    const q = questions[i];
+
+                    if (userAnswer !== null) {
+                        if (q.correctChoices) { // Hell Mode
+                            const userChoiceIndices = userAnswer || [];
+                            const correctChoiceKeys = new Set(q.correctChoices.map(c => [...c].sort().join('-')));
+                            const userChoiceKeys = new Set(userChoiceIndices.map(idx => [...q.choices[idx]].sort().join('-')));
+                            isCorrect = (userChoiceKeys.size === correctChoiceKeys.size && [...userChoiceKeys].every(key => correctChoiceKeys.has(key)));
+                        } else if (q.correctChoice) { // Easy/Medium/Hard
+                            isCorrect = JSON.stringify(q.choices[userAnswer]) === JSON.stringify(q.correctChoice);
+                        }
+                    }
+                    // --- END: MODIFIED FOR HELL MODE ---
+                    if (i === reviewQuestionIndex) btn.classList.add('current');
+                    btn.onclick = () => jumpToReviewQuestion(i);
+                    navGrid.appendChild(btn);
+                }
+            }
+
+            // =========================================
+            // KEYBOARD SHORTCUTS & MAPPING (FINAL UPDATED)
+            // =========================================
+            document.addEventListener('keydown', (e) => {
+                // 1. เช็คสถานะว่าหน้าไหนเปิดอยู่บ้าง
+                const isStartActive = !document.getElementById('startScreen').classList.contains('hidden'); // [เพิ่ม] เช็คหน้า Start
+                const isGameActive = !document.getElementById('gameScreen').classList.contains('hidden');
+                const isReviewActive = !document.getElementById('reviewScreen').classList.contains('hidden');
+                const isResultsActive = !document.getElementById('resultsScreen').classList.contains('hidden');
+                const isDifficultyActive = !document.getElementById('difficultyScreen').classList.contains('hidden');
+                const isHowToPlayActive = !document.getElementById('howToPlayScreen').classList.contains('hidden');
+
+                // --- ESCAPE KEY HANDLING (Global Back Function) ---
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+
+                    // 1. Modal Submit (ในเกม) -> ปิด Modal
+                    const confirmModal = document.getElementById('confirmModal');
+                    if (confirmModal.classList.contains('active')) {
+                        document.getElementById('cancelSubmitBtn').click();
+                        return;
+                    }
+
+                    // 2. หน้า Review Answer -> กลับไปหน้า Results
+                    if (isReviewActive) {
+                        document.getElementById('backToResultsBtn').click();
+                        return;
+                    }
+
+                    // 3. หน้า Practice Mode (Game Screen) -> กลับไปหน้าเลือก Level
+                    if (isGameActive && gameState.mode === 'practice') {
+                        document.getElementById('backToMenuBtn').click();
+                        return;
+                    }
+
+                    // 4. หน้า Results Screen -> กลับไปหน้า Menu
+                    if (isResultsActive) {
+                        document.getElementById('retakeBtn').click();
+                        return;
+                    }
+
+                    // 5. หน้าเลือก Difficulty -> กลับไปหน้า Start Screen
+                    if (isDifficultyActive) {
+                        switchScreen('start');
+                        return;
+                    }
+
+                    // 6. หน้า How to Play -> กลับหน้า Start
+                    if (isHowToPlayActive) {
+                        document.getElementById('backToStartBtn').click();
+                        return;
+                    }
+
+                    // 7. [เพิ่มใหม่] หน้า Start Screen -> ออกจากระบบ (Back to Main Page)
+                    if (isStartActive) {
+                        // สั่งคลิกปุ่ม Back to Main Page
+                        const backBtn = document.querySelector('#startScreen .back-to-system-btn');
+                        if (backBtn) backBtn.click();
+                        return;
+                    }
+                }
+
+                // ถ้าไม่ได้อยู่ในหน้า Game หรือ Review ก็จบการทำงาน (ปุ่มอื่นไม่ต้องใช้)
+                if (!isGameActive && !isReviewActive) return;
+
+
+                // --- ส่วน Modal Confirm (ใช้ Spacebar หรือ Enter) ---
+                const confirmModal = document.getElementById('confirmModal');
+                if (isGameActive && confirmModal.classList.contains('active')) {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('confirmSubmitBtn').click();
+                    }
+                    return;
+                }
+
+                // --- 1. NAVIGATION (Left/Right Arrow) ---
+                if (e.key === 'ArrowLeft') {
+                    if (isGameActive && currentQuestionIndex > 0) {
+                        currentQuestionIndex--;
+                        displayQuestion();
+                    } else if (isReviewActive && reviewQuestionIndex > 0) {
+                        jumpToReviewQuestion(reviewQuestionIndex - 1);
+                    }
+                }
+                else if (e.key === 'ArrowRight') {
+                    if (isGameActive && currentQuestionIndex < TOTAL_QUESTIONS - 1) {
+                        currentQuestionIndex++;
+                        displayQuestion();
+                    } else if (isReviewActive && reviewQuestionIndex < TOTAL_QUESTIONS - 1) {
+                        jumpToReviewQuestion(reviewQuestionIndex + 1);
+                    }
+                }
+
+                // --- 2. ACTION (Spacebar) ---
+                if (e.key === ' ') {
+                    e.preventDefault(); // ป้องกัน Scroll
+
+                    if (isReviewActive) return; // Review ไม่ทำอะไร
+
+                    if (isGameActive) {
+                        if (gameState.mode === 'practice') {
+                            // Practice: Check / Next
+                            const choicesContainer = document.getElementById('choicesContainer');
+                            const isAnswered = choicesContainer.querySelector('.choice-button.correct') || choicesContainer.querySelector('.choice-button.incorrect');
+
+                            if (isAnswered) {
+                                if (currentQuestionIndex < TOTAL_QUESTIONS - 1) {
+                                    currentQuestionIndex++;
+                                    displayQuestion();
+                                } else {
+                                    submitQuiz();
+                                }
+                            } else {
+                                if (userAnswers.hasOwnProperty(currentQuestionIndex)) {
+                                    handleCheckAnswer();
+                                }
+                            }
+                        } else {
+                            // Test Mode: Open Modal
+                            modal.classList.add('active');
+                        }
+                    }
+                }
+
+                // --- 3. CHOICE SELECTION (A-H or 1-8) ---
+                if (isGameActive) {
+                    const key = e.key.toUpperCase();
+                    const keyMap = {
+                        'A': 0, '1': 0, 'B': 1, '2': 1, 'C': 2, '3': 2, 'D': 3, '4': 3,
+                        'E': 4, '5': 4, 'F': 5, '6': 5, 'G': 6, '7': 6, 'H': 7, '8': 7
+                    };
+
+                    if (keyMap.hasOwnProperty(key)) {
+                        const choiceIndex = keyMap[key];
+                        const q = questions[currentQuestionIndex];
+                        if (q && q.choices && choiceIndex < q.choices.length) {
+                            selectAnswer(choiceIndex);
+                        }
+                    }
+                }
+            });
+        </script>
+</body>
+</html>

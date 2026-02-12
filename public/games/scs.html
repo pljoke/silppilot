@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanning Symbol (Original)</title>
+    <style>
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --bg-color-light: #FAF7F2;
+            --bg-color-dark: #F5F2EA;
+            --surface-color: #FFFEF9;
+            --text-color: #3a2e2c;
+            --text-color-secondary: #8B4513;
+            --border-color: #E8DDD4;
+            --light-text: #fff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --success-color-light: #d4edda;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            padding-top: 80px;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        /* [Fix 5] Landscape Lock Overlay - Expanded coverage for Tablets */
+        #rotate-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+            #rotate-overlay p {
+                font-size: 1.5rem;
+                margin-top: 20px;
+            }
+
+        #rotate-icon {
+            font-size: 3rem;
+            animation: rotatePhone 2s infinite ease-in-out;
+        }
+
+        @keyframes rotatePhone {
+            0%, 100% {
+                transform: rotate(-90deg);
+            }
+
+            50% {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Apply to anything up to large tablets */
+        @media screen and (max-width: 1366px) and (orientation: landscape) {
+            #rotate-overlay {
+                display: flex;
+            }
+        }
+
+        .header {
+            background: rgba(255, 253, 250, 0.95);
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 5px;
+            font-size: 1.2rem;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+        .header-timer {
+            display: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-variant-numeric: tabular-nums;
+        }
+
+            .header-timer.active {
+                display: block;
+            }
+
+            .header-timer.danger {
+                color: var(--danger-color);
+                animation: pulse 1s infinite;
+            }
+
+        .main-container {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1600px;
+            height: 85vh;
+        }
+
+        .scan-board {
+            flex-grow: 1;
+            height: 100%;
+            border: 2px solid var(--border-color);
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+            touch-action: pan-x pan-y;
+        }
+
+        .test-panel {
+            width: 350px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            background-color: var(--surface-color);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.1);
+            border: 1px solid var(--border-color);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            overflow-y: auto;
+        }
+
+        h2 {
+            color: var(--primary-color);
+        }
+
+        /* --- SHAPES --- */
+        .shape-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            transition: width 0.3s, height 0.3s, left 0.3s, top 0.3s, transform 0.3s;
+            will-change: transform;
+        }
+
+        .shape-outline, .shape-fill {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        .shape-outline {
+            background-color: var(--text-color);
+        }
+
+        .shape-fill {
+            background-color: var(--surface-color);
+            transform: scale(0.90);
+        }
+
+        .triangle {
+            clip-path: polygon(50% 0%, 93% 75%, 7% 75%);
+        }
+
+        .square {
+        }
+
+        .circle {
+            border-radius: 50%;
+        }
+
+        .pentagon {
+            clip-path: polygon(50% 0%, 98% 35%, 79% 90%, 21% 90%, 2% 35%);
+        }
+
+        .hexagon {
+            clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+        }
+
+        .octagon {
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        }
+
+        .shape-text {
+            position: relative;
+            font-weight: 800;
+            color: var(--text-color);
+            z-index: 2;
+        }
+
+        /* --- GAME UI --- */
+        #timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        #question-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0 1rem 0;
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--primary-color);
+            background-color: var(--bg-color-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .navigation-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        #prev-btn, #next-btn {
+            width: 48%;
+            order: 1;
+        }
+
+        #submit-btn {
+            width: 100%;
+            order: 2;
+        }
+
+        .btn {
+            font-size: 1rem;
+            padding: 12px 28px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        @media (hover: hover) {
+            .btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+            .outline-btn:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+        }
+
+        .btn:disabled {
+            background-color: #ccc !important;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--light-text);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: var(--light-text);
+        }
+
+        .outline-btn {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .options-container .btn {
+            font-size: 1.5rem;
+        }
+
+        .option-btn {
+            border: 3px solid transparent;
+        }
+
+            .option-btn.selected {
+                background-color: var(--secondary-color);
+                border-color: var(--primary-color);
+            }
+
+        /* Navigation Bar (Sidebar) - No Gaps */
+        #nav-bar {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            max-height: 100%;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-item {
+            height: 32px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 0;
+            border: 1px solid var(--border-color);
+            margin-right: -1px;
+            margin-bottom: -1px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background-color: #fff;
+        }
+
+        .nav-answered {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            z-index: 1;
+        }
+
+        .nav-current {
+            background-color: var(--secondary-color);
+            color: white;
+            z-index: 2;
+            border-color: var(--secondary-color);
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .center-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .panel-menu {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(250, 247, 242, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader-spinner {
+            border: 8px solid var(--border-color);
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .practice-result-card {
+            max-width: 450px !important;
+            margin: 0 auto;
+        }
+
+        .result-comparison {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .result-column {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-color-dark);
+            text-align: left;
+        }
+
+            .result-column h3 {
+                text-align: center;
+                margin-bottom: 1rem;
+                color: var(--text-color-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 0.5rem;
+            }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap-x: 2rem;
+            gap-y: 1.25rem;
+            align-items: center;
+        }
+
+        .r-label {
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .r-value {
+            font-weight: 800;
+            text-align: right;
+            color: var(--primary-color);
+        }
+
+        #review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .review-item {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            background: #fff;
+            transition: background 0.2s;
+        }
+
+            .review-item:hover {
+                background-color: #f9f9f9;
+                border-color: var(--primary-color);
+            }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .review-correct {
+            color: var(--success-color);
+        }
+
+        .review-wrong {
+            color: var(--danger-color);
+        }
+
+        .highlight-correct {
+            z-index: 100 !important;
+            filter: drop-shadow(0 0 15px var(--success-color));
+        }
+
+            .highlight-correct .shape-fill {
+                background-color: var(--success-color-light);
+            }
+
+            .highlight-correct .shape-text {
+                color: var(--success-color);
+            }
+
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1005;
+        }
+
+            #sidebarOverlay.active {
+                display: block;
+            }
+
+        /* --- MOBILE & TABLET RESPONSIVE STYLES --- */
+        @media (max-width: 1024px) {
+            body {
+                padding-top: 0;
+                padding-left: 0;
+                padding-right: 0;
+                padding-bottom: 0;
+                display: block;
+                overflow: hidden; /* Prevent body scroll, handle in containers */
+            }
+
+            .header {
+                height: 60px;
+                padding: 0 15px;
+            }
+
+                .header h1 {
+                    font-size: 1.2rem;
+                }
+
+            .hamburger-btn {
+                display: inline-block;
+            }
+
+            /* [Fix 1] Result Screen: Vertical Stack & Scrollable */
+            .center-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start; /* Start from top to allow scrolling */
+                align-items: center;
+                height: 100vh;
+                width: 100%;
+                padding: 15px;
+                padding-top: 80px; /* Space for header */
+                overflow-y: auto; /* Allow vertical scrolling */
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .results-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                gap: 15px;
+                margin-bottom: 40px; /* Buffer for scrolling to bottom */
+                height: auto; /* Allow growth */
+                width: 100%;
+                max-width: 500px; /* Limit width for Tablets */
+                padding: 20px !important;
+            }
+
+                .results-container h2 {
+                    margin: 0;
+                    font-size: 1.5rem;
+                }
+
+            /* Force vertical stacking of Score Cards */
+            .result-comparison {
+                display: flex;
+                flex-direction: column; /* Top-Down */
+                margin-top: 5px;
+                gap: 15px;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            /* Ensure cards take full width */
+            .result-column {
+                width: 100%;
+                flex: none;
+            }
+
+            .results-container .btn {
+                margin-top: 5px;
+            }
+
+            /* [Fix] Center the Menu and Difficulty screens vertically */
+            .panel-menu {
+                width: 100%;
+                max-width: 450px;
+                /* Use auto margins to center vertically within the flex container */
+                margin: auto !important;
+                flex-grow: 0;
+            }
+
+            /* Game Layout: Fixed positioning to prevent header overlap */
+            .main-container, #review-screen {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: auto !important;
+                width: 100%;
+                margin: 0 !important;
+                display: flex;
+                flex-direction: column;
+                z-index: 100;
+                background: var(--bg-color-light);
+            }
+
+            .scan-board, #review-board {
+                flex: 1;
+                width: 100%;
+                height: auto !important;
+                position: relative;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                background-color: #e0e0e0;
+                display: block !important;
+            }
+
+            .test-panel {
+                width: 100%;
+                height: auto;
+                min-height: 0;
+                flex: 0 0 auto;
+                border-radius: 0;
+                z-index: 1002;
+                background: var(--surface-color);
+                border-top: none;
+                padding-bottom: 5px;
+            }
+
+                .test-panel .panel-content {
+                    padding: 5px 10px;
+                    height: auto;
+                    overflow: hidden;
+                }
+
+                    .test-panel .panel-content > div {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        gap: 4px;
+                        height: auto;
+                    }
+
+            #timer-display {
+                display: none;
+            }
+
+            #question-display {
+                font-size: 1.6rem;
+                margin: 0;
+                padding: 2px;
+                min-height: 0;
+                line-height: 1.2;
+                flex-shrink: 0;
+            }
+
+            #q-counter {
+                font-size: 0.8rem;
+                margin: 0;
+                text-align: center;
+                flex-shrink: 0;
+            }
+
+            .options-container {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 5px;
+                flex-shrink: 0;
+            }
+
+                .options-container .btn {
+                    font-size: 1.2rem;
+                    padding: 6px;
+                }
+
+            .navigation-area {
+                flex-wrap: nowrap;
+                gap: 8px;
+                margin-top: 2px;
+                flex-shrink: 0;
+            }
+
+            #prev-btn, #submit-btn, #next-btn {
+                order: 0;
+                flex: 1;
+                width: auto;
+                font-size: 0.9rem;
+                padding: 10px 5px;
+                margin-top: 0;
+                border-radius: 8px;
+            }
+
+            /* Sidebar Nav */
+            #nav-bar {
+                position: fixed;
+                top: 60px;
+                left: -280px;
+                width: 260px;
+                height: calc(100% - 60px);
+                background: white;
+                border-right: 1px solid #ccc;
+                z-index: 1010;
+                transition: left 0.3s ease;
+                padding: 10px;
+                margin: 0;
+                display: grid;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+
+                #nav-bar.active {
+                    left: 0;
+                }
+
+            /* Review Screen Overrides */
+            #review-list {
+                flex-grow: 1;
+                overflow-y: auto;
+                max-height: 150px;
+                padding-bottom: 5px;
+            }
+
+            #review-screen .panel-content {
+                padding: 5px 10px;
+                gap: 5px;
+                justify-content: flex-start;
+            }
+
+            #review-screen h3 {
+                margin: 0;
+                font-size: 1rem;
+                flex-shrink: 0;
+                text-align: center;
+            }
+
+            #review-screen button {
+                margin-top: 0 !important;
+                padding: 6px;
+            }
+        }
+
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+</head>
+<body>
+    <div id="rotate-overlay">
+        <div id="rotate-icon">⟳</div>
+        <p>Please rotate your device to Portrait Mode</p>
+    </div>
+
+    <div id="sidebarOverlay"></div>
+
+    <div id="mainHeader" class="header hidden">
+        <div class="header-left">
+            <button id="hamburgerBtn" class="hamburger-btn">☰</button>
+            <h1>💠 Scanning Symbol</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="mobileTimer" class="header-timer">00:00</div>
+            <button id="headerBackBtn" class="btn btn-primary hidden" onclick="backToResults()" style="padding: 5px 15px; font-size: 0.9rem; margin-right: 0;">Back</button>
+        </div>
+    </div>
+
+    <div id="loader-overlay" class="loader-overlay"><div class="loader-spinner"></div></div>
+
+    <div id="center-container" class="center-container">
+        <div id="menu-screen" class="panel-content panel-menu">
+            <h1>Scanning Skill Test (Original)</h1>
+            <p>Find the matching letter for the number inside the shape. All 40 questions are on one large board.</p>
+            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                <button onclick="setMode('practice')" class="btn btn-secondary">Practice Mode</button>
+                <button onclick="setMode('quiz')" class="btn btn-primary">Test Mode</button>
+                <button onclick="showHowToPlay()" class="btn outline-btn">How to Play</button>
+                <button onclick="window.location.href='/index.html'" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+
+        <div id="how-to-play-screen" class="panel-content panel-menu hidden">
+            <h2>How to Play</h2>
+            <p>Find the matching shape and number in the big board. The letter inside is the answer.</p>
+
+            <div style="margin: 20px 0; padding: 20px; background: var(--bg-color-dark); border-radius: 10px; text-align: left;">
+                <p><strong>Example:</strong> If the question is <strong>5△</strong> (Number 5 in a Triangle)</p>
+                <div style="position: relative; height: 100px; background: #e0e0e0; border: 1px solid #ccc; margin-top: 10px; border-radius: 8px;">
+                    <div class="shape-container" style="left: 20%; top: 50%; transform: translate(-50%, -50%) rotate(15deg); width: 50px; height: 50px;">
+                        <div class="shape-outline square"></div>
+                        <div class="shape-fill square"></div>
+                        <span class="shape-text" style="font-size: 12px; transform: rotate(-15deg);">5B</span>
+                    </div>
+                    <div class="shape-container" style="left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-10deg); z-index: 10; width: 50px; height: 50px;">
+                        <div class="shape-outline triangle"></div>
+                        <div class="shape-fill triangle" style="background: var(--success-color-light);"></div>
+                        <span class="shape-text" style="color: var(--success-color); font-size: 12px; transform: rotate(10deg);">5C</span>
+                    </div>
+                    <div class="shape-container" style="left: 80%; top: 50%; transform: translate(-50%, -50%) rotate(30deg); width: 50px; height: 50px;">
+                        <div class="shape-outline circle"></div>
+                        <div class="shape-fill circle"></div>
+                        <span class="shape-text" style="font-size: 12px; transform: rotate(-30deg);">2C</span>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; text-align: center;">Find the Triangle with number 5. Answer is <strong>C</strong>.</p>
+            </div>
+
+            <button onclick="backToMenu()" class="btn btn-primary">Back</button>
+        </div>
+
+        <div id="difficulty-screen" class="panel-content panel-menu hidden">
+            <h2>Select Difficulty</h2>
+            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                <button onclick="selectDifficulty('easy')" class="btn btn-primary">Easy (2 Shapes)</button>
+                <button onclick="selectDifficulty('normal')" class="btn btn-primary">Normal (3 Shapes)</button>
+                <button onclick="selectDifficulty('hard')" class="btn btn-primary">Hard (4 Shapes)</button>
+            </div>
+        </div>
+
+        <div id="instruction-screen" class="panel-content panel-menu hidden">
+            <h2 id="instruction-title">Instructions</h2>
+            <ul style="text-align: left; margin: 1rem 0; display: inline-block;">
+                <li>Look at the <strong>Number</strong> and <strong>Shape</strong> displayed on the right panel.</li>
+                <li>Find that exact combination on the large board.</li>
+                <li>Identify the <strong>Letter</strong> inside it and select the answer.</li>
+                <li id="skip-rule-text" style="color: var(--danger-color);"><strong>Do not skip questions!</strong> Any skipped question between answered ones will result in a <strong>FAIL (0 Score)</strong>.</li>
+                <li id="time-limit-text">You have <strong>6 minutes</strong> to complete 40 questions.</li>
+            </ul>
+            <div style="margin-top: 1.5rem;">
+                <button onclick="startGame()" class="btn btn-primary">Start</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="panel-content hidden results-container">
+            <h2 id="results-title">Test Completed</h2>
+            <div id="fail-message-box" class="hidden" style="background-color: #ffe6e6; color: #dc3545; padding: 10px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dc3545;">
+                <h3 style="margin: 0; font-size: 1.2rem;">❌ TEST FAILED</h3>
+                <p style="margin: 5px 0 0 0;">You skipped questions. Score adjusted to 0.</p>
+            </div>
+            <div id="test-results" class="result-comparison">
+                <div class="result-column">
+                    <h3>Current Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span id="current-score-text" class="r-value">N/A</span>
+                        <span class="r-label">Accuracy</span><span id="current-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label">Avg. Time / Q</span><span id="avg-time-text" class="r-value">N/A</span>
+                        <span class="r-label practice-only hidden">Total Time</span><span id="total-time-text" class="r-value practice-only hidden">N/A</span>
+                        <span class="r-label percentile-row hidden">Percentile</span><span id="current-percentile-text" class="r-value percentile-row hidden">N/A</span>
+                    </div>
+                </div>
+                <div id="best-score-column" class="result-column hidden">
+                    <h3>Your Best Score</h3>
+                    <div class="result-grid">
+                        <span class="r-label">Score</span><span id="best-score-text" class="r-value">N/A</span>
+                        <span class="r-label">Accuracy</span><span id="best-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label">Percentile</span><span id="best-percentile-text" class="r-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top:1.5rem; flex-wrap: wrap;">
+                <button id="review-btn" onclick="showReview()" class="btn btn-secondary">Review Answers</button>
+                <button onclick="location.reload()" class="btn btn-primary">Back to Menu</button>
+                <button onclick="window.location.href='/index.html'" class="btn outline-btn">Back to Main Page</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container" class="main-container hidden">
+        <div id="scan-area" class="scan-board">
+        </div>
+
+        <div class="test-panel">
+            <div class="panel-content">
+                <div>
+                    <h3 id="q-counter">Question 1/40</h3>
+                    <div id="timer-display">00:00</div>
+                    <div id="question-display"></div>
+
+                    <div class="options-container">
+                        <button class="btn btn-primary option-btn" onclick="handleAnswer(0)"></button>
+                        <button class="btn btn-primary option-btn" onclick="handleAnswer(1)"></button>
+                        <button class="btn btn-primary option-btn" onclick="handleAnswer(2)"></button>
+                        <button class="btn btn-primary option-btn" onclick="handleAnswer(3)"></button>
+                    </div>
+
+                    <div class="navigation-area">
+                        <button id="prev-btn" onclick="navigate(-1)" class="btn outline-btn" disabled>Prev</button>
+                        <button id="submit-btn" onclick="openSubmitModal()" class="btn outline-btn">Submit</button>
+                        <button id="next-btn" onclick="navigate(1)" class="btn btn-secondary" disabled>Next</button>
+                    </div>
+
+                    <div id="nav-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="review-screen" class="main-container hidden">
+        <div id="review-board" class="scan-board">
+        </div>
+        <div class="test-panel">
+            <div class="panel-content">
+                <h3>Review Answers</h3>
+                <div id="review-list">
+                </div>
+                <button onclick="backToResults()" class="btn btn-primary" style="margin-top: 1rem;">Back to Results</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary-color); margin-bottom: 1rem;">Confirm Submission</h2>
+            <p>Are you sure you want to submit your answers?</p>
+            <div class="modal-buttons">
+                <button onclick="closeSubmitModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmSubmit()" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHAPE_MAP = { 'triangle': '△', 'square': '□', 'circle': '○', 'pentagon': '⬠', 'hexagon': '⬡', 'octagon': '🛑' };
+        const TOTAL_QUESTIONS = 40;
+        const TIME_LIMIT = 360;
+
+        let state = {
+            userEmail: null,
+            mode: 'quiz',
+            difficulty: 'normal',
+            questions: [],
+            masterData: {},
+            currentIdx: 0,
+            userAnswers: new Array(TOTAL_QUESTIONS).fill(null),
+            startTime: null,
+            timerInterval: null,
+            timeLeft: TIME_LIMIT,
+            shapeTypes: [],
+            generatedHTML: ''
+        };
+
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+        const navBar = document.getElementById('nav-bar');
+
+        function toggleMobileMenu() {
+            navBar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        const loader = document.getElementById('loader-overlay');
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                state.userEmail = user.email || user.providerData[0]?.email;
+                if (state.userEmail) {
+                    state.userEmail = state.userEmail.trim().toLowerCase();
+                    const parts = state.userEmail.split("@");
+                    if (parts.length === 2 && parts[1] === "gmail.com") {
+                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                    }
+                }
+                try {
+                    const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
+                    const response = await fetch(checkAccessUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: state.userEmail, courseId: 'scs' })
+                    });
+                    const result = await response.json();
+                    if (result.hasAccess) {
+                        loader.classList.add('hidden');
+                        document.getElementById('mainHeader').classList.remove('hidden');
+                    } else {
+                        alert(`Access Denied: ${result.reason}. Redirecting...`);
+                        window.location.href = '/index.html';
+                    }
+                } catch (error) {
+                    console.error("Auth Error:", error);
+                    alert("Connection Error. Redirecting...");
+                    window.location.href = '/index.html';
+                }
+            } else {
+                window.location.href = '/Auth.html';
+            }
+        });
+
+        function setMode(mode) {
+            state.mode = mode;
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('difficulty-screen').classList.remove('hidden');
+        }
+
+        function showHowToPlay() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('how-to-play-screen').classList.remove('hidden');
+        }
+
+        function backToMenu() {
+            document.getElementById('how-to-play-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('mobileTimer').classList.remove('active');
+        }
+
+        function selectDifficulty(diff) {
+            state.difficulty = diff;
+            document.getElementById('difficulty-screen').classList.add('hidden');
+            document.getElementById('instruction-screen').classList.remove('hidden');
+            const title = document.getElementById('instruction-title');
+            const timeText = document.getElementById('time-limit-text');
+            const skipText = document.getElementById('skip-rule-text');
+            if (state.mode === 'practice') {
+                title.textContent = "Practice Instructions";
+                timeText.style.display = 'none';
+                skipText.style.display = 'none';
+            } else {
+                title.textContent = "Test Instructions";
+                timeText.style.display = 'list-item';
+                skipText.style.display = 'list-item';
+            }
+        }
+
+        async function startGame() {
+            loader.classList.remove('hidden');
+            document.getElementById('instruction-screen').classList.add('hidden');
+            try {
+                const funcUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getSCSQuizData";
+                const res = await fetch(`${funcUrl}?difficulty=${state.difficulty}`);
+                const result = await res.json();
+                if (result.success) {
+                    state.questions = result.data.questions;
+                    state.masterData = result.data.masterData;
+                    state.shapeTypes = result.data.shapeTypes;
+                    renderAllShapes(result.data);
+                    setupUI();
+
+                    document.getElementById('center-container').classList.add('hidden');
+                    document.getElementById('game-container').classList.remove('hidden');
+                    loader.classList.add('hidden');
+
+                    state.startTime = Date.now();
+                    if (window.innerWidth <= 992) {
+                        document.getElementById('mobileTimer').classList.add('active');
+                    }
+                    startTimer();
+                    loadQuestion(0);
+                } else {
+                    alert("Error loading data: " + result.error);
+                    loader.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Connection failed");
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderAllShapes(data) {
+            const container = document.getElementById('scan-area');
+            container.innerHTML = '';
+            const itemsToPlace = [];
+            state.shapeTypes.forEach(type => {
+                const numMap = data.masterData[type];
+                Object.keys(numMap).forEach(num => {
+                    itemsToPlace.push({ type: type, number: num, letter: numMap[num], isTarget: true });
+                });
+            });
+            const totalItems = state.difficulty === 'easy' ? 60 : (state.difficulty === 'normal' ? 80 : 100);
+            const distractorCount = totalItems - itemsToPlace.length;
+            for (let i = 0; i < distractorCount; i++) {
+                const type = state.shapeTypes[Math.floor(Math.random() * state.shapeTypes.length)];
+                const num = Math.floor(Math.random() * 40) + 1;
+                const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                const letter = letters[Math.floor(Math.random() * letters.length)];
+                itemsToPlace.push({ type: type, number: num, letter: letter, isTarget: false });
+            }
+
+            let SIZES = [];
+            const width = window.innerWidth;
+
+            // [Fix 1] Split Logic: Mobile (<600) vs Tablet (600-1024) vs Desktop (>1024)
+            if (width <= 600) {
+                // Mobile (Phone) - Compact sizes (Rev11)
+                if (state.difficulty === 'easy') {
+                    SIZES = [{ w: 22, f: 8 }, { w: 26, f: 9 }, { w: 30, f: 10 }];
+                } else {
+                    SIZES = [{ w: 16, f: 5 }, { w: 20, f: 6 }, { w: 24, f: 7 }];
+                }
+            } else if (width <= 1024) {
+                // Tablet (iPad) - Larger sizes (Rev10 Original)
+                SIZES = [{ w: 46, f: 12 }, { w: 52, f: 14 }, { w: 60, f: 16 }];
+            } else {
+                // Desktop
+                if (state.difficulty === 'easy') {
+                    SIZES = [{ w: 60, f: 16 }, { w: 75, f: 18 }, { w: 90, f: 20 }];
+                } else {
+                    SIZES = [{ w: 48, f: 12 }, { w: 58, f: 14 }, { w: 68, f: 16 }];
+                }
+            }
+
+            itemsToPlace.sort(() => Math.random() - 0.5);
+            const placedItems = [];
+
+            itemsToPlace.forEach((item, idx) => {
+                const sizeCfg = SIZES[Math.floor(Math.random() * SIZES.length)];
+                const sizeVal = sizeCfg.w;
+                let bestX = 0, bestY = 0, valid = false;
+
+                // Spacing Logic: Tighter for Mobile/Tablet to fit all items
+                // กำหนดตัวแปรค่าเริ่มต้น
+                let maxAttempts = 200;
+                let r_pct = 3.6;
+
+                // แยก Logic ตามขนาดหน้าจอ
+                if (width <= 600) {
+                    // === MOBILE ===
+                    maxAttempts = 800; // พยายามหาที่ลง 500 ครั้ง (ยิ่งเยอะยิ่งดีสำหรับจอเล็ก)
+                    r_pct = 3.0;       // ★ ค่าระยะห่าง (ยิ่งเลขเยอะ รูปยิ่งห่างกัน ไม่ซ้อนทับ)
+                } else if (width <= 1024) {
+                    // === TABLET ===
+                    maxAttempts = 600;
+                    r_pct = 3.2;       // ★ ปรับค่านี้เพื่อคุมการกระจายตัวใน Tablet
+                } else {
+                    // === DESKTOP ===
+                    maxAttempts = 200;
+                    r_pct = 3.6;       // ★ ปรับค่านี้เพื่อคุมการกระจายตัวใน Desktop
+                }
+
+                for (let i = 0; i < maxAttempts; i++) {
+                    const startY = 5;
+                    const endY = 95;
+                    const x = Math.random() * 90 + 5;
+                    const y = Math.random() * (endY - startY) + startY;
+
+                    let overlap = false;
+                    for (const p of placedItems) {
+                        const dx = x - p.x;
+                        const dy = (y - p.y) * 1.5;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < (r_pct + p.r)) { overlap = true; break; }
+                    }
+                    if (!overlap) {
+                        bestX = x; bestY = y; valid = true;
+                        placedItems.push({ x: x, y: y, r: r_pct });
+                        break;
+                    }
+                }
+                if (valid) {
+                    const rot = Math.floor(Math.random() * 360);
+                    const el = document.createElement('div');
+                    el.className = 'shape-container';
+                    el.dataset.key = `${item.type}-${item.number}`;
+                    el.style.left = `calc(${bestX}% - ${sizeVal / 2}px)`;
+                    el.style.top = `calc(${bestY}% - ${sizeVal / 2}px)`;
+                    el.style.width = `${sizeVal}px`;
+                    el.style.height = `${sizeVal}px`;
+                    el.style.transform = `rotate(${rot}deg)`;
+                    el.dataset.rotation = rot;
+                    el.innerHTML = `
+                        <div class="shape-outline ${item.type}"></div>
+                        <div class="shape-fill ${item.type}"></div>
+                        <span class="shape-text" style="font-size:${sizeCfg.f}px; transform: rotate(-${rot}deg);">${item.number}${item.letter}</span>
+                    `;
+                    container.appendChild(el);
+                }
+            });
+            state.generatedHTML = container.innerHTML;
+        }
+
+        function setupUI() {
+            const nav = document.getElementById('nav-bar');
+            nav.innerHTML = '';
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'nav-item';
+                btn.id = `nav-${i}`;
+                btn.textContent = i + 1;
+                btn.onclick = () => {
+                    loadQuestion(i);
+                    if (window.innerWidth <= 992) toggleMobileMenu();
+                };
+                nav.appendChild(btn);
+            }
+        }
+
+        function loadQuestion(idx) {
+            state.currentIdx = idx;
+            const q = state.questions[idx];
+            document.getElementById('q-counter').innerText = `Question ${idx + 1}/${TOTAL_QUESTIONS}`;
+            document.getElementById('question-display').innerText = `${q.number}${SHAPE_MAP[q.shape]}`;
+            const buttons = document.querySelectorAll('.option-btn');
+            q.options.forEach((opt, i) => {
+                buttons[i].innerText = opt;
+                buttons[i].classList.remove('selected');
+                if (state.userAnswers[idx] && state.userAnswers[idx].answer === opt) {
+                    buttons[i].classList.add('selected');
+                }
+            });
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-current'));
+            document.getElementById(`nav-${idx}`).classList.add('nav-current');
+            document.getElementById('prev-btn').disabled = idx === 0;
+            document.getElementById('next-btn').disabled = idx === TOTAL_QUESTIONS - 1;
+        }
+
+        function handleAnswer(btnIdx) {
+            const q = state.questions[state.currentIdx];
+            const choice = q.options[btnIdx];
+            state.userAnswers[state.currentIdx] = { answer: choice, isCorrect: choice === q.correctAnswer };
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.classList.remove('selected'));
+            buttons[btnIdx].classList.add('selected');
+            document.getElementById(`nav-${state.currentIdx}`).classList.add('nav-answered');
+
+            const answeredCount = state.userAnswers.filter(x => x).length;
+            const submitBtn = document.getElementById('submit-btn');
+            if (answeredCount === TOTAL_QUESTIONS) {
+                submitBtn.classList.remove('outline-btn');
+                submitBtn.classList.add('btn-secondary');
+                submitBtn.classList.add('pulse');
+            }
+
+            if (state.currentIdx < TOTAL_QUESTIONS - 1) {
+                setTimeout(() => {
+                    let nextIdx = state.currentIdx + 1;
+                    while (nextIdx < TOTAL_QUESTIONS && state.userAnswers[nextIdx]) { nextIdx++; }
+                    if (nextIdx < TOTAL_QUESTIONS) loadQuestion(nextIdx);
+                }, 200);
+            }
+        }
+
+        function navigate(dir) {
+            const newIdx = state.currentIdx + dir;
+            if (newIdx >= 0 && newIdx < TOTAL_QUESTIONS) loadQuestion(newIdx);
+        }
+
+        function openSubmitModal() { document.getElementById('confirmModal').classList.add('active'); }
+        function closeSubmitModal() { document.getElementById('confirmModal').classList.remove('active'); }
+
+        function startTimer() {
+            const display = document.getElementById('timer-display');
+            const mobileDisplay = document.getElementById('mobileTimer');
+            state.timerInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = Math.floor((now - state.startTime) / 1000);
+                let timeText = "";
+                if (state.mode === 'quiz') {
+                    const remain = TIME_LIMIT - elapsed;
+                    if (remain <= 0) {
+                        clearInterval(state.timerInterval);
+                        finishGame(true);
+                        return;
+                    } else {
+                        const m = Math.floor(remain / 60).toString().padStart(2, '0');
+                        const s = (remain % 60).toString().padStart(2, '0');
+                        timeText = `${m}:${s}`;
+                        if (remain <= 30) {
+                            display.style.color = 'var(--danger-color)';
+                            mobileDisplay.classList.add('danger');
+                        }
+                    }
+                } else {
+                    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const s = (elapsed % 60).toString().padStart(2, '0');
+                    timeText = `${m}:${s}`;
+                }
+                display.innerText = timeText;
+                mobileDisplay.innerText = timeText;
+            }, 1000);
+        }
+
+        function confirmSubmit() { closeSubmitModal(); finishGame(false); }
+
+        async function finishGame(timeUp) {
+            clearInterval(state.timerInterval);
+            loader.classList.remove('hidden');
+            let isFailBySkip = false;
+            if (state.mode === 'quiz') {
+                let lastIdx = -1;
+                for (let i = TOTAL_QUESTIONS - 1; i >= 0; i--) {
+                    if (state.userAnswers[i] !== null) { lastIdx = i; break; }
+                }
+                if (lastIdx !== -1) {
+                    for (let i = 0; i < lastIdx; i++) {
+                        if (state.userAnswers[i] === null) { isFailBySkip = true; break; }
+                    }
+                }
+            }
+            const answered = state.userAnswers.filter(x => x).length;
+            const correct = isFailBySkip ? 0 : state.userAnswers.filter(x => x && x.isCorrect).length;
+            const accuracy = (isFailBySkip || answered === 0) ? 0 : (correct / answered) * 100;
+            const timeUsed = Math.floor((Date.now() - state.startTime) / 1000);
+
+            if (state.mode === 'quiz') {
+                const scoreData = {
+                    score: correct, questionsAnswered: answered, accuracy: parseFloat(accuracy.toFixed(2)),
+                    timeUsed: (timeUsed > TIME_LIMIT ? TIME_LIMIT : timeUsed),
+                    isFail: isFailBySkip, difficulty: state.difficulty, userEmail: state.userEmail
+                };
+                try {
+                    const saveUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/saveSCSScore";
+                    const res = await fetch(saveUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(scoreData)
+                    });
+                    const json = await res.json();
+                    const bestUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCSScore";
+                    const resBest = await fetch(`${bestUrl}?email=${state.userEmail}&difficulty=${state.difficulty}`);
+                    const jsonBest = await resBest.json();
+                    showResults(scoreData, json.percentile, jsonBest.data, isFailBySkip);
+                } catch (e) {
+                    console.error(e);
+                    showResults(scoreData, 'Error', null, isFailBySkip);
+                }
+            } else {
+                setTimeout(() => {
+                    showResults({ score: correct, accuracy: accuracy, timeUsed: timeUsed }, 'N/A', null, false);
+                }, 500);
+            }
+        }
+
+        function showResults(current, percentile, best, isFail = false) {
+            const answered = state.userAnswers.filter(x => x).length;
+            document.getElementById('instruction-screen').classList.add('hidden');
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('center-container').classList.remove('hidden');
+
+            document.getElementById('mobileTimer').classList.remove('active');
+
+            const resultsScreen = document.getElementById('results-screen');
+            resultsScreen.classList.remove('hidden');
+            const failBox = document.getElementById('fail-message-box');
+            if (isFail) { failBox.classList.remove('hidden'); } else { failBox.classList.add('hidden'); }
+
+            if (state.mode !== 'quiz') {
+                resultsScreen.classList.add('practice-result-card');
+                failBox.classList.add('hidden');
+            } else {
+                resultsScreen.classList.remove('practice-result-card');
+            }
+            document.getElementById('results-title').innerText = state.mode === 'quiz' ? "Quiz Results" : "Practice Finished";
+            document.getElementById('current-score-text').innerText = `${current.score || current.correctCount || 0}/40`;
+            document.getElementById('current-accuracy-text').innerText = `${(current.accuracy || 0).toFixed(2)}%`;
+            document.getElementById('avg-time-text').innerText = `${answered > 0 ? (current.timeUsed / answered).toFixed(2) : 0}s`;
+            document.getElementById('current-percentile-text').innerText = (percentile === -1 || percentile === 'N/A') ? 'N/A' : percentile + '%';
+            if (state.mode === 'quiz' && best) {
+                document.getElementById('best-score-column').classList.remove('hidden');
+                document.getElementById('best-score-text').innerText = `${best.bestScore}/40`;
+                document.getElementById('best-accuracy-text').innerText = `${best.bestAccuracy.toFixed(2)}%`;
+                document.getElementById('best-percentile-text').innerText = `${best.bestPercentile}%`;
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
+            } else {
+                document.getElementById('best-score-column').classList.add('hidden');
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => {
+                    el.classList.remove('hidden');
+                    if (el.id === 'total-time-text') el.innerText = `${Math.floor(current.timeUsed / 60).toString().padStart(2, '0')}:${(current.timeUsed % 60).toString().padStart(2, '0')}`;
+                });
+            }
+            loader.classList.add('hidden');
+        }
+
+        function showReview() {
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('center-container').classList.add('hidden');
+            document.getElementById('review-screen').classList.remove('hidden');
+
+            // [Fix 3] Hide Hamburger, Show Right-Side Back Button
+            if (window.innerWidth <= 1024) {
+                document.getElementById('hamburgerBtn').classList.add('hidden');
+                document.getElementById('headerBackBtn').classList.remove('hidden');
+            }
+
+            const reviewBoard = document.getElementById('review-board');
+            reviewBoard.innerHTML = state.generatedHTML;
+            const list = document.getElementById('review-list');
+            list.innerHTML = '';
+            state.questions.forEach((q, i) => {
+                const userAns = state.userAnswers[i];
+                const isCorrect = userAns && userAns.isCorrect;
+                const item = document.createElement('div');
+                item.className = 'review-item';
+                item.innerHTML = `
+                    <div class="review-header">
+                        <span>Q${i + 1}: ${q.number}${SHAPE_MAP[q.shape]}</span>
+                        <span class="${isCorrect ? 'review-correct' : 'review-wrong'}">${isCorrect ? 'Correct' : 'Wrong'}</span>
+                    </div>
+                    <div style="font-size:0.9rem;">Ans: ${q.correctAnswer} | You: ${userAns ? userAns.answer : '-'}</div>
+                `;
+                item.onmouseenter = () => {
+                    const targets = reviewBoard.querySelectorAll(`[data-key="${q.shape}-${q.number}"]`);
+                    targets.forEach(el => {
+                        el.classList.add('highlight-correct');
+                        const rot = el.dataset.rotation || 0;
+                        el.style.transform = `rotate(${rot}deg) scale(1.5)`;
+                    });
+                };
+                item.onmouseleave = () => {
+                    const targets = reviewBoard.querySelectorAll(`.highlight-correct`);
+                    targets.forEach(el => {
+                        el.classList.remove('highlight-correct');
+                        const rot = el.dataset.rotation || 0;
+                        el.style.transform = `rotate(${rot}deg)`;
+                    });
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function backToResults() {
+            document.getElementById('review-screen').classList.add('hidden');
+            document.getElementById('center-container').classList.remove('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            // [Fix 3] Restore Hamburger, Hide Back Button
+            if (window.innerWidth <= 1024) {
+                document.getElementById('hamburgerBtn').classList.remove('hidden');
+                document.getElementById('headerBackBtn').classList.add('hidden');
+            }
+        }
+
+    </script>
+</body>
+</html>

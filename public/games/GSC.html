@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Science Quiz</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+      /* --- CSS 100% MATCH --- */
+      :root { 
+        --primary-color: #722F37;
+        --secondary-color: #8B4513; --accent-color: #A0826D;
+        --background-color-light: #FAF7F2; --background-color-dark: #F5F2EA; --text-color: #722F37;
+        --text-color-secondary: #8B4513; --success-color: #28a745; --danger-color: #dc3545; 
+        --border-color: #E8DDD4;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; }
+      body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-dark) 100%); 
+        line-height: 1.6; 
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+      }
+      .header { 
+        background: rgba(255,253,250,0.95);
+        padding: 15px 20px; box-shadow: 0 2px 10px rgba(139,69,19,0.1); display: flex;
+        justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1001;
+        border-bottom: 2px solid var(--secondary-color);
+        flex-shrink: 0;
+      }
+      .header h1 { color: var(--primary-color); font-size: 24px; font-weight: 700; }
+      .header-buttons { display: flex; gap: 10px; }
+      .timer-container { text-align: center; margin-bottom: 1rem; }
+      .timer { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); }
+      .timer.danger { color: var(--danger-color); }
+      .container { 
+        max-width: 1400px; 
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .test-container { 
+          background: #FFFEF9;
+          border-radius: 15px; padding: 30px; 
+          box-shadow: 0 10px 30px rgba(139,69,19,0.1); border: 1px solid #E8DDD4; width: 100%;
+      }
+      .screen { display: none; }
+      .screen.active { display: flex; flex-direction: column; }
+      #instruction-screen, #how-to-play-screen { align-items: center; text-align: center; }
+      #instruction-screen ul { text-align: left; display: inline-block; margin-top: 1rem; }
+      .mode-selection { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+      .quiz-layout { display: flex; flex-direction: row; gap: 20px; width: 100%; }
+      .nav-panel { width: 25%; max-width: 280px; background-color: var(--background-color-dark); padding: 20px; border-radius: 10px; border: 1px solid #E8DDD4; align-self: flex-start; }
+      .question-content { width: 75%; position: relative; }
+      .question-nav-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
+      .question-nav-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
+      .question-nav-btn.answered { background-color: var(--primary-color); color: white; }
+      .question-nav-btn.unanswered { background-color: var(--background-color-light); color: var(--text-color-secondary); border: 1px solid #E8DDD4;}
+      .question-nav-btn.current { border-color: var(--primary-color); transform: scale(1.1); background-color: var(--secondary-color); color: white; }
+      .question-nav-btn.correct { background-color: var(--success-color); color: white; }
+      .question-nav-btn.incorrect { background-color: var(--danger-color); color: white; }
+      .legend { margin-top: 15px; text-align: left; font-size: 14px; }
+      .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+      .legend-color { width: 18px; height: 18px; border-radius: 4px; margin-right: 10px; border: 1px solid #ccc; }
+      .question-header { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--background-color-dark); border-radius: 10px; border: 1px solid #E8DDD4; }
+      .question-number { background: var(--primary-color); color: white; padding: 10px 20px; border-radius: 25px; font-weight: bold; font-size: 16px; display: inline-block; margin-bottom: 15px; }
+      #question-text { font-size: 1.25rem; color: var(--text-color); }
+      #question-image, #review-question-image { max-width: 100%; max-height: 300px; margin: 20px auto; display: block; border-radius: 10px; }
+      
+      /* Image Loading Spinner */
+      .img-loader {
+          display: none;
+          border: 5px solid #E8DDD4;
+          border-top: 5px solid var(--primary-color);
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          margin: 20px auto;
+      }
+
+      .options-container { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; }
+      .option { display: flex; align-items: center; padding: 20px; border: 2px solid #E8DDD4; border-radius: 12px; background: var(--background-color-light); cursor: pointer; transition: all 0.3s ease; font-size: 16px; }
+      .option.disabled { cursor: not-allowed; pointer-events: none; }
+      .option:not(.disabled):hover { background: var(--background-color-dark); border-color: var(--primary-color); }
+      .option.selected { border-color: var(--secondary-color); background-color: var(--background-color-dark); font-weight: bold; }
+      .option.correct { border-color: var(--success-color) !important; background-color: #d4edda !important; font-weight: bold; }
+      .option.incorrect { border-color: var(--danger-color) !important; background-color: #f8d7da !important; opacity: 0.7; }
+      .option.user-selected { border-width: 3px; }
+      .option-letter { background: var(--secondary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; transition: all 0.3s ease; }
+      .option.selected .option-letter { background: var(--primary-color); color: white; }
+      .option.correct .option-letter { background: var(--success-color) !important; color: white !important; }
+      .btn { background: var(--primary-color); color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-decoration: none; text-align: center; }
+      .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(114,47,55,0.3); opacity: 0.9; }
+      .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+      .submit-btn { background-color: var(--primary-color); }
+      .action-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+      .secondary-btn { background: var(--secondary-color); color: white; }
+      .outline-btn { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
+      .outline-btn:hover { background-color: var(--primary-color); color: white; }
+      .header-btn { padding: 8px 20px; font-size: 16px; }
+      .navigation-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 2.5rem; width: 100%; }
+      .navigation-controls.center { justify-content: center; }
+      #result-screen { align-items: center; text-align: center; }
+      .result-details { background-color: var(--background-color-dark); padding: 2rem; border-radius: 10px; width: 100%; max-width: 800px; }
+      .result-comparison { display: flex; gap: 2rem; justify-content: center; text-align: left; }
+      .result-column { flex: 1; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px; background: #FFFEF9; }
+      .result-column h3 { color: var(--text-color-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+      .result-grid { display: grid; grid-template-columns: auto 1fr; gap-x: 2rem; gap-y: 1.25rem; font-size: 1.25rem; align-items: center; }
+      .result-grid span:nth-child(odd) { font-weight: 600; color: var(--text-color-secondary); }
+      .result-grid span:nth-child(even) { font-weight: bold; text-align: right; }
+      .explanation { text-align: left; background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid var(--primary-color); font-size: 1.1rem; }
+      .explanation h4 { color: var(--primary-color); margin-bottom: 8px; }
+      .hidden { display: none !important; }
+      .loader-overlay {
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(250, 247, 242, 0.85);
+        display: none; justify-content: center; align-items: center;
+        z-index: 9999; backdrop-filter: blur(2px);
+      }
+      .loader-spinner {
+        border: 8px solid var(--border-color);
+        border-top: 8px solid var(--primary-color);
+        border-radius: 50%; width: 60px; height: 60px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @media (min-width: 768px) { .options-container { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 768px) { .result-comparison { flex-direction: column; } }
+      .practice-mode-active .quiz-layout { justify-content: center; }
+      .practice-mode-active .nav-panel { display: none; }
+      .practice-mode-active .question-content { width: 100%; max-width: 800px; flex-grow: 0; }
+      
+      .modal { 
+        position: fixed; z-index: 2000; left: 0; top: 0; width: 100%;
+        height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
+      }
+      .modal.active { display: flex; }
+      .modal-content { 
+        background: var(--background-color-light); padding: 30px;
+        border-radius: 15px; width: 90%; max-width: 450px;
+        text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+      }
+      .modal-content h2 { color: var(--primary-color); margin-bottom: 1rem; font-size: 1.75rem; }
+      .modal-content p { color: var(--text-color-secondary); margin-bottom: 1.5rem; font-size: 1.1rem; }
+      .modal-actions { display: flex; justify-content: center; gap: 1rem; }
+
+      .result-summary {
+          text-align: left; background: var(--background-color-dark); padding: 2rem;
+          border-radius: 10px; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto;
+      }
+      .result-summary p {
+          font-size: 1.25rem; margin: 12px 0; display: flex; justify-content: space-between; align-items: center;
+      }
+      .result-summary p strong { color: var(--primary-color); }
+      .result-summary p span { font-size: 1.5rem; font-weight: bold; color: var(--text-color); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ General Science Quiz</h1>
+        <div class="header-buttons">
+            <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Back to Menu</button>
+            <button id="back-to-results-button" class="btn secondary-btn header-btn hidden">Back to Results</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="app" class="test-container" style="max-width: 600px;">
+    
+            <div id="instruction-screen" class="screen active">
+                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">General Science Test</h1>
+                <p class="text-lg mb-6" style="color: var(--text-color-secondary);">This test will evaluate your general science knowledge.</p>
+                <div class="mode-selection">
+                    <button id="practice-mode-btn" class="btn secondary-btn">Practice Mode</button>
+                    <button id="test-mode-btn" class="btn btn-primary">Test Mode</button>
+                    <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
+                    <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
+                </div>
+    
+                <ul>
+                    <li><strong>Practice Mode:</strong> No timer, immediate feedback after each question.</li>
+                    <li><strong>Test Mode:</strong> 25 questions, 3-minute time limit.</li>
+                </ul>
+            </div>
+
+      
+            <div id="how-to-play-screen" class="screen">
+                <h1 style="color: var(--primary-color);">How to Play</h1>
+                <ul style="margin-top: 1.5rem; margin-bottom: 1.5rem; text-align: left; display: inline-block;">
+                    <li>Read each question carefully. Some may include images.</li>
+                    <li>Select the best answer from the options provided.</li>
+                    <li>In <strong>Test Mode</strong>, your selection will automatically advance to the next question.</li>
+                    <li>In <strong>Practice Mode</strong>, you can check your answer before moving on.</li>
+                </ul>
+                <div class="action-buttons">
+                    <button id="back-to-instructions-btn" class="btn btn-primary">Back</button>
+                </div>
+            </div>
+
+            <div id="quiz-screen" class="screen">
+                <div class="quiz-layout">
+                    <div id="nav-panel" class="nav-panel">
+                        <div class="timer-container">
+                            <div id="timer-display" class="timer hidden">06:00</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">Questions</h2>
+                        <div id="nav-items" class="question-nav-container"></div>
+                        <div class="legend">
+                           <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
+                           <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
+                           <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light)"></div> Not Answered</div>
+                        </div>
+                    </div>
+                    <div class="question-content">
+                         <div class="question-header w-full">
+                            <div class="question-number" id="quiz-question-number">Question 1</div>
+                            
+                            <div id="img-loader" class="img-loader"></div>
+                            
+                            <img id="question-image" src="" alt="Question Image" style="display: none;"/>
+                            <p id="question-text" class="text-xl mt-4"></p>
+                        </div>
+                        <div class="options-container mt-4 w-full" id="quiz-options-container"></div>
+                        <div id="explanation-container" class="explanation" style="display: none;"></div>
+                        <div class="navigation-controls" id="navigation-controls"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="result-screen" class="screen">
+                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Test Complete!</h1>
+            
+                <div id="practice-result-summary" class="result-summary hidden">
+                    <p><strong>Score:</strong> <span id="practice-score-display">N/A</span></p>
+                    <p><strong>Accuracy:</strong> <span id="practice-accuracy-display">N/A</span></p>
+                </div>
+                 <div id="result-details" class="result-details">
+                     <div class="result-comparison">
+                        <div class="result-column">
+                            <h3>Current Score</h3>
+                             <div class="result-grid">
+                                <span>Score</span><span id="score-display">N/A</span>
+                                <span>Accuracy</span><span id="accuracy-display">N/A</span>
+                                <span>Percentile</span><span id="percentile-display">N/A</span>
+                             </div>
+                        </div>
+                        <div class="result-column">
+                            <h3>Your Best Score</h3>
+                             <div class="result-grid">
+                                <span>Score</span><span id="best-score-display">N/A</span>
+                                <span>Accuracy</span><span id="best-accuracy-display">N/A</span>
+                                <span>Percentile</span><span id="best-percentile-display">N/A</span>
+                            </div>
+                         </div>
+                     </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="review-button" class="btn secondary-btn">Review Answers</button>
+                    <button id="retake-button" class="btn secondary-btn">Back to Menu</button>
+                    <button onclick="window.location.href='index.html'" class="btn back-to-system-link">Back to Main Page</button>
+                </div>
+            </div>
+
+            <div id="review-screen" class="screen">
+                <div class="quiz-layout">
+                     <div class="nav-panel">
+                        <h2 class="text-xl font-semibold">Review</h2>
+                        <div id="review-nav-items" class="question-nav-container"></div>
+                    </div>
+                     <div class="question-content">
+                        <div class="question-header w-full">
+                            <div class="question-number" id="review-question-number">Question 1</div>
+                             
+                             <div id="review-img-loader" class="img-loader"></div>
+                             
+                             <img id="review-question-image" src="" alt="Question Image" style="display: none;"/>
+                             <p id="review-question-text" class="text-xl mt-4"></p>
+                        </div>
+                        <div class="options-container mt-4 w-full" id="review-options-container"></div>
+                         <div id="review-explanation" class="explanation" style="display: none;"></div>
+                        <div class="navigation-controls">
+                            <button id="review-prev-button" class="btn secondary-btn px-6 py-2">Previous</button>
+                            <button id="review-next-button" class="btn secondary-btn px-6 py-2">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirmModal" class="modal">
+         <div class="modal-content">
+            <h2>Confirm Submission</h2>
+            <p>Are you sure you want to submit? You cannot change your answers after submitting.</p>
+            <div class="modal-actions">
+                <button id="cancelSubmitBtn" class="btn secondary-btn">Cancel</button>
+                <button id="confirmSubmitBtn" class="btn submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <script>
+        // --- 1. CONFIGURATION (ใส่ของจริงที่นี่!) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA", 
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const functions = firebase.functions();
+        const storage = firebase.storage();
+
+        // --- GLOBAL UI REFS ---
+        const screens = { instruction: document.getElementById('instruction-screen'), howToPlay: document.getElementById('how-to-play-screen'), quiz: document.getElementById('quiz-screen'), result: document.getElementById('result-screen'), review: document.getElementById('review-screen'), };
+        const appContainer = document.getElementById('app');
+        const loader = document.getElementById('loader-overlay');
+        const confirmModal = document.getElementById('confirmModal');
+        const practiceModeBtn = document.getElementById('practice-mode-btn');
+        const testModeBtn = document.getElementById('test-mode-btn');
+        const timerDisplay = document.getElementById('timer-display');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const accuracyDisplay = document.getElementById('accuracy-display');
+        const percentileDisplay = document.getElementById('percentile-display');
+        const bestScoreDisplay = document.getElementById('best-score-display');
+        const bestAccuracyDisplay = document.getElementById('best-accuracy-display');
+        const bestPercentileDisplay = document.getElementById('best-percentile-display');
+        const retakeButton = document.getElementById('retake-button');
+        const reviewButton = document.getElementById('review-button');
+        let state = {};
+
+        function resetState() { state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 180, startTime: null, finalResult: {}, mode: null }; } // Default 3 mins (180s) for Test Mode
+        resetState();
+        
+        function switchScreen(screenName) { 
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            screens[screenName].classList.add('active'); 
+            
+            const showTimer = (screenName === 'quiz' && state.mode === 'test'); 
+            timerDisplay.classList.toggle('hidden', !showTimer);
+            
+            const showBackToMenuBtn = (screenName === 'quiz' && state.mode === 'practice');
+            backToMenuBtn.classList.toggle('hidden', !showBackToMenuBtn);
+            const showBackToResultsBtn = (screenName === 'review');
+            document.getElementById('back-to-results-button').classList.toggle('hidden', !showBackToResultsBtn);
+
+            const isWideScreen = ['quiz', 'result', 'review'].includes(screenName);
+            const containerWidth = isWideScreen ? '1400px' : '600px';
+            if (appContainer.style.maxWidth !== containerWidth) {
+                appContainer.style.maxWidth = containerWidth;
+            }
+        }
+
+        function backToMenu() { if(state.quizTimerInterval) clearInterval(state.quizTimerInterval);
+            appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction'); }
+        function formatTime(seconds) { const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60; return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
+        // --- FIREBASE ADAPTER FUNCTIONS ---
+        
+        async function fetchQuestionsFromFirebase(mode) {
+            const snapshot = await db.collection('Exam_GSC').orderBy('id').get();
+            const allQs = snapshot.docs.map(doc => doc.data());
+
+            let formattedQs = allQs.map(q => ({
+                id: q.id,
+                questionText: q.text,
+                questionImage: q.hasImage ? `GSC_Images/${q.id}.jpg` : '',
+                optionA: q.choices.A,
+                optionB: q.choices.B,
+                optionC: q.choices.C,
+                optionD: q.choices.D,
+                correctAnswer: q.correctAnswer,
+                explanation: q.description || '',
+                rawImageId: q.id, 
+                hasImage: q.hasImage
+            }));
+
+            // Shuffle with ID integrity preserved (formattedQs contains rawImageId which is correct)
+            for (let i = formattedQs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [formattedQs[i], formattedQs[j]] = [formattedQs[j], formattedQs[i]];
+            }
+
+            if (mode === 'test') {
+                return formattedQs.slice(0, 25); 
+            } else {
+                return formattedQs; 
+            }
+        }
+
+        async function submitAnswersToFirebase(userAnswersObj, timeUsed) {
+            let correctCount = 0;
+            let total = state.questions.length;
+            
+            state.questions.forEach(q => {
+                if (userAnswersObj[q.id] === q.correctAnswer) correctCount++;
+            });
+            
+            const submitFn = functions.httpsCallable('submitGSCScore');
+            const result = await submitFn({
+                score: correctCount,
+                total: total,
+                answers: userAnswersObj,
+                mode: state.mode === 'practice' ? 'Practice' : 'Test', 
+                timeSpent: timeUsed
+            });
+            return result.data;
+        }
+
+        // --- MAIN LOGIC ---
+
+        async function startTest() { 
+            if (!auth.currentUser) { alert("Please login first"); return; }
+            resetState();
+            state.mode = 'test'; 
+            state.timeRemaining = 180; 
+            appContainer.classList.remove('practice-mode-active'); 
+            state.startTime = new Date();
+            loader.style.display = 'flex';
+            
+            try {
+                const questions = await fetchQuestionsFromFirebase('test');
+                onQuizDataReceived({ questions: questions });
+            } catch (error) {
+                onDataError(error);
+            }
+        }
+
+        async function startPractice() { 
+            if (!auth.currentUser) { alert("Please login first"); return; }
+            resetState();
+            state.mode = 'practice'; 
+            appContainer.classList.add('practice-mode-active'); 
+            loader.style.display = 'flex'; 
+            
+            try {
+                const questions = await fetchQuestionsFromFirebase('practice');
+                onQuizDataReceived({ questions: questions });
+            } catch (error) {
+                onDataError(error);
+            }
+        }
+
+        function onQuizDataReceived(data) {
+            loader.style.display = 'none';
+            if (!data.questions || data.questions.length < 1) { 
+                onDataError({ message: "No questions loaded." }); 
+                return;
+            } 
+            state.questions = data.questions; 
+            state.userAnswers = Array(state.questions.length).fill(null); 
+            switchScreen('quiz');
+            renderQuestion(0); 
+            if (state.mode === 'test') { 
+                renderNavPanel();
+                startTimer(); 
+            } 
+        }
+
+        function onDataError(error) { 
+            loader.style.display = 'none';
+            alert('Failed to load quiz: ' + error.message); 
+            backToMenu(); 
+        }
+
+        function startTimer() { 
+            timerDisplay.textContent = formatTime(state.timeRemaining);
+            state.quizTimerInterval = setInterval(() => { 
+                state.timeRemaining--; 
+                timerDisplay.textContent = formatTime(state.timeRemaining);
+                timerDisplay.classList.toggle('danger', state.timeRemaining <= 30);
+                if (state.timeRemaining <= 0) { finishQuiz(); } 
+            }, 1000);
+        }
+        
+        function renderNavPanel() {
+            if (state.mode !== 'test') return;
+            const navItemsContainer = screens.quiz.querySelector('#nav-items'); 
+            navItemsContainer.innerHTML = ''; 
+            state.questions.forEach((_, index) => { 
+                const btn = document.createElement('button'); 
+                btn.textContent = index + 1; 
+                btn.className = 'question-nav-btn'; 
+                btn.classList.add(state.userAnswers[index] ? 'answered' : 'unanswered'); 
+                if (index === state.currentQuestionIndex) { btn.classList.add('current'); } 
+                btn.addEventListener('click', () => jumpToQuestion(index)); 
+                navItemsContainer.appendChild(btn); 
+            });
+        }
+
+        function renderQuestion(index) { 
+            state.currentQuestionIndex = index;
+            const q = state.questions[index];
+            const qScreen = screens.quiz; 
+            qScreen.querySelector('#quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`; 
+            qScreen.querySelector('#question-text').textContent = q.questionText || 'No question text';
+            document.getElementById('explanation-container').style.display = 'none'; 
+            
+            // Image Loading Logic
+            const qImageEl = qScreen.querySelector('#question-image');
+            const imgLoader = qScreen.querySelector('#img-loader');
+            
+            if (q.hasImage) { 
+                qImageEl.style.display = 'none'; 
+                imgLoader.style.display = 'block'; 
+
+                const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                storage.ref(storagePath).getDownloadURL().then(url => {
+                     qImageEl.src = url;
+                     qImageEl.onload = () => {
+                         imgLoader.style.display = 'none';
+                         qImageEl.style.display = 'block';
+                     };
+                }).catch(e => {
+                     storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
+                         qImageEl.src = url;
+                         qImageEl.onload = () => {
+                             imgLoader.style.display = 'none';
+                             qImageEl.style.display = 'block';
+                         };
+                     }).catch(() => {
+                         imgLoader.style.display = 'none'; 
+                     });
+                });
+            } else { 
+                qImageEl.style.display = 'none';
+                imgLoader.style.display = 'none';
+            } 
+
+            const optionsContainer = qScreen.querySelector('#quiz-options-container'); 
+            optionsContainer.innerHTML = '';
+            const availableOptions = []; 
+            if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({key: 'A', value: q.optionA});
+            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({key: 'B', value: q.optionB});
+            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({key: 'C', value: q.optionC});
+            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({key: 'D', value: q.optionD});
+            availableOptions.forEach(option => { 
+                const optionEl = document.createElement('div'); 
+                optionEl.className = 'option'; 
+                optionEl.dataset.value = option.key; 
+                optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; 
+                if (state.userAnswers[index] === option.key) { optionEl.classList.add('selected'); } 
+                optionEl.addEventListener('click', () => selectAnswer(option.key)); 
+                optionsContainer.appendChild(optionEl); 
+            });
+            updateNavigationControls(); 
+            if(state.mode === 'test') renderNavPanel(); 
+        }
+
+        function selectAnswer(optionKey) { 
+            if (state.mode === 'practice' && state.userAnswers[state.currentQuestionIndex] !== null) return;
+            state.userAnswers[state.currentQuestionIndex] = optionKey; 
+            document.querySelectorAll('.option').forEach(opt => { 
+                opt.classList.remove('selected'); 
+                if (opt.dataset.value === optionKey) opt.classList.add('selected'); 
+            });
+            if (state.mode === 'practice') { 
+                updateNavigationControls();
+            } else { 
+                renderNavPanel();
+                if (state.currentQuestionIndex < state.questions.length - 1) { 
+                    setTimeout(() => { jumpToQuestion(state.currentQuestionIndex + 1); }, 300);
+                } else { 
+                    updateNavigationControls();
+                } 
+            } 
+        }
+
+        function handleCheckAnswer() { 
+            const userAnswer = state.userAnswers[state.currentQuestionIndex];
+            const q = state.questions[state.currentQuestionIndex]; 
+            const correctAnswer = q.correctAnswer; 
+            const explanationEl = document.getElementById('explanation-container');
+            document.querySelectorAll('.option').forEach(opt => { 
+                opt.classList.add('disabled'); 
+                const optionKey = opt.dataset.value; 
+                if (optionKey === correctAnswer) { 
+                    opt.classList.add('correct'); 
+                } else if (optionKey === userAnswer) { 
+                    opt.classList.add('incorrect'); 
+                } 
+            });
+            if (q.explanation && q.explanation.trim() !== '') { 
+                explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
+                explanationEl.style.display = 'block'; 
+            } 
+            updateNavigationControls(true);
+        }
+
+        function jumpToQuestion(index) { 
+            if (index >= 0 && index < state.questions.length) { 
+                renderQuestion(index);
+            } 
+        }
+        
+        function updateNavigationControls(isAnswered = false) {
+            const navContainer = document.getElementById('navigation-controls');
+            navContainer.innerHTML = '';
+            navContainer.className = 'navigation-controls';
+        
+            if (state.mode === 'practice') {
+                navContainer.classList.add('center');
+                if (isAnswered) {
+                    if (state.currentQuestionIndex < state.questions.length - 1) {
+                        const nextBtn = document.createElement('button');
+                        nextBtn.className = 'btn';
+                        nextBtn.textContent = 'Next Question';
+                        nextBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex + 1);
+                        navContainer.appendChild(nextBtn);
+                    } else {
+                        const finishBtn = document.createElement('button');
+                        finishBtn.className = 'btn secondary-btn';
+                        finishBtn.textContent = 'Finish Practice';
+                        finishBtn.onclick = finishPractice;
+                        navContainer.appendChild(finishBtn);
+                    }
+                } else {
+                    const checkBtn = document.createElement('button');
+                    checkBtn.className = 'btn submit-btn';
+                    checkBtn.textContent = 'Check Answer';
+                    checkBtn.disabled = state.userAnswers[state.currentQuestionIndex] === null;
+                    checkBtn.onclick = handleCheckAnswer;
+                    navContainer.appendChild(checkBtn);
+                }
+            } else { 
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'btn secondary-btn';
+                prevBtn.textContent = 'Previous';
+                prevBtn.disabled = state.currentQuestionIndex === 0;
+                prevBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex - 1);
+                navContainer.appendChild(prevBtn);
+                const submitBtn = document.createElement('button');
+                submitBtn.className = 'btn submit-btn';
+                submitBtn.textContent = 'Submit';
+                submitBtn.onclick = () => confirmModal.classList.add('active');
+                navContainer.appendChild(submitBtn);
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'btn secondary-btn';
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = state.currentQuestionIndex === state.questions.length - 1;
+                nextBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex + 1);
+                navContainer.appendChild(nextBtn);
+            }
+        }
+
+        function finishPractice() {
+            let correctCount = 0;
+            let attemptedCount = 0;
+            state.userAnswers.forEach((ans, i) => {
+                if (ans !== null) {
+                    attemptedCount++;
+                    if (ans === state.questions[i].correctAnswer) {
+                        correctCount++;
+                    }
+                }
+            });
+            const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
+            // For practice mode, we just show local results, no firebase submit usually, 
+            // but if you want to save practice score, call submit here too.
+            // Following original logic, practice results are local.
+            showResults({ correctCount, accuracy });
+        }
+
+        async function finishQuiz() { 
+            if (state.mode !== 'test') return;
+            clearInterval(state.quizTimerInterval); 
+            loader.style.display = 'flex';
+            const timeUsed = Math.round((new Date() - state.startTime) / 1000); 
+            const userAnswerObj = {};
+            state.questions.forEach((q, index) => { if(state.userAnswers[index] !== null) userAnswerObj[q.id] = state.userAnswers[index]; });
+            
+            let correctCount = 0;
+            let attemptedCount = 0;
+            state.userAnswers.forEach((ans, i) => { 
+                if (ans !== null) { 
+                    attemptedCount++; 
+                    if (ans === state.questions[i].correctAnswer) { 
+                        correctCount++; 
+                    } 
+                } 
+            });
+            const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
+            state.finalResult = { totalScore: correctCount, accuracy, timeUsed, totalQuestions: state.questions.length };
+            
+            try {
+                // Submit and get back { current, best }
+                const result = await submitAnswersToFirebase(userAnswerObj, timeUsed);
+                onScoreReceived(result);
+            } catch (error) {
+                console.error(error);
+                alert("Error saving score: " + error.message);
+                loader.style.display = 'none';
+            }
+        }
+        
+        function showResults(resultData) {
+            switchScreen('result');
+            loader.style.display = 'none';
+
+            if (state.mode === 'practice') {
+                document.getElementById('practice-result-summary').classList.remove('hidden');
+                document.getElementById('result-details').classList.add('hidden');
+                document.getElementById('review-button').classList.add('hidden');
+
+                document.getElementById('result-screen').querySelector('h1').textContent = 'Practice Complete!';
+                document.getElementById('practice-score-display').textContent = `${resultData.correctCount} / ${state.questions.length}`;
+                document.getElementById('practice-accuracy-display').textContent = `${resultData.accuracy.toFixed(2)}%`;
+            } else { 
+                // Test mode
+                document.getElementById('practice-result-summary').classList.add('hidden');
+                document.getElementById('result-details').classList.remove('hidden');
+                document.getElementById('review-button').classList.remove('hidden');
+                document.getElementById('result-screen').querySelector('h1').textContent = 'Test Complete!';
+                
+                // --- Updated Display Logic: Split Current vs Best ---
+                
+                // 1. Current Score (Left)
+                // Note: resultData passed from onScoreReceived contains the full object from backend
+                if (resultData.current) {
+                     scoreDisplay.textContent = `${resultData.current.score} / ${state.questions.length}`;
+                     accuracyDisplay.textContent = `${resultData.current.accuracy.toFixed(2)}%`;
+                     percentileDisplay.textContent = `${resultData.current.percentile.toFixed(2)}%`;
+                } else {
+                     // Fallback for practice or error
+                     scoreDisplay.textContent = 'N/A';
+                     accuracyDisplay.textContent = 'N/A';
+                     percentileDisplay.textContent = 'N/A';
+                }
+
+                // 2. Best Score (Right)
+                if (resultData.best) {
+                     bestScoreDisplay.textContent = `${resultData.best.score} / ${state.questions.length}`;
+                     bestAccuracyDisplay.textContent = `${resultData.best.accuracy.toFixed(2)}%`; 
+                     bestPercentileDisplay.textContent = `${resultData.best.percentile.toFixed(2)}%`;
+                } else {
+                     bestScoreDisplay.textContent = 'N/A';
+                     bestAccuracyDisplay.textContent = 'N/A'; 
+                     bestPercentileDisplay.textContent = 'N/A'; 
+                }
+            }
+        }
+
+        function onScoreReceived(result) { 
+            // result = { success: true, isNewBest: bool, current: {...}, best: {...} }
+            showResults(result); 
+        }
+
+        function showReview() { state.reviewQuestionIndex = 0;
+            renderReviewNavPanel(); renderReviewQuestion(0); switchScreen('review'); }
+        function renderReviewNavPanel() { const navItemsContainer = screens.review.querySelector('#review-nav-items');
+            navItemsContainer.innerHTML = ''; state.questions.forEach((q, index) => { const btn = document.createElement('button'); btn.textContent = index + 1; btn.className = 'question-nav-btn'; const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; if (userAnswer === null) { btn.classList.add('unanswered'); } else if (userAnswer === correctAnswer) { btn.classList.add('correct'); } else { btn.classList.add('incorrect'); } if (index === state.reviewQuestionIndex) { btn.classList.add('current'); } btn.addEventListener('click', () => jumpToReviewQuestion(index)); navItemsContainer.appendChild(btn); });
+        }
+        function renderReviewQuestion(index) { state.reviewQuestionIndex = index; const q = state.questions[index];
+            const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; const rScreen = screens.review; rScreen.querySelector('#review-question-number').textContent = `Question ${index + 1}`;
+            rScreen.querySelector('#review-question-text').textContent = q.questionText; 
+            
+            // --- Review Image Logic (Copied) ---
+            const rImageEl = rScreen.querySelector('#review-question-image'); 
+            const rImgLoader = rScreen.querySelector('#review-img-loader');
+            
+            if (q.hasImage) { 
+                 rImageEl.style.display = 'none';
+                 rImgLoader.style.display = 'block';
+
+                 const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                 storage.ref(storagePath).getDownloadURL().then(url => {
+                     rImageEl.src = url;
+                     rImageEl.onload = () => {
+                         rImgLoader.style.display = 'none';
+                         rImageEl.style.display = 'block';
+                     };
+                 }).catch(()=>{
+                     storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
+                         rImageEl.src = url;
+                         rImageEl.onload = () => {
+                             rImgLoader.style.display = 'none';
+                             rImageEl.style.display = 'block';
+                         };
+                     }).catch(() => {
+                        rImgLoader.style.display = 'none'; 
+                     });
+                 });
+            } else { 
+                 rImageEl.style.display = 'none'; 
+                 rImgLoader.style.display = 'none'; 
+            }
+            
+            const optionsContainer = rScreen.querySelector('#review-options-container'); optionsContainer.innerHTML = '';
+            const availableOptions = []; if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({key: 'A', value: q.optionA});
+            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({key: 'B', value: q.optionB});
+            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({key: 'C', value: q.optionC});
+            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({key: 'D', value: q.optionD});
+            availableOptions.forEach(option => { const optionEl = document.createElement('div'); optionEl.className = 'option disabled'; optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; if (option.key === correctAnswer) { optionEl.classList.add('correct'); } if (option.key === userAnswer) { optionEl.classList.add('user-selected'); if (userAnswer !== correctAnswer) { optionEl.classList.add('incorrect'); } } optionsContainer.appendChild(optionEl); });
+            const explanationEl = rScreen.querySelector('#review-explanation'); if (q.explanation && q.explanation.trim() !== '') { explanationEl.style.display = 'block'; explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
+            } else { explanationEl.style.display = 'none'; } updateReviewNavButtons(); renderReviewNavPanel(); }
+        function jumpToReviewQuestion(index) { if (index >= 0 && index < state.questions.length) { renderReviewQuestion(index);
+            } }
+        function updateReviewNavButtons() { const rScreen = screens.review; const navControls = rScreen.querySelector('.navigation-controls');
+            rScreen.querySelector('#review-prev-button').disabled = state.reviewQuestionIndex === 0; rScreen.querySelector('#review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
+            }
+        
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            practiceModeBtn.addEventListener('click', startPractice);
+            testModeBtn.addEventListener('click', startTest);
+            backToMenuBtn.addEventListener('click', backToMenu);
+            document.getElementById('how-to-play-btn').addEventListener('click', () => switchScreen('howToPlay'));
+            document.getElementById('back-to-instructions-btn').addEventListener('click', () => switchScreen('instruction'));
+            document.getElementById('review-prev-button').addEventListener('click', () => jumpToReviewQuestion(state.reviewQuestionIndex - 1));
+            document.getElementById('review-next-button').addEventListener('click', () => jumpToReviewQuestion(state.reviewQuestionIndex + 1));
+            document.getElementById('back-to-results-button').addEventListener('click', () => switchScreen('result'));
+            retakeButton.addEventListener('click', () => { appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction'); });
+            reviewButton.addEventListener('click', showReview);
+            document.querySelectorAll('.back-to-system-link').forEach(link => { link.addEventListener('click', () => { loader.style.display = 'flex'; }); });
+            document.getElementById('cancelSubmitBtn').addEventListener('click', () => {
+                confirmModal.classList.remove('active');
+            });
+            document.getElementById('confirmSubmitBtn').addEventListener('click', () => {
+                confirmModal.classList.remove('active');
+                finishQuiz();
+            });
+        });
+    </script>
+</body>
+</html>
