@@ -4,30 +4,12 @@
 const functions = require("firebase-functions");
 const cors = require("cors")({ origin: true });
 const { initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+
+// ✅ แก้ไขส่วนนี้: ประกาศครั้งเดียว และนำเข้า FieldValue ให้ถูกต้อง
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+
 initializeApp();
 const db = getFirestore();
-
-// --- Utility: Normalize Email ---
-function normalizeGmail(email) {
-    if (!email) return "";
-    email = email.toLowerCase().trim();
-    const parts = email.split("@");
-    if (parts.length < 2) return email;
-    
-    let local = parts[0];
-    let domain = parts[1];
-
-    if (domain === "gmail.com" || domain === "googlemail.com") {
-        local = local.replace(/\./g, ""); 
-        const plusIndex = local.indexOf("+");
-        if (plusIndex !== -1) {
-            local = local.substring(0, plusIndex);
-        }
-        return `${local}@gmail.com`;
-    }
-    return email;
-}
 
 // ==========================================
 // 1. DATA (จาก gs.txt ของคุณ)
@@ -1413,13 +1395,13 @@ function generateRubikQuestion(numPieces) {
     const puzzlePieces = pieces; // ชิ้นที่เหลือคือโจทย์
 
     // 4. Generate Choices (1 Correct + 3 Wrong)
-    const choices = []; 
+    const choices = [];
     // เราจะเก็บ Correct ไว้ก่อน แล้วค่อย Shuffle ทีหลัง
     // แต่เพื่อให้ตรวจคำตอบได้ เราต้องรู้ว่า index ไหนถูก
-    
+
     const wrongChoices = [];
     let attempts = 0;
-    while(wrongChoices.length < 3 && attempts < 100) {
+    while (wrongChoices.length < 3 && attempts < 100) {
         attempts++;
         let newChoice = null;
         const strategy = Math.random();
@@ -1430,31 +1412,31 @@ function generateRubikQuestion(numPieces) {
         } else {
             newChoice = createWrongShapeChoice(correctAnswer, masterCube, allExisting); // Note: masterCube here acts as remaining pool, vaguely correct based on logic
         }
-        
+
         // Fallback Logic from GAS if specific strategies fail
         if (!newChoice) {
-             let wrong = JSON.parse(JSON.stringify(correctAnswer));
-             // Simple mutation logic (shuffle or swap a block from outside)
-             // Simulating pool logic from GAS roughly
-             newChoice = wrong; // Placeholder if complex logic fails, but createWrongShape usually works
+            let wrong = JSON.parse(JSON.stringify(correctAnswer));
+            // Simple mutation logic (shuffle or swap a block from outside)
+            // Simulating pool logic from GAS roughly
+            newChoice = wrong; // Placeholder if complex logic fails, but createWrongShape usually works
         }
 
         if (newChoice && !isRubikChoiceDuplicate(newChoice, allExisting)) {
             wrongChoices.push(newChoice);
         }
     }
-    
+
     // เผื่อสร้างไม่ครบ
     while (wrongChoices.length < 3) {
-         // Create a dummy wrong choice by just recoloring random block
-         let wrong = JSON.parse(JSON.stringify(correctAnswer));
-         wrong[0].color = wrong[0].color === 'base' ? 'accent1' : 'base';
-         wrongChoices.push(wrong);
+        // Create a dummy wrong choice by just recoloring random block
+        let wrong = JSON.parse(JSON.stringify(correctAnswer));
+        wrong[0].color = wrong[0].color === 'base' ? 'accent1' : 'base';
+        wrongChoices.push(wrong);
     }
 
     // รวมคำตอบ
     const finalChoices = [correctAnswer, ...wrongChoices];
-    
+
     // Shuffle choices และจำไว้ว่าอันไหนคือข้อถูก
     // สร้าง Object wrapper เพื่อติดตาม Index เดิม
     const labeledChoices = finalChoices.map((c, i) => ({ choice: c, isCorrect: i === 0 }));
@@ -1485,7 +1467,7 @@ exports.getRubik3DQuizData = functions.https.onRequest((req, res) => {
             } else { // Hard
                 for (let i = 0; i < TOTAL_QUESTIONS; i++) questions.push(generateRubikQuestion(3));
             }
-            
+
             shuffleRubikArray(questions);
 
             // ส่งข้อมูลกลับ Client
@@ -1516,10 +1498,10 @@ exports.saveRubik3DScore = functions.https.onRequest((req, res) => {
             // รับ userAnswers (Array of Selected Indices) และ correctIndices (Array of Correct Indices)
             // Frontend ต้องส่งทั้งคู่มา (เนื่องจาก Backend เป็น Stateless ไม่ได้เก็บโจทย์ไว้)
             // ถึงแม้ User จะแก้ correctIndices ได้ แต่ก็ต้องรู้ structure ซึ่งยากกว่าการแก้ score โดยตรง
-            
+
             const userAnswers = scoreData.userAnswers || [];
             const correctIndices = scoreData.correctIndices || []; // รับเฉลยที่ Frontend ได้รับตอนโหลดโจทย์
-            
+
             let calculatedCorrectCount = 0;
             let answeredCount = 0;
 
@@ -1668,8 +1650,8 @@ function generateSCTQuestion(difficulty) {
     if (difficulty === 'hell') {
         // ... (Logic Hell Mode เหมือนเดิม) ...
         const str1 = generateRandomString(strLength);
-        const targetDiff = Math.floor(Math.random() * 17); 
-        
+        const targetDiff = Math.floor(Math.random() * 17);
+
         let str2 = str1.split('');
         let str3 = str1.split('');
         let str4 = str1.split('');
@@ -1686,9 +1668,9 @@ function generateSCTQuestion(difficulty) {
             if (Math.random() > 0.3) { str4[pos] = CHARS_SCT.charAt(Math.floor(Math.random() * CHARS_SCT.length)); modified = true; }
 
             if (!modified || (str1[pos] === str2[pos] && str1[pos] === str3[pos] && str1[pos] === str4[pos])) {
-                 let newChar;
-                 do { newChar = CHARS_SCT.charAt(Math.floor(Math.random() * CHARS_SCT.length)); } while (newChar === str1[pos]);
-                 str2[pos] = newChar;
+                let newChar;
+                do { newChar = CHARS_SCT.charAt(Math.floor(Math.random() * CHARS_SCT.length)); } while (newChar === str1[pos]);
+                str2[pos] = newChar;
             }
         });
 
@@ -1709,16 +1691,16 @@ function generateSCTQuestion(difficulty) {
         // Standard Mode
         const left = generateRandomString(strLength);
         const diff = Math.floor(Math.random() * 6);
-        
+
         let rightArr = left.split('');
         if (diff > 0) {
             let positions = new Set();
             while (positions.size < diff) positions.add(Math.floor(Math.random() * strLength));
-            
+
             positions.forEach(pos => {
                 let newChar;
-                do { 
-                    newChar = CHARS_SCT.charAt(Math.floor(Math.random() * CHARS_SCT.length)); 
+                do {
+                    newChar = CHARS_SCT.charAt(Math.floor(Math.random() * CHARS_SCT.length));
                 } while (newChar === rightArr[pos]);
                 rightArr[pos] = newChar;
             });
@@ -1729,9 +1711,9 @@ function generateSCTQuestion(difficulty) {
         for (let j = 0; j <= 10; j++) {
             if (j !== correctAnswer) possibleWrongAnswers.push(j);
         }
-        
+
         // *** ตรงนี้คือจุดที่เคย Error ถ้าไม่มี function shuffleArray ***
-        shuffleArray(possibleWrongAnswers); 
+        shuffleArray(possibleWrongAnswers);
         let options = [correctAnswer, ...possibleWrongAnswers.slice(0, 3)];
         shuffleArray(options);
 
@@ -1750,7 +1732,7 @@ exports.getSCTQuizData = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
         const difficulty = req.query.difficulty || 'normal';
         let TOTAL_QUESTIONS = (difficulty === 'hell') ? 40 : 30; // Hell 40 ข้อ, อื่นๆ 30 ข้อ
-        
+
         let questions = [];
         for (let i = 0; i < TOTAL_QUESTIONS; i++) {
             questions.push(generateSCTQuestion(difficulty));
@@ -1776,17 +1758,17 @@ exports.saveSCTScore = functions.https.onRequest((req, res) => {
             const correctCount = scoreData.correctCount;
             const totalQuestions = scoreData.totalQuestions;
             const attemptedCount = scoreData.answeredCount;
-            
+
             // ถ้า isFail (เช่นทำไม่ทัน หรือกดข้ามใน Test Mode) ให้ score เป็น 0 (ตาม Logic SCT เดิม)
             const performanceScore = (!scoreData.isFail && attemptedCount > 0 && totalQuestions > 0)
                 ? (correctCount / totalQuestions) * (correctCount / attemptedCount) * 100
                 : 0;
 
             const resultsRef = db.collection("Results");
-            
+
             // เช็คคะแนนเก่า (Best Score Logic)
             const query = resultsRef.where("NormalizedEmail", "==", normalizedUserEmail)
-                                    .where("SetID", "==", setId);
+                .where("SetID", "==", setId);
             const querySnapshot = await query.get();
 
             let currentBestScore = -1;
@@ -1848,13 +1830,13 @@ exports.getBestSCTScore = functions.https.onRequest((req, res) => {
 
             const setId = `SCT_${difficulty.toUpperCase()}`;
             const normalizedUserEmail = normalizeGmail(userEmail);
-            
+
             const resultsRef = db.collection("Results");
             const query = resultsRef.where("NormalizedEmail", "==", normalizedUserEmail)
-                                    .where("SetID", "==", setId)
-                                    .orderBy("PerformanceScore", "desc")
-                                    .limit(1);
-            
+                .where("SetID", "==", setId)
+                .orderBy("PerformanceScore", "desc")
+                .limit(1);
+
             const snapshot = await query.get();
             if (snapshot.empty) {
                 res.json({ success: true, data: null });
@@ -1887,130 +1869,332 @@ exports.getBestSCTScore = functions.https.onRequest((req, res) => {
 });
 
 // ==========================================
-// GSC Functions: Current & Best Score Logic
+// 2. GSC Functions: Robust Save Logic
 // ==========================================
 
-exports.submitGSCScore = functions.https.onCall(async (data, context) => {
-    // 1. ตรวจสอบ Login
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'User must be logged in.');
-    }
+exports.submitGSCScore = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            const data = req.body;
+            const uid = data.uid;
+            const userEmail = data.email;
 
-    try {
-        const uid = context.auth.uid;
-        const userEmail = context.auth.token.email || "unknown";
-        
-        const score = data.score || 0;
-        const total = data.total || 0;
-        const accuracy = total > 0 ? (score / total) * 100 : 0; 
-        const timeSpent = data.timeSpent || 0;
-        
-        let testType = "Test";
-        if (data.mode && data.mode.toLowerCase() === 'practice') {
-            testType = "Practice";
-        }
-
-        const currentScoreData = {
-            UID: uid,
-            Email: userEmail,
-            NormalizedEmail: normalizeGmail(userEmail),
-            SetID: "GSC",
-            TestType: testType, 
-            CorrectCount: score,
-            TotalQuestions: total,
-            Accuracy: parseFloat(accuracy.toFixed(2)),
-            TimeSpent: timeSpent,
-            Timestamp: admin.firestore.FieldValue.serverTimestamp()
-        };
-
-        const resultsRef = db.collection("Results");
-
-        // --- Step A: ดึงคะแนน Best Score เดิม (ถ้ามี) ---
-        const oldScoreSnapshot = await resultsRef
-            .where("UID", "==", uid)
-            .where("SetID", "==", "GSC")
-            .where("TestType", "==", testType)
-            .limit(1)
-            .get();
-
-        let bestScoreData = { ...currentScoreData }; // สมมติว่าคะแนนปัจจุบันคือ Best ไว้ก่อน
-        let isNewBest = false;
-
-        if (oldScoreSnapshot.empty) {
-            // Case 1: เล่นครั้งแรก -> บันทึกลง DB เลย
-            await resultsRef.add(currentScoreData);
-            isNewBest = true;
-        } else {
-            // Case 2: เคยเล่นแล้ว -> เทียบกัน
-            const oldDoc = oldScoreSnapshot.docs[0];
-            const oldData = oldDoc.data();
-
-            if (score > oldData.CorrectCount || (score === oldData.CorrectCount && timeSpent < oldData.TimeSpent)) {
-                // คะแนนใหม่ดีกว่า -> อัปเดต DB
-                await oldDoc.ref.update(currentScoreData);
-                isNewBest = true;
-                // bestScoreData คือ currentScoreData (ถูกต้องแล้ว)
-            } else {
-                // คะแนนใหม่แย่กว่า -> ไม่ต้องอัปเดต DB
-                // แต่ต้องเอาข้อมูลเก่ามาเตรียมส่งกลับไปโชว์ในช่อง Best Score
-                bestScoreData = {
-                    CorrectCount: oldData.CorrectCount,
-                    TotalQuestions: oldData.TotalQuestions,
-                    Accuracy: oldData.Accuracy,
-                    TimeSpent: oldData.TimeSpent
-                };
+            if (!uid || !userEmail) {
+                res.status(400).json({ success: false, message: 'Missing User ID or Email' });
+                return;
             }
-        }
 
-        // --- Step B: คำนวณ Percentile ---
-        // เราต้องคำนวณ 2 ค่า:
-        // 1. currentPercentile (สำหรับรอบที่เพิ่งเล่น ไม่ว่าจะดีหรือไม่ดี)
-        // 2. bestPercentile (สำหรับคะแนนที่ดีที่สุด)
-        
-        let currentPercentile = 0;
-        let bestPercentile = 0;
+            // 1. รับค่าและคำนวณ Accuracy
+            const score = Number(data.score) || 0;
+            const total = Number(data.total) || 0;
+            const timeSpent = Number(data.timeSpent) || 0;
+            const attempted = Number(data.attempted) || 0;
+            
+            // Logic Accuracy: Score / Attempted
+            const accuracy = attempted > 0 ? parseFloat(((score / attempted) * 100).toFixed(2)) : 0;
 
-        if (testType === 'Test') {
-            const allScoresSnapshot = await resultsRef
+            let testType = "Test";
+            if (data.mode && typeof data.mode === 'string' && data.mode.toLowerCase() === 'practice') {
+                testType = "Practice";
+            }
+
+            const scoreData = {
+                UID: uid,
+                Email: userEmail,
+                NormalizedEmail: normalizeGmail(userEmail),
+                SetID: "GSC",
+                TestType: testType,
+                CorrectCount: score,
+                TotalQuestions: total,
+                Accuracy: accuracy,
+                TimeSpent: timeSpent,
+                Timestamp: FieldValue.serverTimestamp()
+            };
+
+            const resultsRef = db.collection("Results");
+
+            // 2. จัดการ Save/Update Best Score
+            const oldScoreSnapshot = await resultsRef
+                .where("UID", "==", uid)
                 .where("SetID", "==", "GSC")
-                .where("TestType", "==", "Test") 
+                .where("TestType", "==", testType)
+                .limit(1)
                 .get();
 
-            if (!allScoresSnapshot.empty) {
-                const allScores = allScoresSnapshot.docs.map(doc => doc.data().CorrectCount);
-                allScores.sort((a, b) => a - b);
-                const totalPlayers = allScores.length;
+            let bestScoreData = { ...scoreData };
+            let isNewBest = false;
 
-                // สูตร Percentile
-                const calcPercentile = (targetScore) => {
-                    if (totalPlayers <= 1) return 100;
-                    const countBeat = allScores.filter(s => s < targetScore).length;
-                    return (countBeat / (totalPlayers - 1)) * 100;
-                };
+            if (oldScoreSnapshot.empty) {
+                await resultsRef.add(scoreData);
+                isNewBest = true;
+            } else {
+                const oldDoc = oldScoreSnapshot.docs[0];
+                const oldData = oldDoc.data();
+                const oldScore = Number(oldData.CorrectCount) || 0;
+                const oldTime = Number(oldData.TimeSpent) || 999999;
 
-                currentPercentile = calcPercentile(currentScoreData.CorrectCount);
-                bestPercentile = calcPercentile(bestScoreData.CorrectCount);
+                if (score > oldScore || (score === oldScore && timeSpent < oldTime)) {
+                    await oldDoc.ref.update(scoreData);
+                    isNewBest = true;
+                } else {
+                    bestScoreData = {
+                        CorrectCount: oldScore,
+                        TotalQuestions: oldData.TotalQuestions || total,
+                        Accuracy: oldData.Accuracy || 0,
+                        TimeSpent: oldTime
+                    };
+                }
             }
+
+            // 3. คำนวณ Percentile (FIXED LOGIC)
+            let currentPercentile = 0;
+            let bestPercentile = 0;
+
+            if (testType === 'Test') {
+                const allScoresSnapshot = await resultsRef
+                    .where("SetID", "==", "GSC")
+                    .where("TestType", "==", "Test")
+                    .get();
+
+                if (!allScoresSnapshot.empty) {
+                    // ดึงคะแนนทั้งหมดมาเป็น Array
+                    const allScores = allScoresSnapshot.docs.map(doc => Number(doc.data().CorrectCount) || 0);
+                    const populationCount = allScores.length;
+
+                    // --- ฟังก์ชันคำนวณ Percentile แบบถูกต้อง ---
+                    const calculateStandardPercentile = (targetScore) => {
+                         if (populationCount === 0) return 100;
+                         
+                         // กรณีมีคนเดียวในระบบ (คือตัวเราเองที่มีคะแนน Best Score อยู่ใน DB)
+                         if (populationCount === 1) {
+                             // ให้เทียบกับคะแนนนั้น: 
+                             // ถ้าคะแนนที่ส่งมา (targetScore) >= คะแนนใน DB -> 100%
+                             // ถ้าคะแนนที่ส่งมา น้อยกว่า คะแนนใน DB -> 0%
+                             const singleBestScore = allScores[0];
+                             return targetScore >= singleBestScore ? 100 : 0;
+                         }
+
+                         // กรณีมีหลายคน: สูตร (จำนวนคนที่คะแนนน้อยกว่าเรา / จำนวนคนทั้งหมด) * 100
+                         const countBeat = allScores.filter(s => s < targetScore).length;
+                         return (countBeat / populationCount) * 100;
+                    };
+                    // ------------------------------------------
+
+                    currentPercentile = calculateStandardPercentile(score);
+                    bestPercentile = calculateStandardPercentile(bestScoreData.CorrectCount);
+                }
+            }
+
+            res.json({
+                success: true,
+                isNewBest: isNewBest,
+                current: {
+                    score: score,
+                    accuracy: accuracy,
+                    percentile: parseFloat(currentPercentile.toFixed(2))
+                },
+                best: {
+                    score: bestScoreData.CorrectCount,
+                    accuracy: bestScoreData.Accuracy,
+                    percentile: parseFloat(bestPercentile.toFixed(2))
+                }
+            });
+
+        } catch (error) {
+            console.error("Error submitGSCScore:", error);
+            res.status(500).json({ success: false, message: `Save failed: ${error.message}` });
         }
+    });
+});
 
-        // ส่งข้อมูลกลับไป 2 ก้อน (Current และ Best)
-        return {
-            success: true,
-            isNewBest: isNewBest,
-            current: {
-                score: currentScoreData.CorrectCount,
-                accuracy: currentScoreData.Accuracy,
-                percentile: parseFloat(currentPercentile.toFixed(2))
-            },
-            best: {
-                score: bestScoreData.CorrectCount,
-                accuracy: bestScoreData.Accuracy,
-                percentile: parseFloat(bestPercentile.toFixed(2))
+// ==========================================
+// 12. APR (Approximation Test) LOGIC
+// ==========================================
+
+// API: ดึงโจทย์ APR จาก Firestore (Collection: Exam_APR)
+exports.getAPRQuizData = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            // รับค่า setID (ถ้าไม่ส่งมา ให้ Default เป็น APR001)
+            const setId = req.query.setId || 'APR001';
+            const mode = req.query.mode || 'practice';
+
+            const questionsRef = db.collection('Exam_APR');
+            const snapshot = await questionsRef.where('SetID', '==', setId).get();
+
+            if (snapshot.empty) {
+                res.json({ success: false, error: "No questions found for SetID: " + setId });
+                return;
             }
-        };
 
-    } catch (error) {
-        console.error("Error in submitGSCScore:", error);
-        throw new functions.https.HttpsError('internal', error.message);
-    }
+            let questions = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Map Data จาก CSV Field ให้ตรงกับที่ Frontend APR ต้องการ
+                questions.push({
+                    id: data.QuestionID,
+                    questionText: data.QuestionText,
+                    questionImage: data.QuestionImage || "", // รองรับกรณีไม่มีรูป
+                    optionA: data.OptionA,
+                    optionB: data.OptionB,
+                    optionC: data.OptionC,
+                    optionD: data.OptionD,
+                    correctAnswer: data.CorrectAnswer ? data.CorrectAnswer.trim().toUpperCase() : "",
+                    explanation: data.Description
+                });
+            });
+
+            // Logic การเรียงโจทย์
+            if (mode === 'test') {
+                // ถ้าเป็น Test ให้สุ่มลำดับ (Shuffle)
+                for (let i = questions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [questions[i], questions[j]] = [questions[j], questions[i]];
+                }
+            } else {
+                // ถ้าเป็น Practice ให้เรียงตาม QuestionID
+                questions.sort((a, b) => Number(a.id) - Number(b.id));
+            }
+
+            res.json({ success: true, questions: questions });
+
+        } catch (e) {
+            console.error("Error getAPRQuizData:", e);
+            res.status(500).json({ success: false, error: e.message });
+        }
+    });
+});
+
+// API: บันทึกคะแนน APR (ใช้ Logic เดียวกับ GSC)
+exports.submitAPRScore = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            const data = req.body;
+            const userEmail = data.email; // รับ Email จาก Frontend
+            
+            if (!userEmail) {
+                res.status(400).json({ success: false, message: 'Missing Email' });
+                return;
+            }
+
+            // คำนวณ
+            const score = Number(data.score) || 0;
+            const total = Number(data.total) || 0;
+            const timeSpent = Number(data.timeSpent) || 0;
+            const attempted = Number(data.attempted) || 0;
+            const accuracy = attempted > 0 ? parseFloat(((score / attempted) * 100).toFixed(2)) : 0;
+            const mode = data.mode || 'test';
+
+            const normalizedEmail = normalizeGmail(userEmail);
+            const setId = "APR"; // ใช้เป็น Key รวมสำหรับ APR
+
+            const scoreData = {
+                Email: userEmail,
+                NormalizedEmail: normalizedEmail,
+                SetID: setId,
+                TestType: mode,
+                CorrectCount: score,
+                TotalQuestions: total,
+                Accuracy: accuracy,
+                TimeSpent: timeSpent,
+                Timestamp: FieldValue.serverTimestamp()
+            };
+
+            const resultsRef = db.collection("Results");
+
+            // 1. จัดการ Best Score (เปรียบเทียบกับของเดิม)
+            const oldScoreSnapshot = await resultsRef
+                .where("NormalizedEmail", "==", normalizedEmail)
+                .where("SetID", "==", setId)
+                .where("TestType", "==", mode)
+                .orderBy("CorrectCount", "desc") // เรียงคะแนนมากสุดก่อน
+                .limit(1)
+                .get();
+
+            let bestScoreData = { ...scoreData }; // Default คือคะแนนรอบนี้
+            let isNewBest = false;
+
+            if (oldScoreSnapshot.empty) {
+                // ยังไม่เคยเล่น บันทึกเลย
+                await resultsRef.add(scoreData);
+                isNewBest = true;
+            } else {
+                const oldDoc = oldScoreSnapshot.docs[0];
+                const oldData = oldDoc.data();
+                const oldScore = Number(oldData.CorrectCount) || 0;
+                
+                // เช็คว่าทำได้ดีกว่าเดิมไหม
+                if (score > oldScore) {
+                    await resultsRef.add(scoreData); // เพิ่ม Record ใหม่ที่เป็น New Best
+                    // (Optionally: ลบอันเก่าออกถ้าไม่อยากเก็บ History เยอะ)
+                    isNewBest = true;
+                } else {
+                    // ถ้าไม่ชนะ ให้ใช้ค่าเก่าเป็น Best Score เพื่อส่งกลับไปโชว์
+                    bestScoreData = {
+                        CorrectCount: oldScore,
+                        TotalQuestions: oldData.TotalQuestions,
+                        Accuracy: oldData.Accuracy,
+                        TimeSpent: oldData.TimeSpent
+                    };
+                    // บันทึก History การเล่นรอบนี้ด้วย (แต่ไม่ใช่ Best)
+                    await resultsRef.add(scoreData);
+                }
+            }
+
+            // 2. คำนวณ Percentile (เทียบกับผู้เล่นคนอื่นในโหมด Test)
+            let currentPercentile = 0;
+            let bestPercentile = 0;
+
+            if (mode === 'test') {
+                const allScoresSnapshot = await resultsRef
+                    .where("SetID", "==", setId)
+                    .where("TestType", "==", "test")
+                    .get();
+
+                if (!allScoresSnapshot.empty) {
+                    // ดึงคะแนนที่ดีที่สุดของแต่ละคน (Unique User) มาทำ Pool
+                    const userBestScores = {};
+                    allScoresSnapshot.forEach(doc => {
+                        const d = doc.data();
+                        const email = d.NormalizedEmail;
+                        const s = Number(d.CorrectCount) || 0;
+                        if (!userBestScores[email] || s > userBestScores[email]) {
+                            userBestScores[email] = s;
+                        }
+                    });
+
+                    const allBestScores = Object.values(userBestScores);
+                    const populationCount = allBestScores.length;
+
+                    const calculatePercentile = (targetScore) => {
+                        if (populationCount <= 1) return 100;
+                        const countBeat = allBestScores.filter(s => s < targetScore).length;
+                        return (countBeat / populationCount) * 100;
+                    };
+
+                    currentPercentile = calculatePercentile(score);
+                    bestPercentile = calculatePercentile(bestScoreData.CorrectCount);
+                }
+            }
+
+            res.json({
+                success: true,
+                isNewBest: isNewBest,
+                current: {
+                    score: score,
+                    accuracy: accuracy,
+                    percentile: parseFloat(currentPercentile.toFixed(2))
+                },
+                best: {
+                    score: bestScoreData.CorrectCount,
+                    accuracy: bestScoreData.Accuracy,
+                    percentile: parseFloat(bestPercentile.toFixed(2))
+                }
+            });
+
+        } catch (error) {
+            console.error("Error submitAPRScore:", error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
 });

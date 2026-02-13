@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>General Science Quiz</title>
-    
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -12,178 +12,1275 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
-      /* --- CSS 100% MATCH --- */
-      :root { 
-        --primary-color: #722F37;
-        --secondary-color: #8B4513; --accent-color: #A0826D;
-        --background-color-light: #FAF7F2; --background-color-dark: #F5F2EA; --text-color: #722F37;
-        --text-color-secondary: #8B4513; --success-color: #28a745; --danger-color: #dc3545; 
-        --border-color: #E8DDD4;
-      }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { height: 100%; }
-      body { 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-dark) 100%); 
-        line-height: 1.6; 
-        color: var(--text-color);
-        display: flex;
-        flex-direction: column;
-      }
-      .header { 
-        background: rgba(255,253,250,0.95);
-        padding: 15px 20px; box-shadow: 0 2px 10px rgba(139,69,19,0.1); display: flex;
-        justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1001;
-        border-bottom: 2px solid var(--secondary-color);
-        flex-shrink: 0;
-      }
-      .header h1 { color: var(--primary-color); font-size: 24px; font-weight: 700; }
-      .header-buttons { display: flex; gap: 10px; }
-      .timer-container { text-align: center; margin-bottom: 1rem; }
-      .timer { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); }
-      .timer.danger { color: var(--danger-color); }
-      .container { 
-        max-width: 1400px; 
-        width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-        flex-grow: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .test-container { 
-          background: #FFFEF9;
-          border-radius: 15px; padding: 30px; 
-          box-shadow: 0 10px 30px rgba(139,69,19,0.1); border: 1px solid #E8DDD4; width: 100%;
-      }
-      .screen { display: none; }
-      .screen.active { display: flex; flex-direction: column; }
-      #instruction-screen, #how-to-play-screen { align-items: center; text-align: center; }
-      #instruction-screen ul { text-align: left; display: inline-block; margin-top: 1rem; }
-      .mode-selection { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
-      .quiz-layout { display: flex; flex-direction: row; gap: 20px; width: 100%; }
-      .nav-panel { width: 25%; max-width: 280px; background-color: var(--background-color-dark); padding: 20px; border-radius: 10px; border: 1px solid #E8DDD4; align-self: flex-start; }
-      .question-content { width: 75%; position: relative; }
-      .question-nav-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
-      .question-nav-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
-      .question-nav-btn.answered { background-color: var(--primary-color); color: white; }
-      .question-nav-btn.unanswered { background-color: var(--background-color-light); color: var(--text-color-secondary); border: 1px solid #E8DDD4;}
-      .question-nav-btn.current { border-color: var(--primary-color); transform: scale(1.1); background-color: var(--secondary-color); color: white; }
-      .question-nav-btn.correct { background-color: var(--success-color); color: white; }
-      .question-nav-btn.incorrect { background-color: var(--danger-color); color: white; }
-      .legend { margin-top: 15px; text-align: left; font-size: 14px; }
-      .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
-      .legend-color { width: 18px; height: 18px; border-radius: 4px; margin-right: 10px; border: 1px solid #ccc; }
-      .question-header { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--background-color-dark); border-radius: 10px; border: 1px solid #E8DDD4; }
-      .question-number { background: var(--primary-color); color: white; padding: 10px 20px; border-radius: 25px; font-weight: bold; font-size: 16px; display: inline-block; margin-bottom: 15px; }
-      #question-text { font-size: 1.25rem; color: var(--text-color); }
-      #question-image, #review-question-image { max-width: 100%; max-height: 300px; margin: 20px auto; display: block; border-radius: 10px; }
-      
-      /* Image Loading Spinner */
-      .img-loader {
-          display: none;
-          border: 5px solid #E8DDD4;
-          border-top: 5px solid var(--primary-color);
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
-          animation: spin 1s linear infinite;
-          margin: 20px auto;
-      }
+        /* --- CSS แบบเต็ม (ไม่ย่อ) เพื่อให้แก้ไขง่าย --- */
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --accent-color: #A0826D;
+            --background-color-light: #FAF7F2;
+            --background-color-dark: #F5F2EA;
+            --text-color: #722F37;
+            --text-color-secondary: #8B4513;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --border-color: #E8DDD4;
+        }
 
-      .options-container { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; }
-      .option { display: flex; align-items: center; padding: 20px; border: 2px solid #E8DDD4; border-radius: 12px; background: var(--background-color-light); cursor: pointer; transition: all 0.3s ease; font-size: 16px; }
-      .option.disabled { cursor: not-allowed; pointer-events: none; }
-      .option:not(.disabled):hover { background: var(--background-color-dark); border-color: var(--primary-color); }
-      .option.selected { border-color: var(--secondary-color); background-color: var(--background-color-dark); font-weight: bold; }
-      .option.correct { border-color: var(--success-color) !important; background-color: #d4edda !important; font-weight: bold; }
-      .option.incorrect { border-color: var(--danger-color) !important; background-color: #f8d7da !important; opacity: 0.7; }
-      .option.user-selected { border-width: 3px; }
-      .option-letter { background: var(--secondary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; transition: all 0.3s ease; }
-      .option.selected .option-letter { background: var(--primary-color); color: white; }
-      .option.correct .option-letter { background: var(--success-color) !important; color: white !important; }
-      .btn { background: var(--primary-color); color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-decoration: none; text-align: center; }
-      .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(114,47,55,0.3); opacity: 0.9; }
-      .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
-      .submit-btn { background-color: var(--primary-color); }
-      .action-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
-      .secondary-btn { background: var(--secondary-color); color: white; }
-      .outline-btn { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
-      .outline-btn:hover { background-color: var(--primary-color); color: white; }
-      .header-btn { padding: 8px 20px; font-size: 16px; }
-      .navigation-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 2.5rem; width: 100%; }
-      .navigation-controls.center { justify-content: center; }
-      #result-screen { align-items: center; text-align: center; }
-      .result-details { background-color: var(--background-color-dark); padding: 2rem; border-radius: 10px; width: 100%; max-width: 800px; }
-      .result-comparison { display: flex; gap: 2rem; justify-content: center; text-align: left; }
-      .result-column { flex: 1; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px; background: #FFFEF9; }
-      .result-column h3 { color: var(--text-color-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-      .result-grid { display: grid; grid-template-columns: auto 1fr; gap-x: 2rem; gap-y: 1.25rem; font-size: 1.25rem; align-items: center; }
-      .result-grid span:nth-child(odd) { font-weight: 600; color: var(--text-color-secondary); }
-      .result-grid span:nth-child(even) { font-weight: bold; text-align: right; }
-      .explanation { text-align: left; background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid var(--primary-color); font-size: 1.1rem; }
-      .explanation h4 { color: var(--primary-color); margin-bottom: 8px; }
-      .hidden { display: none !important; }
-      .loader-overlay {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(250, 247, 242, 0.85);
-        display: none; justify-content: center; align-items: center;
-        z-index: 9999; backdrop-filter: blur(2px);
-      }
-      .loader-spinner {
-        border: 8px solid var(--border-color);
-        border-top: 8px solid var(--primary-color);
-        border-radius: 50%; width: 60px; height: 60px;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      @media (min-width: 768px) { .options-container { grid-template-columns: repeat(2, 1fr); } }
-      @media (max-width: 768px) { .result-comparison { flex-direction: column; } }
-      .practice-mode-active .quiz-layout { justify-content: center; }
-      .practice-mode-active .nav-panel { display: none; }
-      .practice-mode-active .question-content { width: 100%; max-width: 800px; flex-grow: 0; }
-      
-      .modal { 
-        position: fixed; z-index: 2000; left: 0; top: 0; width: 100%;
-        height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
-      }
-      .modal.active { display: flex; }
-      .modal-content { 
-        background: var(--background-color-light); padding: 30px;
-        border-radius: 15px; width: 90%; max-width: 450px;
-        text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
-      }
-      .modal-content h2 { color: var(--primary-color); margin-bottom: 1rem; font-size: 1.75rem; }
-      .modal-content p { color: var(--text-color-secondary); margin-bottom: 1.5rem; font-size: 1.1rem; }
-      .modal-actions { display: flex; justify-content: center; gap: 1rem; }
+        * {
+            box-sizing: border-box;
+            /* เพิ่มส่วนนี้: ทำให้ฟีลลิ่งการกดเหมือนแอป Native */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none; /* ห้ามเลือก Text */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation; /* ลด Delay เวลากดปุ่ม */
+        }
 
-      .result-summary {
-          text-align: left; background: var(--background-color-dark); padding: 2rem;
-          border-radius: 10px; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto;
-      }
-      .result-summary p {
-          font-size: 1.25rem; margin: 12px 0; display: flex; justify-content: space-between; align-items: center;
-      }
-      .result-summary p strong { color: var(--primary-color); }
-      .result-summary p span { font-size: 1.5rem; font-weight: bold; color: var(--text-color); }
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-dark) 100%);
+            line-height: 1.6;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,253,250,0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(139,69,19,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            border-bottom: 2px solid var(--secondary-color);
+            flex-shrink: 0;
+        }
+
+            .header h1 {
+                color: var(--primary-color);
+                font-size: 24px;
+                font-weight: 700;
+            }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .timer-container {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .timer {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+            .timer.danger {
+                color: var(--danger-color);
+            }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-container {
+            background: #FFFEF9;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(139,69,19,0.1);
+            border: 1px solid #E8DDD4;
+            width: 100%;
+        }
+
+        .screen {
+            display: none;
+        }
+
+            .screen.active {
+                display: flex;
+                flex-direction: column;
+            }
+
+        #instruction-screen, #how-to-play-screen {
+            align-items: center;
+            text-align: center;
+        }
+
+            #instruction-screen ul {
+                text-align: left;
+                display: inline-block;
+                margin-top: 1rem;
+            }
+
+        .mode-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .quiz-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .nav-panel {
+            width: 25%;
+            max-width: 280px;
+            background-color: var(--background-color-dark);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #E8DDD4;
+            align-self: flex-start;
+        }
+
+        .question-content {
+            width: 75%;
+            position: relative;
+        }
+
+        .question-nav-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+        }
+
+        .question-nav-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+            .question-nav-btn.answered {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+            .question-nav-btn.unanswered {
+                background-color: var(--background-color-light);
+                color: var(--text-color-secondary);
+                border: 1px solid #E8DDD4;
+            }
+
+            .question-nav-btn.current {
+                border-color: var(--primary-color);
+                transform: scale(1.1);
+                background-color: var(--secondary-color);
+                color: white;
+            }
+
+            .question-nav-btn.correct {
+                background-color: var(--success-color);
+                color: white;
+            }
+
+            .question-nav-btn.incorrect {
+                background-color: var(--danger-color);
+                color: white;
+            }
+
+        .legend {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .question-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--background-color-dark);
+            border-radius: 10px;
+            border: 1px solid #E8DDD4;
+        }
+
+        .question-number {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        #question-text {
+            font-size: 1.25rem;
+            color: var(--text-color);
+        }
+
+        #question-image, #review-question-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 20px auto;
+            display: block;
+            border-radius: 10px;
+        }
+
+        /* Image Loading Indicator */
+        .img-loader {
+            display: none;
+            border: 5px solid #E8DDD4;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid #E8DDD4;
+            border-radius: 12px;
+            background: var(--background-color-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+            .option.disabled {
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
+            .option:not(.disabled):hover {
+                background: var(--background-color-dark);
+                border-color: var(--primary-color);
+            }
+
+            .option.selected {
+                border-color: var(--secondary-color);
+                background-color: var(--background-color-dark);
+                font-weight: bold;
+            }
+
+            .option.correct {
+                border-color: var(--success-color) !important;
+                background-color: #d4edda !important;
+                font-weight: bold;
+            }
+
+            .option.incorrect {
+                border-color: var(--danger-color) !important;
+                background-color: #f8d7da !important;
+                opacity: 0.7;
+            }
+
+            .option.user-selected {
+                border-width: 3px;
+            }
+
+        .option-letter {
+            background: var(--secondary-color);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .option.selected .option-letter {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .option.correct .option-letter {
+            background: var(--success-color) !important;
+            color: white !important;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(114,47,55,0.3);
+                opacity: 0.9;
+            }
+
+            .btn:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-btn {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .outline-btn {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+            .outline-btn:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .header-btn {
+            padding: 8px 20px;
+            font-size: 16px;
+        }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2.5rem;
+            width: 100%;
+        }
+
+            .navigation-controls.center {
+                justify-content: center;
+            }
+
+        #result-screen {
+            align-items: center;
+            text-align: center;
+        }
+
+        .result-details {
+            background-color: var(--background-color-dark);
+            padding: 2rem;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .result-comparison {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            text-align: left;
+        }
+
+        .result-column {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #FFFEF9;
+        }
+
+            .result-column h3 {
+                color: var(--text-color-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap-x: 2rem;
+            gap-y: 1.25rem;
+            font-size: 1.25rem;
+            align-items: center;
+        }
+
+            .result-grid span:nth-child(odd) {
+                font-weight: 600;
+                color: var(--text-color-secondary);
+            }
+
+            .result-grid span:nth-child(even) {
+                font-weight: bold;
+                text-align: right;
+            }
+
+        .explanation {
+            text-align: left;
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+            .explanation h4 {
+                color: var(--primary-color);
+                margin-bottom: 8px;
+            }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(250, 247, 242, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        }
+
+        .loader-spinner {
+            border: 8px solid var(--border-color);
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .options-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .result-comparison {
+                flex-direction: column;
+            }
+        }
+
+        .practice-mode-active .quiz-layout {
+            justify-content: center;
+        }
+
+        .practice-mode-active .nav-panel {
+            display: none;
+        }
+
+        .practice-mode-active .question-content {
+            width: 100%;
+            max-width: 800px;
+            flex-grow: 0;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--background-color-light);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
+
+            .modal-content h2 {
+                color: var(--primary-color);
+                margin-bottom: 1rem;
+                font-size: 1.75rem;
+            }
+
+            .modal-content p {
+                color: var(--text-color-secondary);
+                margin-bottom: 1.5rem;
+                font-size: 1.1rem;
+            }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .result-summary {
+            text-align: left;
+            background: var(--background-color-dark);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+            .result-summary p {
+                font-size: 1.25rem;
+                margin: 12px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .result-summary p strong {
+                    color: var(--primary-color);
+                }
+
+                .result-summary p span {
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    color: var(--text-color);
+                }
+
+        /* =========================================
+        RESPONSIVE DESIGN (แยก Mobile / Tablet)
+        ========================================= */
+
+        /* =========================================
+           1. MAIN HEADER (Fixed Top like FoldingBox)
+           ========================================= */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+            background-color: var(--background-color-light);
+            border-bottom: 2px solid var(--border-color);
+            height: 60px;
+            width: 100%;
+            position: fixed; /* Fix ติดบนสุด */
+            top: 0;
+            left: 0;
+            z-index: 2000; /* Layer สูงสุด ทับทุกอย่าง */
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .timer-badge {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color); /* สีเดียวกับ Theme */
+            background: transparent;
+            padding: 0;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 2001; /* สูงกว่า Header */
+        }
+
+            .hamburger-btn div {
+                width: 24px;
+                height: 3px;
+                background-color: var(--primary-color);
+                border-radius: 2px;
+            }
+
+        /* Container หลัก (เว้นที่ให้ Header) */
+        .container {
+            margin-top: 60px; /* เว้นที่ให้ Header 60px */
+            height: calc(100vh - 60px); /* ความสูงที่เหลือ */
+            width: 100%;
+            overflow: hidden; /* ห้าม Scroll ที่ Container ใหญ่ */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* =========================================
+           2. MOBILE (< 768px) - Compact Mode
+           ========================================= */
+        @media (max-width: 767.98px) {
+            /* 1. แก้หน้าเลือก Mode ตัวใหญ่เกินไป */
+            #instruction-screen h1 {
+                font-size: 1.5rem !important;
+                margin-bottom: 1rem;
+            }
+
+            #instruction-screen p {
+                font-size: 0.95rem !important;
+            }
+
+            .mode-selection .btn {
+                padding: 0.75rem;
+                font-size: 0.95rem;
+            }
+
+            /* 2. ซ่อน Sidebar และ Header เก่า */
+            #nav-panel, .header, #review-nav-panel {
+                display: none !important;
+            }
+
+            /* 3. ปรับ Layout ให้เต็มจอ และ Scroll ได้ */
+            .quiz-layout, .review-layout {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                padding: 0;
+                width: 100%;
+            }
+
+            .question-content {
+                flex: 1; /* ยืดเต็มพื้นที่ */
+                padding: 15px;
+                overflow-y: auto; /* <--- หัวใจสำคัญ: ให้ Scroll ได้ */
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 80px; /* เผื่อที่ให้ปุ่มด้านล่าง */
+                width: 100%;
+            }
+
+            /* 4. ลดขนาด Font และรูปภาพ */
+            #quiz-question-number, #review-question-number {
+                font-size: 0.85rem !important;
+                color: #888;
+                margin-bottom: 5px;
+            }
+
+            #question-text, #review-question-text {
+                font-size: 0.95rem !important; /* ปรับขนาดตัวอักษรโจทย์ตรงนี้ */
+                line-height: 1.4;
+                margin-bottom: 15px;
+            }
+
+            #question-image, #review-question-image {
+                max-height: 25vh;
+                margin: 0 auto 15px auto;
+                display: block;
+            }
+
+            /* 5. ปุ่มตัวเลือก */
+            .options-container {
+                display: grid;
+                grid-template-columns: 1fr; /* แก้เป็น 1fr ให้เต็มจอ อ่านง่ายขึ้น */
+                gap: 8px;
+                width: 100%;
+            }
+
+            .option-card {
+                min-height: 45px;
+                font-size: 0.85rem !important;
+                padding: 5px;
+            }
+
+            /* 6. ปุ่ม Navigation ด้านล่าง */
+            .navigation-controls {
+                margin-top: 20px;
+                display: flex;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+
+                .navigation-controls .btn {
+                    flex: 1;
+                    padding: 10px;
+                    font-size: 0.9rem;
+                }
+
+            /* 7. หน้า Result */
+            #result-screen {
+                padding: 1rem;
+                overflow-y: auto;
+            }
+
+                #result-screen h1 {
+                    font-size: 1.5rem !important;
+                }
+        }
+
+        /* =========================================
+           3. TABLET PORTRAIT (768px - 1024px)
+           ========================================= */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+            /* 1. ซ่อน Sidebar */
+            #nav-panel, #review-nav-panel {
+                display: none !important;
+            }
+
+            /* 2. ปรับ Layout ให้เหมือน Mobile แต่ใหญ่กว่า */
+            .quiz-layout, .review-layout {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                padding: 0;
+                width: 100%;
+            }
+
+            .question-content {
+                flex: 1;
+                padding: 2rem; /* เพิ่ม Padding ให้ไม่ชิดขอบจอเกินไป */
+                overflow-y: auto; /* ให้ Scroll ได้ */
+                width: 100%;
+            }
+
+            /* 3. Font Size Tablet (พอดีสายตา) */
+            #question-text, #review-question-text {
+                font-size: 1.25rem !important;
+                line-height: 1.6;
+            }
+
+            #question-image, #review-question-image {
+                max-height: 35vh;
+            }
+
+            .options-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+
+            .option-card {
+                min-height: 60px;
+                font-size: 1.1rem !important;
+            }
+
+            /* ปุ่ม Navigation */
+            .navigation-controls .btn {
+                padding: 12px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* บังคับหมุนจอ */
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            #rotate-warning {
+                display: flex;
+            }
+
+            .container, .main-header {
+                display: none;
+            }
+        }
+
+        /* --- CSS สำหรับ Hamburger และ Side Menu --- */
+        .mobile-header {
+            display: none;
+        }
+        /* ซ่อนบน Desktop */
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+            .hamburger-btn div {
+                width: 25px;
+                height: 3px;
+                background-color: var(--primary-color);
+                border-radius: 2px;
+            }
+
+        /* Side Menu Styles */
+        .side-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2999;
+            display: none;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 260px;
+            height: 100%;
+            background: var(--background-color-light);
+            z-index: 3000;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+            .side-menu.active {
+                right: 0;
+            }
+
+        .side-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* แก้ตรงนี้ */
+            margin-bottom: 1rem;
+            /* ... */
+        }
+
+        .question-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+        /* ปุ่มใน Side Menu */
+        .mobile-nav-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: auto;
+            color: var(--text-color);
+            background: transparent;
+        }
+
+        /* Rotate Warning Styles */
+        #rotate-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            color: white;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            items-center;
+            text-align: center;
+        }
+
+        .rotate-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* --- MOBILE RESPONSIVE (จุดสำคัญ) --- */
+        @media (max-width: 768px) {
+            body, html {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            /* 1. ซ่อน Sidebar เดิม */
+            #nav-panel {
+                display: none !important;
+            }
+
+            /* 2. ปรับ Layout หลักให้เต็มจอ */
+            .quiz-layout {
+                grid-template-columns: 1fr; /* ให้เหลือคอลัมน์เดียว */
+                height: 100%;
+                padding: 0.5rem;
+            }
+
+            .question-content {
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* 3. แสดง Mobile Header */
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            /* 4. ปรับขนาด Font และรูป */
+            #quiz-question-number {
+                font-size: 1.2rem;
+            }
+
+            #question-text {
+                font-size: 1rem;
+                margin-top: 0.5rem;
+            }
+
+            #question-image {
+                max-height: 25vh; /* รูปสูงไม่เกิน 25% ของจอ */
+                width: auto;
+                max-width: 100%;
+                object-fit: contain;
+                margin: 0 auto;
+            }
+
+            /* 5. ปุ่มตัวเลือก (Choices) เรียง 2 คอลัมน์ */
+            .options-container {
+                display: grid;
+                grid-template-columns: 1fr !important; /* แก้เป็น 1fr เพื่อให้เหลือ 1 ช่องเต็มๆ */
+                gap: 0.5rem;
+            }
+
+            .option-card {
+                min-height: 50px;
+                font-size: 0.9rem;
+                padding: 0.5rem;
+                margin-bottom: 0; /* ลบ margin เดิมทิ้ง */
+            }
+        }
+
+        /* บังคับหมุนจอ */
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            #rotate-warning {
+                display: flex;
+            }
+
+            .quiz-layout {
+                display: none;
+            }
+        }
+
+        /* --- START: MOBILE & TABLET FIXES (Rev 27 Final) --- */
+
+        /* 1. Global Reset for Mobile Scroll */
+        @media (max-width: 1024px) {
+            html, body {
+                overflow: hidden !important;
+                height: 100% !important;
+                /* position: fixed;  <-- ลบออก หรือ Comment ไว้ */
+                width: 100%;
+            }
+
+            /* Container หลัก: Scroll ได้ และมีพื้นที่ด้านล่าง */
+            .container {
+                margin-top: 60px;
+                height: calc(100% - 60px) !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                display: block !important;
+                padding: 15px !important;
+                padding-bottom: 150px !important; /* ดันปุ่ม Next ให้พ้นขอบ */
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .test-container {
+                /* box-shadow: none !important; */
+                /* border: none !important; */
+                /* padding: 0 !important; */
+                /* background: transparent !important; */ /* นำกลับมาเพื่อให้มีพื้นหลังสีขาว */
+                width: 100% !important;
+                margin-bottom: 20px; /* เพิ่มระยะห่างด้านล่างนิดหน่อย */
+            }
+
+            /* ซ่อน Sidebar และปุ่ม Back to Results ด้านล่าง (Review) */
+            .nav-panel {
+                display: none !important;
+            }
+
+            #back-to-results-button-review {
+                display: none !important;
+            }
+            /* ซ่อนปุ่มล่าง ตามข้อ 4 */
+
+            .quiz-layout, .review-layout {
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+
+            .question-content {
+                width: 100% !important;
+            }
+        }
+
+        /* 2. Hamburger & Timer (FoldingBox Style) */
+        .hamburger-btn {
+            display: none;
+            font-size: 30px; /* ใหญ่ขึ้น */
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            padding: 5px 15px 5px 0; /* เพิ่มพื้นที่สัมผัส */
+            position: relative;
+            z-index: 9999 !important; /* สูงทะลุเพดาน เพื่อแก้ปัญหากดไม่ได้ */
+            pointer-events: auto !important;
+        }
+
+        #header-timer-display {
+            font-family: 'Segoe UI', monospace !important;
+            font-size: 1.4rem !important;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 5px;
+            width: 70px;
+            text-align: right;
+            display: none;
+        }
+
+            #header-timer-display.active {
+                display: block;
+            }
+
+        @media (max-width: 1024px) {
+            /* Hamburger โชว์เฉพาะตอน JS สั่ง (ผ่าน display block) */
+            .main-header {
+                padding: 0 15px !important;
+                z-index: 2001 !important;
+            }
+
+            .header-left {
+                display: flex;
+                align-items: center;
+                flex: 1;
+                z-index: 2002; /* ให้พื้นที่ซ้ายอยู่สูงกว่า Title */
+            }
+
+            .header-title {
+                font-size: 1.1rem !important;
+                white-space: nowrap;
+                z-index: 1; /* ต่ำกว่าปุ่ม Hamburger */
+            }
+        }
+
+        /* 3. Font Size & Layout (Mobile) */
+        @media (max-width: 768px) {
+            #instruction-screen h1 {
+                font-size: 1.6rem !important;
+                line-height: 1.3;
+            }
+
+            #question-text, #review-question-text {
+                font-size: 1.1rem !important;
+                line-height: 1.5;
+                margin-top: 10px;
+                color: #000;
+            }
+
+            .option {
+                padding: 10px !important; /* ลด padding */
+                font-size: 0.85rem !important; /* ลดขนาด font ลงเล็กน้อย */
+            }
+
+            .navigation-controls {
+                gap: 10px !important;
+                margin-top: 20px !important;
+            }
+
+            .btn {
+                padding: 10px 20px !important; /* ลด Padding */
+                font-size: 0.9rem !important; /* ลดขนาดตัวอักษร */
+                width: 100%;
+            }
+
+            #result-screen h1 {
+                font-size: 1.2rem !important;
+            }
+
+            .result-column h3 {
+                font-size: 1rem !important; /* ปรับเลขตรงนี้ให้เล็กลงตามใจชอบ (เดิมน่าจะใหญ่กว่านี้) */
+                margin-bottom: 0.5rem !important;
+            }
+
+            .result-grid {
+                font-size: 0.8rem !important; /* เดิม 1rem -> แก้เป็น 0.85rem หรือ 0.9rem */
+                gap-x: 0.5rem !important; /* ลดช่องว่างระหว่าง Label กับตัวเลข */
+                gap-y: 0.5rem !important; /* ลดช่องว่างระหว่างบรรทัด */
+            }
+        }
+        /* --- END: MOBILE & TABLET FIXES --- */
+
+        /* =========================================
+           4. TABLET SPECIFIC FIXES (แก้ปัญหา Tablet ชิดขอบ/ไม่กลาง)
+           ========================================= */
+        @media (min-width: 768px) and (max-width: 1024px) {
+
+            /* 1. ดึง Container กลับมาอยู่กึ่งกลาง (แก้ปัญหาชิด Header) */
+            .container {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding-bottom: 0 !important; /* ลบค่าเผื่อของมือถือออก */
+            }
+
+            /* 2. ปรับกล่องข้อสอบให้เป็นการ์ดสวยงาม (แก้ปัญหากว้างเกินไป) */
+            .test-container {
+                width: 85% !important; /* ไม่กว้างเต็ม 100% ให้เหลือขอบข้าง */
+                max-width: 720px !important; /* จำกัดความกว้างสูงสุด */
+                background: #FFFEF9 !important; /* เอาสีพื้นหลังการ์ดกลับมา */
+                box-shadow: 0 10px 30px rgba(139,69,19,0.1) !important; /* เอาเงากลับมา */
+                border-radius: 15px !important;
+                padding: 40px !important;
+                margin: auto !important; /* จัดกึ่งกลางแนวนอน/แนวตั้ง */
+                /* จัดการ Scroll กรณีเนื้อหายาวเกินจอ Tablet */
+                max-height: 85vh !important;
+                overflow-y: auto !important;
+                display: block !important; /* ให้ Content ไหลลงมาตามปกติ */
+            }
+
+            /* 3. ปรับ Layout ข้างในให้เหมาะสมกับ Tablet */
+            .quiz-layout, .review-layout {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+
+            .question-content {
+                width: 100% !important;
+                padding: 0 !important;
+                overflow-y: visible !important; /* ปล่อยให้ Scroll ที่ตัวการ์ดแม่แทน */
+            }
+
+            /* ปรับปุ่ม Mode Selection ให้ดูดีขึ้นบน Tablet */
+            .mode-selection .btn {
+                width: 100%;
+                max-width: 400px; /* จำกัดความกว้างปุ่มไม่ให้ยาวเกินไป */
+                margin: 0 auto; /* จัดปุ่มกลาง */
+            }
+
+            /* --- [เพิ่มใหม่] ปรับขนาดตัวอักษรหน้า Result สำหรับ Tablet --- */
+
+            /* 1. ลดขนาดหัวข้อ "Current Score" และ "Your Best Score" */
+            .result-column h3 {
+                font-size: 1.1rem !important; /* ปรับขนาดหัวข้อ */
+                margin-bottom: 0.75rem !important;
+            }
+
+            /* 2. ลดขนาดตัวเลขคะแนนและ Label */
+            .result-grid {
+                font-size: 1rem !important; /* ปรับขนาดตัวเลข */
+                gap-x: 1rem !important;
+            }
+
+            /* 3. ลดขนาดปุ่ม Action (Review, Back to Menu, etc.) */
+            .action-buttons .btn {
+                font-size: 1rem !important; /* ลดขนาดตัวหนังสือในปุ่ม */
+                padding: 10px 20px !important; /* ลดความอูมของปุ่ม */
+                margin: 5px !important; /* จัดระยะห่างระหว่างปุ่ม */
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>⚙️ General Science Quiz</h1>
-        <div class="header-buttons">
-            <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Back to Menu</button>
-            <button id="back-to-results-button" class="btn secondary-btn header-btn hidden">Back to Results</button>
+    <div class="main-header" id="main-header">
+        <div class="header-left" style="display:flex; align-items:center;">
+            <button id="hamburgerBtn" class="hamburger-btn">☰</button>
+            <h1 class="header-title" style="margin-left: 10px;">General Science Quiz</h1>
+        </div>
+
+        <div class="header-right" style="display:flex; align-items:center;">
+            <div id="header-timer-display" class="timer-badge hidden">00:00</div>
+
+            <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden" style="padding:5px 15px; font-size:0.9rem;">Menu</button>
+            <button id="back-to-results-button" class="btn secondary-btn header-btn hidden" style="padding:5px 15px; font-size:0.9rem;">Results</button>
         </div>
     </div>
 
     <div class="container">
-        <div id="app" class="test-container" style="max-width: 600px;">
-    
+        <div id="app" class="test-container">
+
             <div id="instruction-screen" class="screen active">
-                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">General Science Test</h1>
+                <h1 style="color: var(--primary-color);">General Science Test</h1>
                 <p class="text-lg mb-6" style="color: var(--text-color-secondary);">This test will evaluate your general science knowledge.</p>
                 <div class="mode-selection">
                     <button id="practice-mode-btn" class="btn secondary-btn">Practice Mode</button>
@@ -191,23 +1288,20 @@
                     <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
                     <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
                 </div>
-    
-                <ul>
-                    <li><strong>Practice Mode:</strong> No timer, immediate feedback after each question.</li>
-                    <li><strong>Test Mode:</strong> 25 questions, 3-minute time limit.</li>
-                </ul>
+                <p id="auth-status" style="font-size: 0.8rem; color: #888; margin-top: 10px; display: none;">Checking Login...</p>
             </div>
 
-      
-            <div id="how-to-play-screen" class="screen">
+            <div id="howToPlay-screen" class="screen">
                 <h1 style="color: var(--primary-color);">How to Play</h1>
+
                 <ul style="margin-top: 1.5rem; margin-bottom: 1.5rem; text-align: left; display: inline-block;">
-                    <li>Read each question carefully. Some may include images.</li>
+                    <li>Read each question carefully.</li>
                     <li>Select the best answer from the options provided.</li>
-                    <li>In <strong>Test Mode</strong>, your selection will automatically advance to the next question.</li>
-                    <li>In <strong>Practice Mode</strong>, you can check your answer before moving on.</li>
+                    <li>In <strong>Test Mode</strong>, your selection will automatically advance, 25 questions, 3-minute time limit.</li>
+                    <li>In <strong>Practice Mode</strong>, you can change answers before checking, No timer, immediate feedback.</li>
                 </ul>
-                <div class="action-buttons">
+
+                <div class="action-buttons" style="margin-top: 2rem;">
                     <button id="back-to-instructions-btn" class="btn btn-primary">Back</button>
                 </div>
             </div>
@@ -221,18 +1315,19 @@
                         <h2 class="text-xl font-semibold">Questions</h2>
                         <div id="nav-items" class="question-nav-container"></div>
                         <div class="legend">
-                           <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
-                           <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
-                           <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light)"></div> Not Answered</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light)"></div> Not Answered</div>
                         </div>
                     </div>
                     <div class="question-content">
-                         <div class="question-header w-full">
+                        <div class="question-header w-full">
+
                             <div class="question-number" id="quiz-question-number">Question 1</div>
-                            
+
                             <div id="img-loader" class="img-loader"></div>
-                            
-                            <img id="question-image" src="" alt="Question Image" style="display: none;"/>
+
+                            <img id="question-image" src="" alt="Question Image" style="display: none;" />
                             <p id="question-text" class="text-xl mt-4"></p>
                         </div>
                         <div class="options-container mt-4 w-full" id="quiz-options-container"></div>
@@ -243,31 +1338,31 @@
             </div>
 
             <div id="result-screen" class="screen">
-                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Test Complete!</h1>
-            
+                <h1 style="color: var(--primary-color);">Test Complete!</h1>
+
                 <div id="practice-result-summary" class="result-summary hidden">
                     <p><strong>Score:</strong> <span id="practice-score-display">N/A</span></p>
                     <p><strong>Accuracy:</strong> <span id="practice-accuracy-display">N/A</span></p>
                 </div>
-                 <div id="result-details" class="result-details">
-                     <div class="result-comparison">
+                <div id="result-details" class="result-details">
+                    <div class="result-comparison">
                         <div class="result-column">
-                            <h3>Current Score</h3>
-                             <div class="result-grid">
+                            <h3 style="text-align: center;">Current Score</h3>
+                            <div class="result-grid">
                                 <span>Score</span><span id="score-display">N/A</span>
                                 <span>Accuracy</span><span id="accuracy-display">N/A</span>
                                 <span>Percentile</span><span id="percentile-display">N/A</span>
-                             </div>
+                            </div>
                         </div>
                         <div class="result-column">
-                            <h3>Your Best Score</h3>
-                             <div class="result-grid">
+                            <h3 style="text-align: center;">Your Best Score</h3>
+                            <div class="result-grid">
                                 <span>Score</span><span id="best-score-display">N/A</span>
                                 <span>Accuracy</span><span id="best-accuracy-display">N/A</span>
                                 <span>Percentile</span><span id="best-percentile-display">N/A</span>
                             </div>
-                         </div>
-                     </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="action-buttons">
                     <button id="review-button" class="btn secondary-btn">Review Answers</button>
@@ -277,22 +1372,20 @@
             </div>
 
             <div id="review-screen" class="screen">
-                <div class="quiz-layout">
-                     <div class="nav-panel">
+                <div class="quiz-layout review-layout">
+                    <div id="review-nav-panel" class="nav-panel">
                         <h2 class="text-xl font-semibold">Review</h2>
                         <div id="review-nav-items" class="question-nav-container"></div>
                     </div>
-                     <div class="question-content">
+                    <div class="question-content">
                         <div class="question-header w-full">
                             <div class="question-number" id="review-question-number">Question 1</div>
-                             
-                             <div id="review-img-loader" class="img-loader"></div>
-                             
-                             <img id="review-question-image" src="" alt="Question Image" style="display: none;"/>
-                             <p id="review-question-text" class="text-xl mt-4"></p>
+                            <div id="review-img-loader" class="img-loader"></div>
+                            <img id="review-question-image" src="" alt="Question Image" style="display: none;" />
+                            <p id="review-question-text" class="text-xl mt-4"></p>
                         </div>
                         <div class="options-container mt-4 w-full" id="review-options-container"></div>
-                         <div id="review-explanation" class="explanation" style="display: none;"></div>
+                        <div id="review-explanation" class="explanation" style="display: none;"></div>
                         <div class="navigation-controls">
                             <button id="review-prev-button" class="btn secondary-btn px-6 py-2">Previous</button>
                             <button id="review-next-button" class="btn secondary-btn px-6 py-2">Next</button>
@@ -302,9 +1395,9 @@
             </div>
         </div>
     </div>
-    
+
     <div id="confirmModal" class="modal">
-         <div class="modal-content">
+        <div class="modal-content">
             <h2>Confirm Submission</h2>
             <p>Are you sure you want to submit? You cannot change your answers after submitting.</p>
             <div class="modal-actions">
@@ -317,18 +1410,21 @@
     <div id="loader-overlay" class="loader-overlay">
         <div class="loader-spinner"></div>
     </div>
-    
+
     <script>
-        // --- 1. CONFIGURATION (ใส่ของจริงที่นี่!) ---
+        // ===============================================
+        // ⚠️ สำคัญ: อย่าลืมใส่ apiKey ของจริงที่นี่! ⚠️
+        // ===============================================
         const firebaseConfig = {
-            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA", 
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
             authDomain: "silp-pilot-platform.firebaseapp.com",
             projectId: "silp-pilot-platform",
             storageBucket: "silp-pilot-platform.firebasestorage.app",
             messagingSenderId: "307814159914",
-            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553"
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
         };
-        
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -354,36 +1450,80 @@
         const reviewButton = document.getElementById('review-button');
         let state = {};
 
-        function resetState() { state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 180, startTime: null, finalResult: {}, mode: null }; } // Default 3 mins (180s) for Test Mode
+        function resetState() { state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 180, startTime: null, finalResult: {}, mode: null }; }
         resetState();
-        
-        function switchScreen(screenName) { 
-            Object.values(screens).forEach(s => s.classList.remove('active'));
-            screens[screenName].classList.add('active'); 
-            
-            const showTimer = (screenName === 'quiz' && state.mode === 'test'); 
-            timerDisplay.classList.toggle('hidden', !showTimer);
-            
-            const showBackToMenuBtn = (screenName === 'quiz' && state.mode === 'practice');
-            backToMenuBtn.classList.toggle('hidden', !showBackToMenuBtn);
-            const showBackToResultsBtn = (screenName === 'review');
-            document.getElementById('back-to-results-button').classList.toggle('hidden', !showBackToResultsBtn);
 
-            const isWideScreen = ['quiz', 'result', 'review'].includes(screenName);
-            const containerWidth = isWideScreen ? '1400px' : '600px';
-            if (appContainer.style.maxWidth !== containerWidth) {
-                appContainer.style.maxWidth = containerWidth;
+        // --- AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                //document.getElementById('auth-status').innerText = `Logged in as: ${user.email}`;
+                //document.getElementById('auth-status').style.color = 'green';
+            } else {
+                document.getElementById('auth-status').innerText = 'Not Logged In. Redirecting...';
+                document.getElementById('auth-status').style.color = 'red';
+                setTimeout(() => { window.location.href = 'Auth.html'; }, 1500);
             }
+        });
+
+        function switchScreen(screenName) {
+            // 1. ซ่อนทุกหน้า
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenName + '-screen');
+            if (target) target.classList.add('active');
+
+            // 2. อ้างอิง Elements ใน Header
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const headerTimer = document.getElementById('header-timer-display');
+            const backMenuBtn = document.getElementById('back-to-menu-btn');
+            const resultsBtn = document.getElementById('back-to-results-button');
+
+            // 3. Reset: ซ่อนทุกปุ่มบน Header ก่อนเสมอ (ล้างค่าเก่า)
+            if (hamburgerBtn) hamburgerBtn.style.display = 'none';
+            if (headerTimer) { headerTimer.classList.remove('active'); headerTimer.style.display = 'none'; }
+            if (backMenuBtn) backMenuBtn.classList.add('hidden');
+            if (resultsBtn) resultsBtn.classList.add('hidden');
+
+            // 4. Logic แยกตามหน้า (ตาม Requirement เป๊ะ)
+            if (screenName === 'quiz') {
+                if (state.mode === 'test') {
+                    // [Test Mode] -> โชว์ Hamburger + Timer
+                    if (window.innerWidth <= 1024 && hamburgerBtn) {
+                        hamburgerBtn.style.display = 'block';
+                    }
+                    if (headerTimer) {
+                        headerTimer.style.display = 'block';
+                        headerTimer.classList.add('active');
+                    }
+                } else if (state.mode === 'practice') {
+                    // [Practice Mode] -> โชว์ปุ่ม Menu (Back) เท่านั้น (ห้ามมี Hamburger)
+                    if (backMenuBtn) backMenuBtn.classList.remove('hidden');
+                }
+            } else if (screenName === 'review') {
+                // [Review Mode]
+                if (resultsBtn) resultsBtn.classList.remove('hidden');
+
+                // --- เพิ่มส่วนนี้: ให้โชว์ Hamburger ในโหมด Review ด้วย ---
+                if (window.innerWidth <= 1024 && hamburgerBtn) {
+                    hamburgerBtn.style.display = 'block';
+                }
+            }
+
+            // 5. Reset Scroll
+            window.scrollTo(0, 0);
+            const container = document.querySelector('.container');
+            if (container) container.scrollTop = 0;
         }
 
-        function backToMenu() { if(state.quizTimerInterval) clearInterval(state.quizTimerInterval);
-            appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction'); }
-        function formatTime(seconds) { const minutes = Math.floor(seconds / 60);
+        function backToMenu() {
+            if (state.quizTimerInterval) clearInterval(state.quizTimerInterval);
+            appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction');
+        }
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
             const remainingSeconds = seconds % 60; return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
         }
 
-        // --- FIREBASE ADAPTER FUNCTIONS ---
-        
+        // --- FETCH DATA ---
         async function fetchQuestionsFromFirebase(mode) {
             const snapshot = await db.collection('Exam_GSC').orderBy('id').get();
             const allQs = snapshot.docs.map(doc => doc.data());
@@ -398,53 +1538,127 @@
                 optionD: q.choices.D,
                 correctAnswer: q.correctAnswer,
                 explanation: q.description || '',
-                rawImageId: q.id, 
+                rawImageId: String(q.id),
                 hasImage: q.hasImage
             }));
 
-            // Shuffle with ID integrity preserved (formattedQs contains rawImageId which is correct)
+            // Shuffle
             for (let i = formattedQs.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [formattedQs[i], formattedQs[j]] = [formattedQs[j], formattedQs[i]];
             }
 
             if (mode === 'test') {
-                return formattedQs.slice(0, 25); 
+                return formattedQs.slice(0, 25);
             } else {
-                return formattedQs; 
+                return formattedQs;
             }
         }
 
         async function submitAnswersToFirebase(userAnswersObj, timeUsed) {
+            // เช็คว่า User Login หรือยัง
+            const user = auth.currentUser;
+            if (!user) throw new Error("You must be logged in to submit scores.");
+
+            // --- แก้ไขจุดที่ทำให้เกิด Error 400 ---
+            // หา Email ให้เจอ ถ้า user.email เป็น null ให้ลองหาใน providerData หรือใช้ค่าสำรอง
+            const safeEmail = user.email || (user.providerData && user.providerData[0] && user.providerData[0].email) || "no-email-found@example.com";
+
+            // เช็ค UID ด้วยเพื่อความชัวร์
+            const safeUid = user.uid;
+            if (!safeUid) throw new Error("User ID not found.");
+            // ----------------------------------------
+
             let correctCount = 0;
+            let attemptedCount = 0;
             let total = state.questions.length;
-            
             state.questions.forEach(q => {
+                // เช็คว่ามีการตอบข้อนี้ไหม (ใน state.userAnswers หรือ userAnswersObj)
+                if (userAnswersObj[q.id] !== null && userAnswersObj[q.id] !== undefined) {
+                    attemptedCount++; // <--- นับว่าทำแล้ว
+                }
                 if (userAnswersObj[q.id] === q.correctAnswer) correctCount++;
             });
-            
-            const submitFn = functions.httpsCallable('submitGSCScore');
-            const result = await submitFn({
+
+            // URL ของ Cloud Function
+            const functionUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/submitGSCScore";
+
+            const payload = {
+                uid: safeUid,
+                email: safeEmail,
                 score: correctCount,
                 total: total,
+                attempted: attemptedCount, // <--- ส่งค่านี้ไปให้ Server
                 answers: userAnswersObj,
-                mode: state.mode === 'practice' ? 'Practice' : 'Test', 
+                mode: state.mode === 'practice' ? 'Practice' : 'Test',
                 timeSpent: timeUsed
-            });
-            return result.data;
+            };
+
+            console.log("Submitting Payload:", payload); // Debug ดูข้อมูลก่อนส่ง
+
+            try {
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // ถ้า Server ตอบกลับมาว่า Error (เช่น 400, 500) ให้ดึงข้อความออกมาดู
+                    const errorText = await response.text();
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        throw new Error(`Server Error (${response.status}): ${errorJson.message || errorText}`);
+                    } catch (e) {
+                        throw new Error(`Server Error (${response.status}): ${errorText}`);
+                    }
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || "Unknown error from server");
+                }
+
+                return result;
+            } catch (error) {
+                console.error("Submission Error Details:", error);
+                throw error;
+            }
+        }
+
+        async function getBestScoreFromFirebase() {
+            if (!auth.currentUser) return null;
+            const snapshot = await db.collection('Results')
+                .where('UID', '==', auth.currentUser.uid)
+                .where('SetID', '==', 'GSC')
+                .where('TestType', '==', 'Test')
+                .orderBy('CorrectCount', 'desc')
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) return null;
+            const data = snapshot.docs[0].data();
+            return {
+                bestScore: data.CorrectCount,
+                totalQuestions: data.TotalQuestions,
+                bestAccuracy: data.Accuracy,
+                bestPercentile: 0
+            };
         }
 
         // --- MAIN LOGIC ---
-
-        async function startTest() { 
+        async function startTest() {
             if (!auth.currentUser) { alert("Please login first"); return; }
             resetState();
-            state.mode = 'test'; 
-            state.timeRemaining = 180; 
-            appContainer.classList.remove('practice-mode-active'); 
+            state.mode = 'test';
+            state.timeRemaining = 180;
+            appContainer.classList.remove('practice-mode-active');
             state.startTime = new Date();
             loader.style.display = 'flex';
-            
+
             try {
                 const questions = await fetchQuestionsFromFirebase('test');
                 onQuizDataReceived({ questions: questions });
@@ -453,13 +1667,13 @@
             }
         }
 
-        async function startPractice() { 
+        async function startPractice() {
             if (!auth.currentUser) { alert("Please login first"); return; }
             resetState();
-            state.mode = 'practice'; 
-            appContainer.classList.add('practice-mode-active'); 
-            loader.style.display = 'flex'; 
-            
+            state.mode = 'practice';
+            appContainer.classList.add('practice-mode-active');
+            loader.style.display = 'flex';
+
             try {
                 const questions = await fetchQuestionsFromFirebase('practice');
                 onQuizDataReceived({ questions: questions });
@@ -468,163 +1682,226 @@
             }
         }
 
+        function preloadAllImages() {
+            console.log("Start preloading images & caching URLs...");
+            state.questions.forEach(q => {
+                if (q.hasImage) {
+                    // โหลด JPG
+                    storage.ref(`GSC_Images/${q.rawImageId}.jpg`).getDownloadURL()
+                        .then(url => {
+                            q.cachedUrl = url; // <--- บรรทัดนี้สำคัญมาก! ต้องจำ URL ไว้
+                            const img = new Image();
+                            img.src = url;
+                        })
+                        .catch(() => {
+                            // ถ้าไม่มี JPG ให้โหลด PNG
+                            storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL()
+                                .then(url => {
+                                    q.cachedUrl = url; // <--- จำ URL ไว้เหมือนกัน
+                                    const img = new Image();
+                                    img.src = url;
+                                });
+                        });
+                }
+            });
+        }
+
         function onQuizDataReceived(data) {
             loader.style.display = 'none';
-            if (!data.questions || data.questions.length < 1) { 
-                onDataError({ message: "No questions loaded." }); 
+            if (!data.questions || data.questions.length < 1) {
+                onDataError({ message: "No questions loaded." });
                 return;
-            } 
-            state.questions = data.questions; 
-            state.userAnswers = Array(state.questions.length).fill(null); 
+            }
+            state.questions = data.questions;
+            preloadAllImages();
+            state.userAnswers = Array(state.questions.length).fill(null);
             switchScreen('quiz');
-            renderQuestion(0); 
-            if (state.mode === 'test') { 
+            renderQuestion(0);
+            if (state.mode === 'test') {
                 renderNavPanel();
-                startTimer(); 
-            } 
+                startTimer();
+            }
         }
 
-        function onDataError(error) { 
+        function onDataError(error) {
             loader.style.display = 'none';
-            alert('Failed to load quiz: ' + error.message); 
-            backToMenu(); 
+            alert('Failed to load quiz: ' + error.message);
+            backToMenu();
         }
 
-        function startTimer() { 
-            timerDisplay.textContent = formatTime(state.timeRemaining);
-            state.quizTimerInterval = setInterval(() => { 
-                state.timeRemaining--; 
-                timerDisplay.textContent = formatTime(state.timeRemaining);
-                timerDisplay.classList.toggle('danger', state.timeRemaining <= 30);
-                if (state.timeRemaining <= 0) { finishQuiz(); } 
+        function startTimer() {
+            const headerTimer = document.getElementById('header-timer-display');
+            const desktopTimer = document.getElementById('timer-display'); // เผื่อ Desktop ยังใช้อยู่
+
+            const updateDisplay = (val) => {
+                const str = formatTime(val);
+                // อัปเดต Timer บน Header
+                if (headerTimer) {
+                    headerTimer.textContent = str;
+                    headerTimer.classList.remove('hidden'); // บังคับโชว์
+
+                    // เปลี่ยนสีแดงเมื่อเหลือน้อย (FoldingBox Style)
+                    if (val <= 30) headerTimer.style.color = '#dc3545';
+                    else headerTimer.style.color = 'var(--primary-color)';
+                }
+                // อัปเดต Timer Desktop (ถ้ามี)
+                if (desktopTimer) desktopTimer.textContent = str;
+            };
+
+            updateDisplay(state.timeRemaining);
+
+            state.quizTimerInterval = setInterval(() => {
+                state.timeRemaining--;
+                updateDisplay(state.timeRemaining);
+
+                if (state.timeRemaining <= 0) {
+                    finishQuiz();
+                }
             }, 1000);
         }
-        
+
         function renderNavPanel() {
             if (state.mode !== 'test') return;
-            const navItemsContainer = screens.quiz.querySelector('#nav-items'); 
-            navItemsContainer.innerHTML = ''; 
-            state.questions.forEach((_, index) => { 
-                const btn = document.createElement('button'); 
-                btn.textContent = index + 1; 
-                btn.className = 'question-nav-btn'; 
-                btn.classList.add(state.userAnswers[index] ? 'answered' : 'unanswered'); 
-                if (index === state.currentQuestionIndex) { btn.classList.add('current'); } 
-                btn.addEventListener('click', () => jumpToQuestion(index)); 
-                navItemsContainer.appendChild(btn); 
+            const navItemsContainer = screens.quiz.querySelector('#nav-items');
+            navItemsContainer.innerHTML = '';
+            state.questions.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = index + 1;
+                btn.className = 'question-nav-btn';
+                btn.classList.add(state.userAnswers[index] ? 'answered' : 'unanswered');
+                if (index === state.currentQuestionIndex) { btn.classList.add('current'); }
+                btn.addEventListener('click', () => jumpToQuestion(index));
+                navItemsContainer.appendChild(btn);
             });
         }
 
-        function renderQuestion(index) { 
+        function renderQuestion(index) {
             state.currentQuestionIndex = index;
             const q = state.questions[index];
-            const qScreen = screens.quiz; 
-            qScreen.querySelector('#quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`; 
+            const qScreen = screens.quiz;
+            qScreen.querySelector('#quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`;
             qScreen.querySelector('#question-text').textContent = q.questionText || 'No question text';
-            document.getElementById('explanation-container').style.display = 'none'; 
-            
-            // Image Loading Logic
+            document.getElementById('explanation-container').style.display = 'none';
+
             const qImageEl = qScreen.querySelector('#question-image');
             const imgLoader = qScreen.querySelector('#img-loader');
-            
-            if (q.hasImage) { 
-                qImageEl.style.display = 'none'; 
-                imgLoader.style.display = 'block'; 
+            if (q.hasImage) {
+                qImageEl.style.display = 'none';
+                imgLoader.style.display = 'block';
 
-                const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
-                storage.ref(storagePath).getDownloadURL().then(url => {
-                     qImageEl.src = url;
-                     qImageEl.onload = () => {
-                         imgLoader.style.display = 'none';
-                         qImageEl.style.display = 'block';
-                     };
-                }).catch(e => {
-                     storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
-                         qImageEl.src = url;
-                         qImageEl.onload = () => {
-                             imgLoader.style.display = 'none';
-                             qImageEl.style.display = 'block';
-                         };
-                     }).catch(() => {
-                         imgLoader.style.display = 'none'; 
-                     });
-                });
-            } else { 
+                // --- แก้ไข: เช็คว่ามี URL ที่โหลดมารอไว้แล้วหรือยัง ---
+                if (q.cachedUrl) {
+                    // ถ้ามี URL แล้ว ใช้เลย (เร็วทันที ไม่ต้องรอ Firebase)
+                    qImageEl.src = q.cachedUrl;
+                    qImageEl.onload = () => {
+                        imgLoader.style.display = 'none';
+                        qImageEl.style.display = 'block';
+                    };
+                    // กรณีรูปอยู่ใน Cache Browser แล้ว
+                    if (qImageEl.complete) {
+                        imgLoader.style.display = 'none';
+                        qImageEl.style.display = 'block';
+                    }
+                } else {
+                    // ถ้ายังไม่มี URL (โหลดสดแบบเดิม)
+                    const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                    storage.ref(storagePath).getDownloadURL().then(url => {
+                        q.cachedUrl = url; // จำไว้ใช้ครั้งหน้า
+                        qImageEl.src = url;
+                        qImageEl.onload = () => {
+                            imgLoader.style.display = 'none';
+                            qImageEl.style.display = 'block';
+                        };
+                    }).catch(e => {
+                        storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
+                            q.cachedUrl = url;
+                            qImageEl.src = url;
+                            qImageEl.onload = () => {
+                                imgLoader.style.display = 'none';
+                                qImageEl.style.display = 'block';
+                            };
+                        }).catch(() => {
+                            imgLoader.style.display = 'none';
+                        });
+                    });
+                }
+                // ---------------------------------
+            } else {
                 qImageEl.style.display = 'none';
                 imgLoader.style.display = 'none';
-            } 
+            }
 
-            const optionsContainer = qScreen.querySelector('#quiz-options-container'); 
+            const optionsContainer = qScreen.querySelector('#quiz-options-container');
             optionsContainer.innerHTML = '';
-            const availableOptions = []; 
-            if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({key: 'A', value: q.optionA});
-            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({key: 'B', value: q.optionB});
-            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({key: 'C', value: q.optionC});
-            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({key: 'D', value: q.optionD});
-            availableOptions.forEach(option => { 
-                const optionEl = document.createElement('div'); 
-                optionEl.className = 'option'; 
-                optionEl.dataset.value = option.key; 
-                optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; 
-                if (state.userAnswers[index] === option.key) { optionEl.classList.add('selected'); } 
-                optionEl.addEventListener('click', () => selectAnswer(option.key)); 
-                optionsContainer.appendChild(optionEl); 
+            const availableOptions = [];
+            if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({ key: 'A', value: q.optionA });
+            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({ key: 'B', value: q.optionB });
+            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({ key: 'C', value: q.optionC });
+            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({ key: 'D', value: q.optionD });
+            availableOptions.forEach(option => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option';
+                optionEl.dataset.value = option.key;
+                optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`;
+                if (state.userAnswers[index] === option.key) { optionEl.classList.add('selected'); }
+                optionEl.addEventListener('click', () => selectAnswer(option.key));
+                optionsContainer.appendChild(optionEl);
             });
-            updateNavigationControls(); 
-            if(state.mode === 'test') renderNavPanel(); 
+            updateNavigationControls();
+            if (state.mode === 'test') renderNavPanel();
         }
 
-        function selectAnswer(optionKey) { 
-            if (state.mode === 'practice' && state.userAnswers[state.currentQuestionIndex] !== null) return;
-            state.userAnswers[state.currentQuestionIndex] = optionKey; 
-            document.querySelectorAll('.option').forEach(opt => { 
-                opt.classList.remove('selected'); 
-                if (opt.dataset.value === optionKey) opt.classList.add('selected'); 
+        function selectAnswer(optionKey) {
+            state.userAnswers[state.currentQuestionIndex] = optionKey;
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === optionKey) opt.classList.add('selected');
             });
-            if (state.mode === 'practice') { 
+
+            if (state.mode === 'practice') {
                 updateNavigationControls();
-            } else { 
+            } else {
                 renderNavPanel();
-                if (state.currentQuestionIndex < state.questions.length - 1) { 
+                if (state.currentQuestionIndex < state.questions.length - 1) {
                     setTimeout(() => { jumpToQuestion(state.currentQuestionIndex + 1); }, 300);
-                } else { 
+                } else {
                     updateNavigationControls();
-                } 
-            } 
+                }
+            }
         }
 
-        function handleCheckAnswer() { 
+        function handleCheckAnswer() {
             const userAnswer = state.userAnswers[state.currentQuestionIndex];
-            const q = state.questions[state.currentQuestionIndex]; 
-            const correctAnswer = q.correctAnswer; 
+            const q = state.questions[state.currentQuestionIndex];
+            const correctAnswer = q.correctAnswer;
             const explanationEl = document.getElementById('explanation-container');
-            document.querySelectorAll('.option').forEach(opt => { 
-                opt.classList.add('disabled'); 
-                const optionKey = opt.dataset.value; 
-                if (optionKey === correctAnswer) { 
-                    opt.classList.add('correct'); 
-                } else if (optionKey === userAnswer) { 
-                    opt.classList.add('incorrect'); 
-                } 
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.add('disabled');
+                const optionKey = opt.dataset.value;
+                if (optionKey === correctAnswer) {
+                    opt.classList.add('correct');
+                } else if (optionKey === userAnswer) {
+                    opt.classList.add('incorrect');
+                }
             });
-            if (q.explanation && q.explanation.trim() !== '') { 
+            if (q.explanation && q.explanation.trim() !== '') {
                 explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
-                explanationEl.style.display = 'block'; 
-            } 
+                explanationEl.style.display = 'block';
+            }
             updateNavigationControls(true);
         }
 
-        function jumpToQuestion(index) { 
-            if (index >= 0 && index < state.questions.length) { 
+        function jumpToQuestion(index) {
+            if (index >= 0 && index < state.questions.length) {
                 renderQuestion(index);
-            } 
+            }
         }
-        
+
         function updateNavigationControls(isAnswered = false) {
             const navContainer = document.getElementById('navigation-controls');
             navContainer.innerHTML = '';
             navContainer.className = 'navigation-controls';
-        
+
             if (state.mode === 'practice') {
                 navContainer.classList.add('center');
                 if (isAnswered) {
@@ -649,7 +1926,7 @@
                     checkBtn.onclick = handleCheckAnswer;
                     navContainer.appendChild(checkBtn);
                 }
-            } else { 
+            } else {
                 const prevBtn = document.createElement('button');
                 prevBtn.className = 'btn secondary-btn';
                 prevBtn.textContent = 'Previous';
@@ -682,33 +1959,30 @@
                 }
             });
             const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
-            // For practice mode, we just show local results, no firebase submit usually, 
-            // but if you want to save practice score, call submit here too.
-            // Following original logic, practice results are local.
             showResults({ correctCount, accuracy });
         }
 
-        async function finishQuiz() { 
+        async function finishQuiz() {
             if (state.mode !== 'test') return;
-            clearInterval(state.quizTimerInterval); 
+            clearInterval(state.quizTimerInterval);
             loader.style.display = 'flex';
-            const timeUsed = Math.round((new Date() - state.startTime) / 1000); 
+            const timeUsed = Math.round((new Date() - state.startTime) / 1000);
             const userAnswerObj = {};
-            state.questions.forEach((q, index) => { if(state.userAnswers[index] !== null) userAnswerObj[q.id] = state.userAnswers[index]; });
-            
+            state.questions.forEach((q, index) => { if (state.userAnswers[index] !== null) userAnswerObj[q.id] = state.userAnswers[index]; });
+
             let correctCount = 0;
             let attemptedCount = 0;
-            state.userAnswers.forEach((ans, i) => { 
-                if (ans !== null) { 
-                    attemptedCount++; 
-                    if (ans === state.questions[i].correctAnswer) { 
-                        correctCount++; 
-                    } 
-                } 
+            state.userAnswers.forEach((ans, i) => {
+                if (ans !== null) {
+                    attemptedCount++;
+                    if (ans === state.questions[i].correctAnswer) {
+                        correctCount++;
+                    }
+                }
             });
             const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
             state.finalResult = { totalScore: correctCount, accuracy, timeUsed, totalQuestions: state.questions.length };
-            
+
             try {
                 // Submit and get back { current, best }
                 const result = await submitAnswersToFirebase(userAnswerObj, timeUsed);
@@ -719,7 +1993,7 @@
                 loader.style.display = 'none';
             }
         }
-        
+
         function showResults(resultData) {
             switchScreen('result');
             loader.style.display = 'none';
@@ -732,100 +2006,109 @@
                 document.getElementById('result-screen').querySelector('h1').textContent = 'Practice Complete!';
                 document.getElementById('practice-score-display').textContent = `${resultData.correctCount} / ${state.questions.length}`;
                 document.getElementById('practice-accuracy-display').textContent = `${resultData.accuracy.toFixed(2)}%`;
-            } else { 
+            } else {
                 // Test mode
                 document.getElementById('practice-result-summary').classList.add('hidden');
                 document.getElementById('result-details').classList.remove('hidden');
                 document.getElementById('review-button').classList.remove('hidden');
                 document.getElementById('result-screen').querySelector('h1').textContent = 'Test Complete!';
-                
-                // --- Updated Display Logic: Split Current vs Best ---
-                
-                // 1. Current Score (Left)
-                // Note: resultData passed from onScoreReceived contains the full object from backend
+
                 if (resultData.current) {
-                     scoreDisplay.textContent = `${resultData.current.score} / ${state.questions.length}`;
-                     accuracyDisplay.textContent = `${resultData.current.accuracy.toFixed(2)}%`;
-                     percentileDisplay.textContent = `${resultData.current.percentile.toFixed(2)}%`;
+                    scoreDisplay.textContent = `${resultData.current.score} / ${state.questions.length}`;
+                    accuracyDisplay.textContent = `${resultData.current.accuracy.toFixed(2)}%`;
+                    percentileDisplay.textContent = `${resultData.current.percentile.toFixed(2)}%`;
                 } else {
-                     // Fallback for practice or error
-                     scoreDisplay.textContent = 'N/A';
-                     accuracyDisplay.textContent = 'N/A';
-                     percentileDisplay.textContent = 'N/A';
+                    scoreDisplay.textContent = 'N/A';
+                    accuracyDisplay.textContent = 'N/A';
+                    percentileDisplay.textContent = 'N/A';
                 }
 
-                // 2. Best Score (Right)
                 if (resultData.best) {
-                     bestScoreDisplay.textContent = `${resultData.best.score} / ${state.questions.length}`;
-                     bestAccuracyDisplay.textContent = `${resultData.best.accuracy.toFixed(2)}%`; 
-                     bestPercentileDisplay.textContent = `${resultData.best.percentile.toFixed(2)}%`;
+                    bestScoreDisplay.textContent = `${resultData.best.score} / ${state.questions.length}`;
+                    bestAccuracyDisplay.textContent = `${resultData.best.accuracy.toFixed(2)}%`;
+                    bestPercentileDisplay.textContent = `${resultData.best.percentile.toFixed(2)}%`;
                 } else {
-                     bestScoreDisplay.textContent = 'N/A';
-                     bestAccuracyDisplay.textContent = 'N/A'; 
-                     bestPercentileDisplay.textContent = 'N/A'; 
+                    bestScoreDisplay.textContent = 'N/A';
+                    bestAccuracyDisplay.textContent = 'N/A';
+                    bestPercentileDisplay.textContent = 'N/A';
                 }
             }
         }
 
-        function onScoreReceived(result) { 
-            // result = { success: true, isNewBest: bool, current: {...}, best: {...} }
-            showResults(result); 
+        function onScoreReceived(result) {
+            showResults(result);
         }
 
-        function showReview() { state.reviewQuestionIndex = 0;
-            renderReviewNavPanel(); renderReviewQuestion(0); switchScreen('review'); }
-        function renderReviewNavPanel() { const navItemsContainer = screens.review.querySelector('#review-nav-items');
+        function showReview() {
+            state.mode = 'review';
+            // บังคับโชว์ Hamburger ในหน้า Review ถ้าเป็น Mobile/Tablet
+            if (window.innerWidth <= 1024) {
+                document.getElementById('hamburgerBtn').classList.remove('hidden');
+                document.getElementById('header-timer-display').classList.add('hidden'); // ซ่อน Timer ตอน Review
+            }
+            state.reviewQuestionIndex = 0;
+            renderReviewNavPanel(); renderReviewQuestion(0); switchScreen('review');
+        }
+        function renderReviewNavPanel() {
+            const navItemsContainer = screens.review.querySelector('#review-nav-items');
             navItemsContainer.innerHTML = ''; state.questions.forEach((q, index) => { const btn = document.createElement('button'); btn.textContent = index + 1; btn.className = 'question-nav-btn'; const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; if (userAnswer === null) { btn.classList.add('unanswered'); } else if (userAnswer === correctAnswer) { btn.classList.add('correct'); } else { btn.classList.add('incorrect'); } if (index === state.reviewQuestionIndex) { btn.classList.add('current'); } btn.addEventListener('click', () => jumpToReviewQuestion(index)); navItemsContainer.appendChild(btn); });
         }
-        function renderReviewQuestion(index) { state.reviewQuestionIndex = index; const q = state.questions[index];
+        function renderReviewQuestion(index) {
+            state.reviewQuestionIndex = index; const q = state.questions[index];
             const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; const rScreen = screens.review; rScreen.querySelector('#review-question-number').textContent = `Question ${index + 1}`;
-            rScreen.querySelector('#review-question-text').textContent = q.questionText; 
-            
-            // --- Review Image Logic (Copied) ---
-            const rImageEl = rScreen.querySelector('#review-question-image'); 
-            const rImgLoader = rScreen.querySelector('#review-img-loader');
-            
-            if (q.hasImage) { 
-                 rImageEl.style.display = 'none';
-                 rImgLoader.style.display = 'block';
+            rScreen.querySelector('#review-question-text').textContent = q.questionText;
 
-                 const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
-                 storage.ref(storagePath).getDownloadURL().then(url => {
-                     rImageEl.src = url;
-                     rImageEl.onload = () => {
-                         rImgLoader.style.display = 'none';
-                         rImageEl.style.display = 'block';
-                     };
-                 }).catch(()=>{
-                     storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
-                         rImageEl.src = url;
-                         rImageEl.onload = () => {
-                             rImgLoader.style.display = 'none';
-                             rImageEl.style.display = 'block';
-                         };
-                     }).catch(() => {
-                        rImgLoader.style.display = 'none'; 
-                     });
-                 });
-            } else { 
-                 rImageEl.style.display = 'none'; 
-                 rImgLoader.style.display = 'none'; 
+            const rImageEl = rScreen.querySelector('#review-question-image');
+            const rImgLoader = rScreen.querySelector('#review-img-loader');
+
+            if (q.hasImage) {
+                rImageEl.style.display = 'none';
+                rImageEl.src = "";
+                rImgLoader.style.display = 'block';
+
+                const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                storage.ref(storagePath).getDownloadURL().then(url => {
+                    rImageEl.src = url;
+                    rImageEl.onload = () => {
+                        rImgLoader.style.display = 'none';
+                        rImageEl.style.display = 'block';
+                    };
+                }).catch(() => {
+                    storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
+                        rImageEl.src = url;
+                        rImageEl.onload = () => {
+                            rImgLoader.style.display = 'none';
+                            rImageEl.style.display = 'block';
+                        };
+                    }).catch(() => {
+                        rImgLoader.style.display = 'none';
+                    });
+                });
+            } else {
+                rImageEl.style.display = 'none';
+                rImgLoader.style.display = 'none';
             }
-            
+
             const optionsContainer = rScreen.querySelector('#review-options-container'); optionsContainer.innerHTML = '';
-            const availableOptions = []; if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({key: 'A', value: q.optionA});
-            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({key: 'B', value: q.optionB});
-            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({key: 'C', value: q.optionC});
-            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({key: 'D', value: q.optionD});
+            const availableOptions = []; if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({ key: 'A', value: q.optionA });
+            if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({ key: 'B', value: q.optionB });
+            if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({ key: 'C', value: q.optionC });
+            if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({ key: 'D', value: q.optionD });
             availableOptions.forEach(option => { const optionEl = document.createElement('div'); optionEl.className = 'option disabled'; optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; if (option.key === correctAnswer) { optionEl.classList.add('correct'); } if (option.key === userAnswer) { optionEl.classList.add('user-selected'); if (userAnswer !== correctAnswer) { optionEl.classList.add('incorrect'); } } optionsContainer.appendChild(optionEl); });
-            const explanationEl = rScreen.querySelector('#review-explanation'); if (q.explanation && q.explanation.trim() !== '') { explanationEl.style.display = 'block'; explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
-            } else { explanationEl.style.display = 'none'; } updateReviewNavButtons(); renderReviewNavPanel(); }
-        function jumpToReviewQuestion(index) { if (index >= 0 && index < state.questions.length) { renderReviewQuestion(index);
-            } }
-        function updateReviewNavButtons() { const rScreen = screens.review; const navControls = rScreen.querySelector('.navigation-controls');
-            rScreen.querySelector('#review-prev-button').disabled = state.reviewQuestionIndex === 0; rScreen.querySelector('#review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
+            const explanationEl = rScreen.querySelector('#review-explanation'); if (q.explanation && q.explanation.trim() !== '') {
+                explanationEl.style.display = 'block'; explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
+            } else { explanationEl.style.display = 'none'; } updateReviewNavButtons(); renderReviewNavPanel();
+        }
+        function jumpToReviewQuestion(index) {
+            if (index >= 0 && index < state.questions.length) {
+                renderReviewQuestion(index);
             }
-        
+        }
+        function updateReviewNavButtons() {
+            const rScreen = screens.review; const navControls = rScreen.querySelector('.navigation-controls');
+            rScreen.querySelector('#review-prev-button').disabled = state.reviewQuestionIndex === 0; rScreen.querySelector('#review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
+        }
+
         // --- EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
             practiceModeBtn.addEventListener('click', startPractice);
@@ -836,6 +2119,7 @@
             document.getElementById('review-prev-button').addEventListener('click', () => jumpToReviewQuestion(state.reviewQuestionIndex - 1));
             document.getElementById('review-next-button').addEventListener('click', () => jumpToReviewQuestion(state.reviewQuestionIndex + 1));
             document.getElementById('back-to-results-button').addEventListener('click', () => switchScreen('result'));
+            document.getElementById('hamburgerBtn').addEventListener('click', toggleMenu);
             retakeButton.addEventListener('click', () => { appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction'); });
             reviewButton.addEventListener('click', showReview);
             document.querySelectorAll('.back-to-system-link').forEach(link => { link.addEventListener('click', () => { loader.style.display = 'flex'; }); });
@@ -847,6 +2131,136 @@
                 finishQuiz();
             });
         });
+
+        // --- [เพิ่มใหม่] ส่วนจัดการ Mobile Menu และ Hamburger ---
+        // ==========================================
+        // 1. HAMBURGER & SIDE MENU LOGIC (FIXED)
+        // ==========================================
+        // ประกาศตัวแปร Global ไว้ตรงนี้เลย เพื่อให้เรียกใช้ได้แน่นอน 100%
+        let sideMenu = null;
+        let sideMenuOverlay = null;
+
+        // รอให้ Web โหลดเสร็จก่อนค่อยจับคู่ตัวแปรกับ HTML ID
+        document.addEventListener('DOMContentLoaded', () => {
+            sideMenu = document.getElementById('side-menu');
+            sideMenuOverlay = document.getElementById('side-menu-overlay');
+
+            // ปุ่มปิดในเมนู
+            const closeBtn = document.getElementById('close-side-menu');
+            if (closeBtn) closeBtn.addEventListener('click', toggleMenu);
+
+            // กดที่พื้นหลังเพื่อปิด
+            if (sideMenuOverlay) sideMenuOverlay.addEventListener('click', toggleMenu);
+        });
+
+        // ฟังก์ชันเปิด/ปิดเมนู (เรียกได้จาก onclick="toggleMenu()" ใน HTML หรือ Event Listener)
+        function toggleMenu() {
+            // ป้องกัน Error กรณีตัวแปรยังไม่พร้อม
+            if (!sideMenu || !sideMenuOverlay) {
+                sideMenu = document.getElementById('side-menu');
+                sideMenuOverlay = document.getElementById('side-menu-overlay');
+            }
+
+            if (sideMenu && sideMenuOverlay) {
+                // เช็คสถานะปัจจุบัน
+                const isActive = sideMenu.classList.contains('active');
+
+                if (isActive) {
+                    // สั่งปิด
+                    sideMenu.classList.remove('active');
+                    sideMenuOverlay.style.display = 'none';
+                } else {
+                    // สั่งเปิด
+                    sideMenu.classList.add('active');
+                    sideMenuOverlay.style.display = 'block';
+
+                    // Render ปุ่มข้อสอบใหม่ทุกครั้งที่เปิด (เพื่อให้สีสถานะอัปเดต)
+                    if (state.mode === 'review') {
+                        renderMobileNavGrid('review');
+                    } else {
+                        renderMobileNavGrid('quiz');
+                    }
+                }
+            } else {
+                console.error("Side Menu elements not found!");
+            }
+        }
+
+        // ฟังก์ชันสร้างปุ่มใน Side Menu (เอามาไว้ตรงนี้ให้ชัดเจน)
+        function renderMobileNavGrid(mode) {
+            const mobileNavContainer = document.getElementById('mobile-nav-grid');
+            if (!mobileNavContainer) return;
+
+            mobileNavContainer.innerHTML = '';
+
+            // วนลูปสร้างปุ่มตามจำนวนข้อ
+            state.questions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = index + 1;
+                btn.className = 'mobile-nav-btn'; // ใช้ CSS Class ที่เตรียมไว้
+
+                // Logic สีปุ่ม (เหมือน Desktop)
+                const userAnswer = state.userAnswers[index];
+                const isCurrent = (mode === 'review') ? (index === state.reviewQuestionIndex) : (index === state.currentQuestionIndex);
+
+                // ใส่สีตามสถานะ
+                if (isCurrent) {
+                    btn.style.border = '2px solid var(--primary-color)';
+                    btn.style.fontWeight = 'bold';
+                    btn.style.transform = 'scale(1.1)';
+                }
+
+                if (mode === 'review') {
+                    // โหมดเฉลย
+                    if (userAnswer === q.correctAnswer) {
+                        btn.style.backgroundColor = 'var(--success-color)'; // ถูก (เขียว)
+                        btn.style.color = 'white';
+                    } else if (userAnswer !== null) {
+                        btn.style.backgroundColor = 'var(--danger-color)'; // ผิด (แดง)
+                        btn.style.color = 'white';
+                    } else {
+                        btn.style.backgroundColor = 'transparent'; // ไม่ได้ตอบ
+                    }
+                } else {
+                    // โหมดสอบ (Quiz / Test)
+                    if (index === state.currentQuestionIndex) {
+                        btn.style.backgroundColor = 'var(--secondary-color)'; // ข้อปัจจุบัน
+                        btn.style.color = 'white';
+                    } else if (userAnswer !== null) {
+                        btn.style.backgroundColor = 'var(--primary-color)'; // ทำแล้ว
+                        btn.style.color = 'white';
+                    }
+                }
+
+                // กดปุ่มแล้วข้ามไปข้อนั้น
+                btn.addEventListener('click', () => {
+                    // เช็คจาก state.mode โดยตรง เพื่อความชัวร์ 100%
+                    if (state.mode === 'review') {
+                        jumpToReviewQuestion(index);
+                    } else {
+                        jumpToQuestion(index);
+                    }
+                    toggleMenu(); // ปิดเมนูหลังเลือกเสร็จ
+                });
+                mobileNavContainer.appendChild(btn);
+            });
+        }
+
     </script>
+
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div id="side-menu" class="side-menu">
+        <div class="side-menu-header">
+            <h3>Question Map</h3>
+            <button id="close-side-menu" class="close-menu-btn">&times;</button>
+        </div>
+        <div id="mobile-nav-grid" class="question-nav-grid"></div>
+    </div>
+
+    <div id="rotate-warning">
+        <div class="rotate-icon">⟳</div>
+        <p>Please rotate your device to portrait mode.</p>
+    </div>
+
 </body>
 </html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal Database Importer</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 40px; background: #f4f4f4; color: #333; }
+        .card { background: white; padding: 40px; border-radius: 12px; max-width: 700px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #722F37; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        select, input[type="text"], input[type="file"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        
+        button { background: #28a745; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #218838; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        #log { margin-top: 30px; text-align: left; height: 250px; overflow-y: auto; background: #1e1e1e; color: #0f0; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 13px; }
+        .log-error { color: #ff4444; }
+        .log-warn { color: #ffbb33; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🚀 Universal Database Importer</h1>
+    <p class="subtitle">เครื่องมือนำเข้าข้อมูลสำหรับ GSC, APR, SRP, STR, BSC</p>
+    
+    <div class="form-group">
+        <label>1. Select Game Type (เลือกเกม)</label>
+        <select id="gameType" onchange="updateCollectionName()">
+            <option value="GSC">GSC (General Science)</option>
+            <option value="APR">APR (Approximation)</option>
+            <option value="SRP">SRP (Series Picture)</option>
+            <option value="STR">STR (Short Term Memory)</option>
+            <option value="BSC">BSC (Basic Knowledge)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>2. Collection Name (ชื่อ Collection ใน Firestore)</label>
+        <input type="text" id="collectionName" value="Exam_GSC">
+    </div>
+    
+    <div class="form-group">
+        <label>3. Select CSV File (เลือกไฟล์ CSV)</label>
+        <input type="file" id="csvFile" accept=".csv">
+    </div>
+    
+    <button id="uploadBtn" onclick="processUpload()">START IMPORT</button>
+    
+    <div id="log">Waiting for action...</div>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY", 
+        authDomain: "silp-pilot-platform.firebaseapp.com",
+        projectId: "silp-pilot-platform",
+        storageBucket: "silp-pilot-platform.firebasestorage.app",
+        messagingSenderId: "307814159914",
+        appId: "YOUR_APP_ID"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function updateCollectionName() {
+        const type = document.getElementById('gameType').value;
+        document.getElementById('collectionName').value = `Exam_${type}`;
+    }
+
+    function log(msg, type = '') {
+        const logDiv = document.getElementById('log');
+        const div = document.createElement('div');
+        div.textContent = `> ${msg}`;
+        if (type === 'error') div.className = 'log-error';
+        if (type === 'warn') div.className = 'log-warn';
+        logDiv.appendChild(div);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function processUpload() {
+        const fileInput = document.getElementById('csvFile');
+        const gameType = document.getElementById('gameType').value;
+        const collectionName = document.getElementById('collectionName').value.trim();
+
+        if (!fileInput.files.length) { alert("Please select a CSV file!"); return; }
+        
+        const file = fileInput.files[0];
+        document.getElementById('uploadBtn').disabled = true;
+        log(`Reading file: ${file.name} for Game: ${gameType}...`);
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async function(results) {
+                const data = results.data;
+                log(`Found ${data.length} rows. Starting upload...`);
+                await uploadToFirestore(data, collectionName, gameType);
+            },
+            error: function(err) {
+                log("CSV Parse Error: " + err.message, 'error');
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+    }
+
+    async function uploadToFirestore(data, collectionName, gameType) {
+        let batch = db.batch();
+        let count = 0;
+        let totalUploaded = 0;
+
+        for (const row of data) {
+            // 1. Common Fields Parsing
+            const id = parseInt(row['QuestionID']);
+            if (isNaN(id)) continue; // Skip invalid IDs
+
+            const hasImage = (row['QuestionImage'] && row['QuestionImage'].trim() !== "");
+            
+            // Base Object
+            let docData = {
+                id: id, // สำคัญ: เก็บเป็น Number เพื่อให้ sort ได้ถูกต้อง (1, 2, 10)
+                setId: row['SetID'] || gameType,
+                text: row['QuestionText'] || "",
+                choices: {
+                    A: row['OptionA'] || "-",
+                    B: row['OptionB'] || "-",
+                    C: row['OptionC'] || "-",
+                    D: row['OptionD'] || "-"
+                },
+                correctAnswer: (row['CorrectAnswer'] || "").trim().toUpperCase(),
+                hasImage: hasImage
+            };
+
+            // 2. Specific Logic per Game Type
+            if (gameType === 'GSC' || gameType === 'APR' || gameType === 'BSC' || gameType === 'SRP') {
+                docData.description = row['Description'] || "";
+            }
+
+            if (gameType === 'APR') {
+                docData.questionType = row['QuestionType'] || "";
+            }
+
+            if (gameType === 'SRP') {
+                docData.choices.E = row['OptionE'] || "-"; // Add Option E
+            }
+
+            if (gameType === 'BSC') {
+                docData.vocab = row['Vocab'] || "";
+                docData.company = row['QuestionCompany'] || "";
+                docData.qType = row['QuestionType'] || "";
+                docData.year = row['QuestionYear'] || "";
+            }
+
+            if (gameType === 'STR') {
+                // STR ไม่มี Description และ Image ในโจทย์ย่อย แต่มี Story ที่ ID 0
+                // เราเก็บไปตรงๆ Frontend จะจัดการเอง
+            }
+
+            // 3. Document ID Strategy
+            // เพื่อป้องกันปัญหาเลขข้อซ้ำข้าม Set (เช่น STR001 ข้อ 1 กับ STR100 ข้อ 1)
+            // สำหรับ GSC เราใช้ ID เดิมไปก่อนเพราะมี Set เดียว
+            // แต่สำหรับ STR หรือเกมที่มีหลาย Set ควรใช้ SetID_QuestionID
+            
+            let docRefId = id.toString();
+            if (gameType === 'STR') {
+                docRefId = `${row['SetID']}_${id}`; // Ex: STR001_1
+            }
+
+            const docRef = db.collection(collectionName).doc(docRefId);
+            batch.set(docRef, docData);
+
+            count++;
+            totalUploaded++;
+
+            // Batch Limit 400
+            if (count >= 400) {
+                await batch.commit();
+                log(`...Saved ${totalUploaded} questions`, 'warn');
+                batch = db.batch();
+                count = 0;
+            }
+        }
+
+        if (count > 0) {
+            await batch.commit();
+        }
+
+        log(`✅ Success! Uploaded ${totalUploaded} questions to '${collectionName}'`, 'success');
+        alert("Import Successful!");
+        document.getElementById('uploadBtn').disabled = false;
+    }
+</script>
+
+</body>
+</html>
