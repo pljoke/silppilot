@@ -541,84 +541,270 @@
             }
         }
 
-        /* Mobile Specifics (Similar to GSC) */
-        @media (max-width: 1024px) {
-            .quiz-layout, .review-layout {
-                flex-direction: column;
-            }
+        /* --- Mobile & Tablet Responsive Styles (Fixed) --- */
 
-            .nav-panel {
-                display: none;
-            }
-            /* Use Hamburger later if needed, current APR has no hamburger yet */
-            .question-content {
-                width: 100%;
-            }
+        /* Header Layout */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px; /* Default & Tablet Padding */
+            background: rgba(255,253,250,0.95);
+            border-bottom: 2px solid var(--secondary-color);
         }
 
-        .practice-mode-active .quiz-layout {
-            justify-content: center;
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .practice-mode-active .nav-panel {
+        /* Hamburger Button: ซ่อนเป็นค่า Default (แก้ข้อ 1) */
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0;
+            display: none; /* ซ่อนไว้ก่อน เดี๋ยว JS จะมาเปิด */
+            z-index: 1002;
+        }
+            /* Class นี้ JS จะเป็นคนเติมให้เมื่ออยู่ใน Test Mode/Review */
+            .hamburger-btn.show-nav {
+                display: block !important;
+            }
+
+        /* Header Timer */
+        .header-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 10px;
             display: none;
         }
 
-        .practice-mode-active .question-content {
+            .header-timer.danger {
+                color: var(--danger-color);
+            }
+
+        /* Overlay & Warning */
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 800px;
-            flex-grow: 0;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1090;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .results-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .result-details {
-            background-color: transparent !important;
-            padding: 0 !important;
-        }
-
-        .result-comparison {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .result-column {
-            flex: 1;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            background: var(--background-color-dark);
-            text-align: left;
-        }
-
-            .result-column h3 {
-                color: var(--text-color-secondary);
-                border-bottom: 1px solid var(--border-color);
-                padding-bottom: 0.5rem;
-                margin-bottom: 1rem;
-                text-align: center;
+            .nav-overlay.active {
+                display: block;
+                opacity: 1;
             }
 
-        .result-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap-x: 2rem;
-            gap-y: 1.25rem;
+        #rotate-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            color: white;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            font-size: 1.1rem;
+            text-align: center;
+            padding: 20px;
         }
 
-            .result-grid span:nth-child(odd) {
-                font-weight: 600;
+        .rotate-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Tablet & Small Laptop (Max Width: 1024px) --- */
+        @media (max-width: 1024px) {
+            /* Header Tablet: ใช้ Padding 15px 20px (ตาม PC) */
+
+            /* Show Timer on Header */
+            .header-timer:not(.hidden) {
+                display: block;
             }
 
-            .result-grid span:nth-child(even) {
-                font-weight: bold;
-                text-align: right;
+            .nav-panel #timer-display {
+                display: none !important;
             }
+
+            /* Nav Drawer */
+            .nav-panel {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                width: 260px;
+                height: 100%;
+                z-index: 1100;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+                transition: left 0.3s ease;
+                display: block !important;
+                background: var(--background-color-dark);
+                overflow-y: auto;
+            }
+
+                .nav-panel.active {
+                    left: 0;
+                }
+
+            .quiz-layout {
+                flex-direction: column;
+            }
+
+            .question-content {
+                width: 100%;
+                padding: 0;
+            }
+        }
+
+        /* --- Mobile Only (Max Width: 767px) --- */
+        @media (max-width: 767px) {
+            /* 1. Header เล็กลง (แก้ข้อ 3) */
+            .header {
+                padding: 10px 15px;
+            }
+
+                .header h1 {
+                    font-size: 18px;
+                    margin: 0;
+                }
+
+            .header-timer {
+                font-size: 1.1rem;
+                margin-right: 5px;
+            }
+
+            .hamburger-btn svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .header-buttons .btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            /* 2. Container & Fonts */
+            .container {
+                padding: 10px;
+            }
+
+            .test-container {
+                padding: 15px;
+            }
+
+            #question-text {
+                font-size: 0.8rem;
+                margin-bottom: 15px;
+            }
+
+            /* ✅ 2. ขนาดตัวอักษรของ "ตัวเลือก" (Options) */
+            .option {
+                padding: 12px 15px !important; /* ลด/เพิ่ม พื้นที่รอบตัวอักษรในปุ่ม */
+                font-size: 15px !important; /* ปรับขนาดตัวอักษรในตัวเลือก */
+                min-height: 50px;
+            }
+
+            /* ✅ 3. ขนาดของตัวอักษร A, B, C, D ในวงกลม */
+            .option-letter {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+                margin-right: 10px;
+            }
+
+            /* ✅ 4. ขนาดตัวเลขข้อ Question 1 of 25 */
+            .question-number {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+
+            /* 3. ปุ่มกดต่างๆ */
+            .navigation-controls .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+                min-width: 80px;
+            }
+
+            .btn {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            /* 4. Result Screen Style (แก้ข้อ 4: จัดรูปแบบหน้าสรุปผลให้เป็นระเบียบ) */
+            .results-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 10px 0 !important;
+                padding: 20px 15px !important; /* ระยะห่างขอบในแบบ FoldingBox */
+                border-radius: 12px !important;
+                box-shadow: none !important; /* ลดเงาให้ดูคลีนแบบ Muji */
+                border: 1px solid var(--border-color) !important;
+            }
+
+                .results-container h2 {
+                    font-size: 1.4rem !important;
+                    margin-bottom: 20px !important;
+                    color: var(--primary-color);
+                }
+
+            .result-comparison {
+                display: flex;
+                flex-direction: column;
+                gap: 12px !important; /* ระยะห่างระหว่างกล่อง Current และ Best */
+            }
+
+            .result-column {
+                padding: 15px !important;
+                min-width: 100% !important;
+                background: #FFFEF9 !important; /* สีพื้นหลังกล่องแบบ FoldingBox */
+                border: 1px solid #E8DDD4 !important;
+                border-radius: 10px !important;
+            }
+
+                .result-column h3 {
+                    font-size: 1rem !important;
+                    margin-bottom: 12px !important;
+                    padding-bottom: 8px !important;
+                    border-bottom: 1px dashed var(--border-color) !important;
+                }
+
+            .result-grid {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px 15px !important; /* ระยะห่างระหว่างแถวและคอลัมน์ในตาราง */
+                font-size: 0.95rem !important;
+                line-height: 1.4;
+            }
+
+                /* ปรับขนาดตัวเลขคะแนนให้เด่นขึ้นเล็กน้อย */
+                .result-grid span:last-child {
+                    font-weight: 600;
+                    color: var(--secondary-color);
+                }
+
+        @media only screen and (max-width: 768px) and (orientation: landscape) {
+            #rotate-warning {
+                display: flex;
+            }
+
+            .header, .container, #login-overlay {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -632,10 +818,20 @@
     </div>
 
     <div class="header">
-        <h1>✈️ Approximation Test</h1>
-        <div class="header-buttons">
-            <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Back to Menu</button>
-            <button id="back-to-results-btn" class="btn secondary-btn header-btn hidden">Back to Results</button>
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1>✈️ Approximation Test</h1>
+        </div>
+
+        <div class="header-right">
+            <div id="header-timer-display" class="header-timer hidden">03:00</div>
+
+            <div class="header-buttons">
+                <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Back to Menu</button>
+                <button id="back-to-results-btn" class="btn secondary-btn header-btn hidden">Back to Results</button>
+            </div>
         </div>
     </div>
 
@@ -773,6 +969,16 @@
         </div>
     </div>
 
+    <div id="nav-overlay" class="nav-overlay"></div>
+
+    <div id="rotate-warning">
+        <div class="rotate-content">
+            <div class="rotate-icon">⟳</div>
+            <h2>Please Rotate Device</h2>
+            <p>This test requires portrait mode on mobile devices for the best experience.</p>
+        </div>
+    </div>
+
     <script>
         // --- CONFIG ---
         const firebaseConfig = {
@@ -807,6 +1013,37 @@
             appContainer = document.getElementById('app');
             loader = document.getElementById('loader-overlay');
             modal = document.getElementById('confirmModal');
+
+            // --- Hamburger Menu Logic ---
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const navOverlay = document.getElementById('nav-overlay');
+            const navPanels = document.querySelectorAll('.nav-panel'); // เลือกทั้ง Quiz และ Review panel
+
+            function toggleMenu() {
+                navPanels.forEach(panel => {
+                    // เปิดเฉพาะ Panel ที่อยู่ในหน้าจอที่ Active
+                    if (panel.closest('.screen.active')) {
+                        panel.classList.toggle('active');
+                    }
+                });
+                navOverlay.classList.toggle('active');
+            }
+
+            function closeMenu() {
+                navPanels.forEach(panel => panel.classList.remove('active'));
+                navOverlay.classList.remove('active');
+            }
+
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleMenu();
+                });
+            }
+
+            if (navOverlay) {
+                navOverlay.addEventListener('click', closeMenu);
+            }
 
             // --- Auth Logic ---
             auth.onAuthStateChanged(user => {
@@ -880,6 +1117,24 @@
 
             const showTimer = (screenName === 'quiz' && state.mode === 'test');
             document.getElementById('timer-display').classList.toggle('hidden', !showTimer);
+            document.getElementById('header-timer-display').classList.toggle('hidden', !showTimer);
+
+            // ✅ แก้ไข: ควบคุม Hamburger Menu
+            // ให้โชว์เฉพาะตอน Quiz (Test Mode) หรือ Review เท่านั้น
+            const showHamburger = (screenName === 'quiz' && state.mode === 'test') || (screenName === 'review');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            if (hamburgerBtn) {
+                // ถ้าเงื่อนไขจริง ให้เติม class 'show-nav' เพื่อให้ CSS แสดงปุ่ม
+                // ถ้าไม่จริง ให้ลบออก ปุ่มจะหายไป
+                if (showHamburger) {
+                    hamburgerBtn.classList.add('show-nav');
+                } else {
+                    hamburgerBtn.classList.remove('show-nav');
+                    // ปิดเมนูด้วยถ้าย้ายหน้า
+                    document.getElementById('nav-overlay').classList.remove('active');
+                    document.querySelectorAll('.nav-panel').forEach(p => p.classList.remove('active'));
+                }
+            }
 
             const showBackToMenuBtn = (screenName === 'quiz' && state.mode === 'practice');
             document.getElementById('back-to-menu-btn').classList.toggle('hidden', !showBackToMenuBtn);
@@ -893,8 +1148,10 @@
 
         function selectAnswer(optionKey) {
             if (state.mode === 'practice' && state.isAnswerChecked) return;
+
             state.userAnswers[state.currentQuestionIndex] = optionKey;
 
+            // ไฮไลท์ข้อที่เลือกในปัจจุบัน
             document.querySelectorAll('#quiz-options-container .option').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.dataset.value === optionKey) {
@@ -907,9 +1164,10 @@
             } else {
                 renderNavPanel();
                 if (state.currentQuestionIndex < state.questions.length - 1) {
+                    // ✅ ใช้การหน่วงเวลาสั้นๆ 250ms แบบ FoldingBox เพื่อความลื่นไหล
                     setTimeout(() => {
                         jumpToQuestion(state.currentQuestionIndex + 1);
-                    }, 300);
+                    }, 250);
                 } else {
                     updateNavigationControls();
                 }
@@ -977,7 +1235,19 @@
             clearInterval(state.quizTimerInterval);
             loader.style.display = 'flex';
 
-            const timeUsed = 180 - state.timeLeft;
+            // ❌ ของเดิม: ใช้ timeLeft (ถ้ารีบกด มันจะยังไม่ลด ทำให้เวลาเป็น 0)
+            // const timeUsed = 180 - state.timeLeft;
+
+            // ✅ ของใหม่: ใช้นาฬิกาจริงจับเวลา (ละเอียด แม่นยำ ไม่เป็น 0 แน่นอน)
+            let timeUsed = 0;
+            if (state.startTime) {
+                const now = new Date();
+                timeUsed = (now - state.startTime) / 1000; // แปลงเป็นวินาที (ทศนิยม)
+            }
+
+            // ปัดเศษ timeUsed ให้สวยงามหน่อย (เช่น 1.253 -> 1.25) ส่งไป Backend
+            timeUsed = Number(timeUsed.toFixed(2));
+
             let correctCount = 0;
             let attemptedCount = 0;
             state.questions.forEach((q, i) => {
@@ -993,7 +1263,7 @@
                 score: correctCount,
                 total: state.questions.length,
                 attempted: attemptedCount,
-                timeSpent: timeUsed,
+                timeSpent: timeUsed, // ส่งค่าเวลาที่แก้แล้วไป
                 mode: 'test'
             };
 
@@ -1068,13 +1338,27 @@
 
         function startTimer() {
             const timerDisplay = document.getElementById('timer-display');
+            const headerTimerDisplay = document.getElementById('header-timer-display'); // ✅ NEW
+
             state.timeLeft = 180;
-            timerDisplay.textContent = formatTime(state.timeLeft);
+            const timeStr = formatTime(state.timeLeft);
+
+            timerDisplay.textContent = timeStr;
+            headerTimerDisplay.textContent = timeStr; // ✅ Update Header Timer
+
             timerDisplay.classList.remove('hidden');
+
             state.quizTimerInterval = setInterval(() => {
                 state.timeLeft--;
-                timerDisplay.textContent = formatTime(state.timeLeft);
-                timerDisplay.classList.toggle('danger', state.timeLeft <= 30);
+                const newTimeStr = formatTime(state.timeLeft);
+
+                timerDisplay.textContent = newTimeStr;
+                headerTimerDisplay.textContent = newTimeStr; // ✅ Update Header Timer
+
+                const isDanger = state.timeLeft <= 30;
+                timerDisplay.classList.toggle('danger', isDanger);
+                headerTimerDisplay.classList.toggle('danger', isDanger); // ✅ Update Color
+
                 if (state.timeLeft <= 0) { finishQuiz(); }
             }, 1000);
         }
@@ -1097,11 +1381,16 @@
             const q = state.questions[index];
             const qScreen = screens.quiz;
 
+            // ล้างค่า Focus เก่าออก (ป้องกันกรอบ Focus สี่เหลี่ยมค้าง)
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+
             qScreen.querySelector('#quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`;
             qScreen.querySelector('#question-text').textContent = q.questionText || 'No question text';
             document.getElementById('explanation-container').style.display = 'none';
 
-            // ✅ Safe Image Rendering
+            // จัดการรูปภาพ
             const qImageEl = qScreen.querySelector('#question-image');
             if (qImageEl) {
                 if (q.questionImage && q.questionImage.trim() !== '' && q.questionImage !== '-') {
@@ -1109,25 +1398,31 @@
                     qImageEl.src = q.questionImage;
                 } else {
                     qImageEl.style.display = 'none';
-                    qImageEl.src = '';
                 }
             }
 
             const optionsContainer = qScreen.querySelector('#quiz-options-container');
             optionsContainer.innerHTML = '';
+
             ['A', 'B', 'C', 'D'].forEach(key => {
                 const val = q['option' + key];
                 if (val && String(val).trim() !== '') {
-                    const optionEl = document.createElement('div'); optionEl.className = 'option';
+                    const optionEl = document.createElement('div');
+                    optionEl.className = 'option';
                     optionEl.dataset.value = key;
                     optionEl.innerHTML = `<div class="option-letter">${key}</div><span>${val}</span>`;
+
+                    // ✅ จุดสำคัญ: จะใส่คลาส selected เฉพาะเมื่อข้อนั้น "มีคำตอบที่เคยเลือกไว้" จริงๆ เท่านั้น
+                    // ถ้าเป็นข้อใหม่ที่ยังไม่เคยทำ state.userAnswers[index] จะเป็น null กรอบจะไม่ขึ้น
                     if (state.userAnswers[index] === key) {
                         optionEl.classList.add('selected');
                     }
+
                     optionEl.onclick = () => selectAnswer(key);
                     optionsContainer.appendChild(optionEl);
                 }
             });
+
             updateNavigationControls();
             if (state.mode === 'test') renderNavPanel();
         }
@@ -1192,27 +1487,47 @@
             } else {
                 navContainer.innerHTML =
                     `<button class="btn secondary-btn" ${state.currentQuestionIndex === 0 ? 'disabled' : ''} onclick="jumpToQuestion(state.currentQuestionIndex - 1)">Previous</button>
-                         <button class="btn btn-primary" onclick="modal.classList.add('active')">Submit</button>
-                         <button class="btn secondary-btn" ${state.currentQuestionIndex === state.questions.length - 1 ? 'disabled' : ''} onclick="jumpToQuestion(state.currentQuestionIndex + 1)">Next</button>`;
+                                                             <button class="btn btn-primary" onclick="modal.classList.add('active')">Submit</button>
+                                                             <button class="btn secondary-btn" ${state.currentQuestionIndex === state.questions.length - 1 ? 'disabled' : ''} onclick="jumpToQuestion(state.currentQuestionIndex + 1)">Next</button>`;
             }
         }
 
         function onScoreSaved(result) {
+            loader.style.display = 'none'; // ปิด Loading
+
+            if (!result || !result.success) {
+                console.error("Save Error:", result);
+                alert("ไม่สามารถบันทึกคะแนนได้: " + (result?.message || "Unknown error"));
+                return;
+            }
+
             state.finalResult = result.current;
             document.getElementById('result-title').textContent = "Test Complete!";
-            document.getElementById('score-display').textContent = `${result.current.score} / ${state.questions.length}`;
+
+            // ตัวแปรสำหรับแสดงผล
+            const total = state.questions.length;
+            const score = result.current.score;
+
+            // ✅ จุดแก้ที่ 1: รับค่า timeSpent และคำนวณ Avg Time แบบปลอดภัย
+            const timeSpent = Number(result.current.timeSpent) || 0;
+            const avgTime = total > 0 ? (timeSpent / total).toFixed(1) : "0.0";
+
+            // แสดงผล
+            document.getElementById('score-display').textContent = `${score} / ${total}`;
             document.getElementById('accuracy-display').textContent = `${result.current.accuracy.toFixed(2)}%`;
-            document.getElementById('avg-time-display').textContent = `${(180 / state.questions.length).toFixed(1)}s`;
+            document.getElementById('avg-time-display').textContent = `${avgTime}s`; // ✅ แสดงค่า Avg Time
             document.getElementById('percentile-display').textContent = `${result.current.percentile}%`;
 
+            // เปิดการแสดงผลส่วนต่างๆ
             document.getElementById('avg-time-label').style.display = 'block';
             document.getElementById('avg-time-display').style.display = 'block';
             document.getElementById('percentile-label').style.display = 'block';
             document.getElementById('percentile-display').style.display = 'block';
             document.getElementById('best-score-column').style.display = 'block';
             document.getElementById('review-button').style.display = 'inline-block';
+
             if (result.best) {
-                document.getElementById('best-score-display').textContent = `${result.best.score} / ${state.questions.length}`;
+                document.getElementById('best-score-display').textContent = `${result.best.score} / ${total}`;
                 document.getElementById('best-accuracy-display').textContent = `${result.best.accuracy.toFixed(2)}%`;
                 document.getElementById('best-percentile-display').textContent = `${result.best.percentile}%`;
             }

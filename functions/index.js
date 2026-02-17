@@ -2008,55 +2008,123 @@ exports.submitGSCScore = functions.https.onRequest((req, res) => {
 });
 
 // ==========================================
-// 12. APR (Approximation Test) LOGIC
+// 12. APR (Approximation Test) LOGIC - FINAL (Smart Select & Correct Stats)
 // ==========================================
 
-// API: ดึงโจทย์ APR จาก Firestore (Collection: Exam_APR)
+// ==========================================
+// 12. APR (Approximation Test) LOGIC - FINAL FIXED
+// ==========================================
+
+// ⚠️ สำคัญ: ประกาศตัวแปร Cache ไว้ข้างนอกสุด (Global Scope)
+let cachedAPRData = {
+    questions: null,
+    timestamp: 0
+};
+const CACHE_DURATION = 1000 * 60 * 20; // Cache อยู่ได้ 20 นาที
+
+// Helper Function: การสุ่มแบบ Fisher-Yates
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Helper Function: สุ่มแบบกระจายหมวดหมู่
+function getBalancedQuestions(allQuestions, count) {
+    const groups = {};
+    allQuestions.forEach(q => {
+        const type = q.type || 'General';
+        if (!groups[type]) groups[type] = [];
+        groups[type].push(q);
+    });
+
+    const types = Object.keys(groups);
+    if (types.length === 0) return [];
+
+    let selected = [];
+    const baseCountPerType = Math.floor(count / types.length);
+    let remainder = count % types.length;
+
+    types.forEach(type => {
+        const shuffledGroup = shuffleArray([...groups[type]]); 
+        const take = baseCountPerType + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+        selected.push(...shuffledGroup.slice(0, take));
+    });
+
+    if (selected.length < count) {
+        const usedIds = new Set(selected.map(q => q.id));
+        const pool = shuffleArray(allQuestions.filter(q => !usedIds.has(q.id)));
+        selected.push(...pool.slice(0, count - selected.length));
+    }
+
+    return shuffleArray(selected);
+}
+
+// API: getAPRQuizData (ดึงโจทย์ทั้งหมด + Cache)
 exports.getAPRQuizData = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         try {
-            // รับค่า setID (ถ้าไม่ส่งมา ให้ Default เป็น APR001)
-            const setId = req.query.setId || 'APR001';
             const mode = req.query.mode || 'practice';
+            const QUESTION_LIMIT = mode === 'test' ? 25 : 50; 
 
-            const questionsRef = db.collection('Exam_APR');
-            const snapshot = await questionsRef.where('SetID', '==', setId).get();
-
-            if (snapshot.empty) {
-                res.json({ success: false, error: "No questions found for SetID: " + setId });
-                return;
-            }
-
-            let questions = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                // Map Data จาก CSV Field ให้ตรงกับที่ Frontend APR ต้องการ
-                questions.push({
-                    id: data.QuestionID,
-                    questionText: data.QuestionText,
-                    questionImage: data.QuestionImage || "", // รองรับกรณีไม่มีรูป
-                    optionA: data.OptionA,
-                    optionB: data.OptionB,
-                    optionC: data.OptionC,
-                    optionD: data.OptionD,
-                    correctAnswer: data.CorrectAnswer ? data.CorrectAnswer.trim().toUpperCase() : "",
-                    explanation: data.Description
-                });
-            });
-
-            // Logic การเรียงโจทย์
-            if (mode === 'test') {
-                // ถ้าเป็น Test ให้สุ่มลำดับ (Shuffle)
-                for (let i = questions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [questions[i], questions[j]] = [questions[j], questions[i]];
-                }
+            // 1. ดึงข้อมูล (Load Global Pool from Cache/DB)
+            let allQuestions = [];
+            const now = Date.now();
+            
+            // เช็คว่ามี cachedAPRData หรือไม่ (ป้องกัน Error)
+            if (cachedAPRData && cachedAPRData.questions && (now - cachedAPRData.timestamp < CACHE_DURATION)) {
+                console.log("Serving APR from Memory Cache");
+                allQuestions = [...cachedAPRData.questions];
             } else {
-                // ถ้าเป็น Practice ให้เรียงตาม QuestionID
-                questions.sort((a, b) => Number(a.id) - Number(b.id));
+                console.log("Fetching ALL APR questions from Firestore (Global Pool)");
+                const questionsRef = db.collection('Exam_APR');
+                
+                // ดึงทั้งหมดโดยไม่สนใจ SetID
+                const snapshot = await questionsRef.get();
+
+                if (snapshot.empty) {
+                    res.json({ success: false, error: "No questions found in database." });
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    allQuestions.push({
+                        id: data.id,
+                        type: data.questionType || 'General',
+                        questionText: data.text || "No Question Text",
+                        questionImage: (data.hasImage && data.hasImage !== "") ? data.hasImage : "",
+                        optionA: data.choices ? data.choices.A : "",
+                        optionB: data.choices ? data.choices.B : "",
+                        optionC: data.choices ? data.choices.C : "",
+                        optionD: data.choices ? data.choices.D : "",
+                        correctAnswer: data.correctAnswer ? data.correctAnswer.trim().toUpperCase() : "",
+                        explanation: data.description || ""
+                    });
+                });
+
+                // บันทึก Cache
+                cachedAPRData = {
+                    questions: allQuestions,
+                    timestamp: now
+                };
+                console.log(`Cached ${allQuestions.length} questions.`);
             }
 
-            res.json({ success: true, questions: questions });
+            // 2. เลือกโจทย์ตาม Mode
+            let finalQuestions = [];
+            
+            if (mode === 'test') {
+                finalQuestions = getBalancedQuestions(allQuestions, QUESTION_LIMIT);
+            } else {
+                // Practice: สุ่มมั่วๆ จากกองใหญ่เลย
+                finalQuestions = shuffleArray([...allQuestions]).slice(0, QUESTION_LIMIT);
+            }
+
+            res.json({ success: true, questions: finalQuestions });
 
         } catch (e) {
             console.error("Error getAPRQuizData:", e);
@@ -2065,30 +2133,29 @@ exports.getAPRQuizData = functions.https.onRequest((req, res) => {
     });
 });
 
-// API: บันทึกคะแนน APR (ใช้ Logic เดียวกับ GSC)
+// API: บันทึกคะแนน (Logic: Current Score คำนวณดิบ / Best Score อวยยศ 100%)
 exports.submitAPRScore = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         try {
             const data = req.body;
-            const userEmail = data.email; // รับ Email จาก Frontend
+            const userEmail = data.email;
             
             if (!userEmail) {
                 res.status(400).json({ success: false, message: 'Missing Email' });
                 return;
             }
 
-            // คำนวณ
             const score = Number(data.score) || 0;
             const total = Number(data.total) || 0;
-            const timeSpent = Number(data.timeSpent) || 0;
+            const timeSpent = Number(data.timeSpent) || 0; // รับค่าเวลา (ทศนิยม)
             const attempted = Number(data.attempted) || 0;
             const accuracy = attempted > 0 ? parseFloat(((score / attempted) * 100).toFixed(2)) : 0;
             const mode = data.mode || 'test';
+            
+            const normalizedEmail = userEmail.toLowerCase().trim();
+            const setId = "APR"; 
 
-            const normalizedEmail = normalizeGmail(userEmail);
-            const setId = "APR"; // ใช้เป็น Key รวมสำหรับ APR
-
-            const scoreData = {
+            const newScoreData = {
                 Email: userEmail,
                 NormalizedEmail: normalizedEmail,
                 SetID: setId,
@@ -2101,47 +2168,39 @@ exports.submitAPRScore = functions.https.onRequest((req, res) => {
             };
 
             const resultsRef = db.collection("Results");
+            let isNewBest = false;
+            let finalBestData = { ...newScoreData };
 
-            // 1. จัดการ Best Score (เปรียบเทียบกับของเดิม)
-            const oldScoreSnapshot = await resultsRef
+            // 1. Check & Update Best Score
+            const snapshot = await resultsRef
                 .where("NormalizedEmail", "==", normalizedEmail)
                 .where("SetID", "==", setId)
                 .where("TestType", "==", mode)
-                .orderBy("CorrectCount", "desc") // เรียงคะแนนมากสุดก่อน
                 .limit(1)
                 .get();
 
-            let bestScoreData = { ...scoreData }; // Default คือคะแนนรอบนี้
-            let isNewBest = false;
-
-            if (oldScoreSnapshot.empty) {
-                // ยังไม่เคยเล่น บันทึกเลย
-                await resultsRef.add(scoreData);
+            if (snapshot.empty) {
+                await resultsRef.add(newScoreData);
                 isNewBest = true;
             } else {
-                const oldDoc = oldScoreSnapshot.docs[0];
+                const oldDoc = snapshot.docs[0];
                 const oldData = oldDoc.data();
                 const oldScore = Number(oldData.CorrectCount) || 0;
-                
-                // เช็คว่าทำได้ดีกว่าเดิมไหม
+
                 if (score > oldScore) {
-                    await resultsRef.add(scoreData); // เพิ่ม Record ใหม่ที่เป็น New Best
-                    // (Optionally: ลบอันเก่าออกถ้าไม่อยากเก็บ History เยอะ)
+                    await oldDoc.ref.update(newScoreData);
                     isNewBest = true;
                 } else {
-                    // ถ้าไม่ชนะ ให้ใช้ค่าเก่าเป็น Best Score เพื่อส่งกลับไปโชว์
-                    bestScoreData = {
+                    finalBestData = {
                         CorrectCount: oldScore,
-                        TotalQuestions: oldData.TotalQuestions,
                         Accuracy: oldData.Accuracy,
-                        TimeSpent: oldData.TimeSpent
+                        TimeSpent: oldData.TimeSpent || 0
                     };
-                    // บันทึก History การเล่นรอบนี้ด้วย (แต่ไม่ใช่ Best)
-                    await resultsRef.add(scoreData);
+                    isNewBest = false;
                 }
             }
 
-            // 2. คำนวณ Percentile (เทียบกับผู้เล่นคนอื่นในโหมด Test)
+            // 2. คำนวณ Percentile (แก้ไขให้ Current คิดตามจริง / Best คิดแบบให้เกียรติที่ 1)
             let currentPercentile = 0;
             let bestPercentile = 0;
 
@@ -2149,31 +2208,32 @@ exports.submitAPRScore = functions.https.onRequest((req, res) => {
                 const allScoresSnapshot = await resultsRef
                     .where("SetID", "==", setId)
                     .where("TestType", "==", "test")
+                    .select('CorrectCount')
                     .get();
 
                 if (!allScoresSnapshot.empty) {
-                    // ดึงคะแนนที่ดีที่สุดของแต่ละคน (Unique User) มาทำ Pool
-                    const userBestScores = {};
+                    const allScores = [];
                     allScoresSnapshot.forEach(doc => {
-                        const d = doc.data();
-                        const email = d.NormalizedEmail;
-                        const s = Number(d.CorrectCount) || 0;
-                        if (!userBestScores[email] || s > userBestScores[email]) {
-                            userBestScores[email] = s;
-                        }
+                        allScores.push(Number(doc.data().CorrectCount) || 0);
                     });
 
-                    const allBestScores = Object.values(userBestScores);
-                    const populationCount = allBestScores.length;
+                    const populationCount = allScores.length;
+                    const maxScoreInDB = Math.max(...allScores); 
 
-                    const calculatePercentile = (targetScore) => {
-                        if (populationCount <= 1) return 100;
-                        const countBeat = allBestScores.filter(s => s < targetScore).length;
+                    const calculatePercentile = (targetScore, isBestCalculation) => {
+                        if (populationCount === 0) return 0;
+                        
+                        // ⭐️ เฉพาะ Best Score เท่านั้น: ถ้าเป็นคะแนนสูงสุด ให้ 100% เลย
+                        if (isBestCalculation && targetScore >= maxScoreInDB) return 100;
+
+                        // ⭐️ Current Score (และ Best ที่ยังไม่ Top): คำนวณตามสูตร (ชนะกี่คน / ทั้งหมด)
+                        // ถ้าเล่นคนเดียว (Beat=0) ก็จะได้ 0% ซึ่งถูกต้องแล้ว
+                        const countBeat = allScores.filter(s => s < targetScore).length;
                         return (countBeat / populationCount) * 100;
                     };
 
-                    currentPercentile = calculatePercentile(score);
-                    bestPercentile = calculatePercentile(bestScoreData.CorrectCount);
+                    currentPercentile = calculatePercentile(score, false); // false = ห้ามปัดเป็น 100%
+                    bestPercentile = calculatePercentile(finalBestData.CorrectCount, true); // true = ยอมให้ 100% ได้
                 }
             }
 
@@ -2183,11 +2243,13 @@ exports.submitAPRScore = functions.https.onRequest((req, res) => {
                 current: {
                     score: score,
                     accuracy: accuracy,
+                    timeSpent: timeSpent, 
+                    attempted: attempted,
                     percentile: parseFloat(currentPercentile.toFixed(2))
                 },
                 best: {
-                    score: bestScoreData.CorrectCount,
-                    accuracy: bestScoreData.Accuracy,
+                    score: finalBestData.CorrectCount,
+                    accuracy: finalBestData.Accuracy,
                     percentile: parseFloat(bestPercentile.toFixed(2))
                 }
             });
