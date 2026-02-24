@@ -114,89 +114,95 @@
     }
 
     async function uploadToFirestore(data, collectionName, gameType) {
-        let batch = db.batch();
-        let count = 0;
-        let totalUploaded = 0;
+        // ✅ เพิ่ม try-catch เพื่อดักจับ Error หน้าจอจะได้ไม่ค้าง
+        try {
+            let batch = db.batch();
+            let count = 0;
+            let totalUploaded = 0;
 
-        for (const row of data) {
-            // 1. Common Fields Parsing
-            const id = parseInt(row['QuestionID']);
-            if (isNaN(id)) continue; // Skip invalid IDs
+            for (const row of data) {
+                // 1. Common Fields Parsing
+                const id = parseInt(row['QuestionID']);
+                if (isNaN(id)) continue; // Skip invalid IDs
 
-            const hasImage = (row['QuestionImage'] && row['QuestionImage'].trim() !== "");
-            
-            // Base Object
-            let docData = {
-                id: id, // สำคัญ: เก็บเป็น Number เพื่อให้ sort ได้ถูกต้อง (1, 2, 10)
-                setId: row['SetID'] || gameType,
-                text: row['QuestionText'] || "",
-                choices: {
-                    A: row['OptionA'] || "-",
-                    B: row['OptionB'] || "-",
-                    C: row['OptionC'] || "-",
-                    D: row['OptionD'] || "-"
-                },
-                correctAnswer: (row['CorrectAnswer'] || "").trim().toUpperCase(),
-                hasImage: hasImage
-            };
+                // ✅ แก้ไขปัญหาค้าง: แปลงให้เป็น Boolean เสมอ ป้องกันค่า undefined
+                const hasImage = !!(row['QuestionImage'] && row['QuestionImage'].trim() !== "");
 
-            // 2. Specific Logic per Game Type
-            if (gameType === 'GSC' || gameType === 'APR' || gameType === 'BSC' || gameType === 'SRP') {
-                docData.description = row['Description'] || "";
+                // Base Object
+                let docData = {
+                    id: id, 
+                    setId: row['SetID'] || gameType,
+                    text: row['QuestionText'] || "",
+                    choices: {
+                        A: row['OptionA'] || "-",
+                        B: row['OptionB'] || "-",
+                        C: row['OptionC'] || "-",
+                        D: row['OptionD'] || "-"
+                    },
+                    correctAnswer: (row['CorrectAnswer'] || "").trim().toUpperCase(),
+                    hasImage: hasImage
+                };
+
+                // 2. Specific Logic per Game Type
+                if (gameType === 'GSC' || gameType === 'APR' || gameType === 'BSC' || gameType === 'SRP') {
+                    docData.description = row['Description'] || "";
+                }
+
+                if (gameType === 'APR') {
+                    docData.questionType = row['QuestionType'] || "";
+                }
+
+                if (gameType === 'SRP') {
+                    docData.choices.E = row['OptionE'] || "-"; // Add Option E
+                }
+
+                if (gameType === 'BSC') {
+                    docData.vocab = row['Vocab'] || "";
+                    docData.company = row['QuestionCompany'] || "";
+                    docData.qType = row['QuestionType'] || "";
+                    docData.year = row['QuestionYear'] || "";
+                }
+
+                if (gameType === 'STR') {
+                    // STR ไม่มี Description และ Image ในโจทย์ย่อย แต่มี Story ที่ ID 0
+                    // เราเก็บไปตรงๆ Frontend จะจัดการเอง
+                }
+
+                // 3. Document ID Strategy
+                let docRefId = id.toString();
+                if (gameType === 'STR') {
+                    docRefId = `${row['SetID']}_${id}`; // Ex: STR001_1
+                }
+
+                const docRef = db.collection(collectionName).doc(docRefId);
+                batch.set(docRef, docData);
+
+                count++;
+                totalUploaded++;
+
+                // Batch Limit 400
+                if (count >= 400) {
+                    await batch.commit();
+                    log(`...Saved ${totalUploaded} questions`, 'warn');
+                    batch = db.batch();
+                    count = 0;
+                }
             }
 
-            if (gameType === 'APR') {
-                docData.questionType = row['QuestionType'] || "";
-            }
-
-            if (gameType === 'SRP') {
-                docData.choices.E = row['OptionE'] || "-"; // Add Option E
-            }
-
-            if (gameType === 'BSC') {
-                docData.vocab = row['Vocab'] || "";
-                docData.company = row['QuestionCompany'] || "";
-                docData.qType = row['QuestionType'] || "";
-                docData.year = row['QuestionYear'] || "";
-            }
-
-            if (gameType === 'STR') {
-                // STR ไม่มี Description และ Image ในโจทย์ย่อย แต่มี Story ที่ ID 0
-                // เราเก็บไปตรงๆ Frontend จะจัดการเอง
-            }
-
-            // 3. Document ID Strategy
-            // เพื่อป้องกันปัญหาเลขข้อซ้ำข้าม Set (เช่น STR001 ข้อ 1 กับ STR100 ข้อ 1)
-            // สำหรับ GSC เราใช้ ID เดิมไปก่อนเพราะมี Set เดียว
-            // แต่สำหรับ STR หรือเกมที่มีหลาย Set ควรใช้ SetID_QuestionID
-            
-            let docRefId = id.toString();
-            if (gameType === 'STR') {
-                docRefId = `${row['SetID']}_${id}`; // Ex: STR001_1
-            }
-
-            const docRef = db.collection(collectionName).doc(docRefId);
-            batch.set(docRef, docData);
-
-            count++;
-            totalUploaded++;
-
-            // Batch Limit 400
-            if (count >= 400) {
+            if (count > 0) {
                 await batch.commit();
-                log(`...Saved ${totalUploaded} questions`, 'warn');
-                batch = db.batch();
-                count = 0;
             }
-        }
 
-        if (count > 0) {
-            await batch.commit();
+            log(`✅ Success! Uploaded ${totalUploaded} questions to '${collectionName}'`, 'success');
+            alert("Import Successful!");
+            document.getElementById('uploadBtn').disabled = false;
+            
+        } catch (error) {
+            // ✅ ถ้าระบบพัง จะมาโชว์ข้อความสีแดงที่หน้าจอแทนการค้าง
+            console.error(error);
+            log(`❌ Error: ${error.message}`, 'error');
+            document.getElementById('uploadBtn').disabled = false;
         }
-
-        log(`✅ Success! Uploaded ${totalUploaded} questions to '${collectionName}'`, 'success');
-        alert("Import Successful!");
-        document.getElementById('uploadBtn').disabled = false;
     }
 </script>
 

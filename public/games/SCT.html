@@ -9,7 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        /* --- 1. CORE THEME (Rubik3D Standard) --- */
+        /* --- แก้ไขปุ่ม Header และ Nav Bar --- */
+        .header-btn { padding: 8px 20px; font-size: 16px; }
         :root {
             --primary-color: #722F37;
             --secondary-color: #8B4513;
@@ -22,11 +23,10 @@
             --light-text: #fff;
             --success-color: #28a745;
             --danger-color: #dc3545;
-            --diff-color: #ffc107;
+            --diff-color: #ffc107; /* สีเหลือง */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        html, body { height: 100%; width: 100%; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -55,18 +55,42 @@
 
         /* --- 3. LAYOUT & CONTAINER --- */
         .container {
-            width: 100%; height: 100%; padding-top: 60px;
-            display: flex; align-items: center; justify-content: center;
+            width: 100%;
+            min-height: calc(100vh - 60px); /* เปลี่ยนเป็น min-height เพื่อให้ยืดหยุ่น */
+            margin-top: 60px;
+            display: flex; align-items: center; justify-content: center; /* จัดกึ่งกลางเป๊ะๆ */
+            padding: 20px;
             overflow-y: auto;
         }
         .test-container {
-            width: 95%; max-width: 1400px;
-            background: var(--surface-color); border-radius: 15px; padding: 20px;
+            width: 100%;
+            max-width: 1400px;
+            background: var(--surface-color); border-radius: 15px; padding: 30px;
             box-shadow: 0 5px 15px rgba(139, 69, 19, 0.1); border: 1px solid var(--border-color);
             text-align: center; display: flex; flex-direction: column; justify-content: center;
-            max-height: 98%; overflow-y: auto; position: relative;
+            margin: auto; /* ป้องกันการชิดขอบบน */
+            transition: max-width 0.3s ease;
         }
         .hidden { display: none !important; }
+
+        /* --- 6. GAME LAYOUT --- */
+        .game-layout { 
+            display: flex; flex-direction: row; gap: 20px; 
+            width: 100%; align-items: flex-start; text-align: left; 
+        }
+        
+        /* แก้ปัญหาข้อ 4: นำ CSS ของ Sidebar (APR) กลับมา */
+        .nav-panel {
+            width: 25%; max-width: 280px;
+            background-color: var(--bg-color-dark); padding: 20px;
+            border-radius: 10px; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-self: flex-start;
+        }
+        
+        .game-content { 
+            width: 75%; position: relative; 
+            display: flex; flex-direction: column; flex-grow: 1; 
+        }
         
         /* --- 4. BUTTONS --- */
         .btn {
@@ -135,30 +159,18 @@
         }
         .sidebar-title { font-weight: bold; color: var(--primary-color); font-size: 1.1rem; }
         
-        .nav-grid-container { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
-        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        
-        .nav-item {
-            aspect-ratio: 1; border-radius: 6px; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.9rem; font-weight: bold; cursor: pointer; 
-            transition: all 0.2s; border: 2px solid transparent;
-            background-color: var(--bg-color-dark); color: var(--text-color);
-        }
-        .nav-item:hover { transform: scale(1.05); filter: brightness(0.95); }
-        
-        /* Nav Item States */
-        .nav-item.current { border-color: var(--primary-color); background-color: #fff; color: var(--primary-color); }
-        .nav-item.answered { background-color: var(--secondary-color); color: white; }
-        .nav-item.correct { background-color: var(--success-color); color: white; }
-        .nav-item.incorrect { background-color: var(--danger-color); color: white; }
+        .question-nav-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+        .question-nav-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); background: var(--bg-color-light); color: var(--text-color-secondary); }
+        .question-nav-btn.answered { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .question-nav-btn.current { border-color: var(--primary-color); transform: scale(1.1); background-color: var(--secondary-color); color: white; }
+        .question-nav-btn.correct { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+        .question-nav-btn.incorrect { background: var(--danger-color); color: white; border-color: var(--danger-color); }
+        .question-nav-btn.unanswered { background: var(--bg-color-light); color: var(--text-color-secondary); }
 
         /* Sidebar Legend */
         .legend-container { margin-top: 15px; display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 0.85rem; color: #666; }
         .legend-item { display: flex; align-items: center; gap: 8px; }
         .legend-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; }
-
-        .game-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
         
         /* Strings Area */
         .strings-area {
@@ -181,25 +193,22 @@
         }
         
         /* Diff Highlight Class */
-        .diff-char { color: #dc3545; font-weight: 900; background-color: rgba(220, 53, 69, 0.1); border-radius: 2px; }
+        .diff-char { color: var(--primary-color); font-weight: 900; background-color: var(--diff-color); border-radius: 2px; padding: 0 3px; }
 
         /* Choices */
-        .choices-area { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: auto; }
-        .choice-btn {
-            padding: 15px; background: var(--surface-color); border: 2px solid var(--border-color);
-            border-radius: 10px; cursor: pointer; position: relative;
-            display: flex; justify-content: center; align-items: center;
-            transition: all 0.2s; height: 70px;
-        }
-        .choice-btn:hover { background: #F0EBE3; border-color: var(--primary-color); }
-        .choice-btn.selected { background: var(--secondary-color); border-color: var(--secondary-color); color: white; }
-        .choice-btn.correct { background: var(--success-color) !important; border-color: var(--success-color) !important; color: white; }
-        .choice-btn.incorrect { background: var(--danger-color) !important; border-color: var(--danger-color) !important; color: white; }
-        
-        .choice-label {
-            position: absolute; top: 6px; left: 10px;
-            font-size: 0.9rem; font-weight: bold; opacity: 0.7;
-        }
+        /* Choices (APR Style) */
+        .options-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: auto; }
+        @media (max-width: 768px) { .options-container { grid-template-columns: 1fr; } }
+        .option { display: flex; align-items: center; padding: 15px; border: 2px solid var(--border-color); border-radius: 12px; background: var(--surface-color); cursor: pointer; transition: all 0.2s; }
+        @media (hover: hover) { .option:not(.disabled):hover { background: var(--bg-color-dark); border-color: var(--primary-color); } }
+        .option:active:not(.disabled) { border-color: var(--secondary-color); background: var(--bg-color-dark); }
+        .option.selected { border-color: var(--secondary-color); background-color: var(--bg-color-dark); font-weight: bold; border-width: 2px; }
+        .option.correct { border-color: var(--success-color) !important; background-color: #d4edda !important; font-weight: bold; }
+        .option.incorrect { border-color: var(--danger-color) !important; background-color: #f8d7da !important; opacity: 0.8; }
+        .option.disabled { cursor: default; pointer-events: none; }
+        .option-letter { background: var(--secondary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+        .option.selected .option-letter { background: var(--primary-color); color: white; }
+        .option.correct .option-letter { background: var(--success-color) !important; color: white !important; }
         .choice-text { font-size: 1.8rem; font-weight: bold; }
 
         /* Slider */
@@ -264,6 +273,149 @@
             border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+        /* =========================================
+           SCT: MOBILE & CONSISTENCY UPDATES
+           ========================================= */
+        /* ป้องกันกรอบสีฟ้าเวลากดจิ้มบนมือถือ */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 1. Header Styles (ให้เหมือน APR/GSC) */
+        .main-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 1rem; background-color: var(--bg-color-light);
+            border-bottom: 2px solid var(--border-color);
+            height: 60px; width: 100%; position: fixed; top: 0; left: 0; z-index: 2000;
+        }
+        .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
+        .header-title { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); margin: 0; }
+        
+        /* 1. Hamburger Button (APR Style) */
+        .hamburger-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; display: none; margin-top: 3px; }
+        .hamburger-btn.show-nav { display: block !important; }
+
+        /* 2. Nav Overlay (พื้นหลังสีดำเวลาเปิดเมนู) */
+        .nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1090; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .nav-overlay.active { display: block; opacity: 1; }
+
+        /* 3. Mobile / Tablet Responsive */
+        @media (max-width: 1024px) {
+            .header-timer:not(.hidden) { display: block; }
+            .nav-panel #timer-display { display: none !important; }
+            
+            /* แก้ข้อ 2 (Tablet): ซ่อน Sidebar ไปด้านซ้าย และดึงเข้ามาเมื่อกด Hamburger */
+            .nav-panel { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; z-index: 1100; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease; display: block !important; background: var(--bg-color-dark); overflow-y: auto; }
+            .nav-panel.active { left: 0; }
+            
+            /* แก้ข้อ 2 (Mobile): ดันหน้าจอเกมให้เต็ม 100% เพื่อไม่ให้เหลือช่องว่างด้านขวา */
+            .game-layout { flex-direction: column; }
+            .game-content { width: 100%; padding: 0; }
+            
+            /* เรียงกล่องข้อความโจทย์ บน-ล่าง ให้อ่านง่าย */
+            .strings-area { display: flex !important; flex-direction: column !important; gap: 10px; }
+            .string-box { font-size: 1.2rem !important; padding: 15px !important; min-height: 80px; }
+            
+            .result-comparison { flex-direction: column !important; }
+        }
+
+        @media (max-width: 767px) {
+            .header { padding: 10px 15px; }
+            .header h1 { font-size: 18px; margin: 0; }
+            .header-timer { font-size: 1.1rem; margin-right: 5px; }
+            .hamburger-btn svg { width: 24px; height: 24px; }
+            
+            /* แก้ข้อ 1 และ 3 (Mobile): ลดขนาดปุ่ม Header ให้สมส่วนและกดได้ปกติ */
+            .header-buttons .btn { padding: 6px 12px !important; font-size: 12px !important; line-height: 1.2; height: auto; min-width: unset; }
+            
+            .container { padding: 10px; padding-top: 70px; }
+            .test-container { padding: 15px; }
+            .options-container { grid-template-columns: 1fr; }
+            .result-comparison { flex-direction: column; gap: 12px !important; }
+        }
+        
+        /* บังคับหมุนจอ */
+        #rotate-warning { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            #rotate-warning { display: flex; }
+            .container, .main-header { display: none; }
+        }
+        
+        /* --- ชุดที่ 1: ปรับแต่งเลขข้อ (แก้ข้อ 1) --- */
+        .question-number {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-block;
+        }
+
+        /* --- ชุดที่ 2: ปรับแต่งนาฬิกาให้ใหญ่เหมือน APR (แก้ข้อ 2) --- */
+        .timer-container { text-align: center; margin-bottom: 1.5rem; }
+        .timer { font-size: 2.5rem !important; font-weight: bold; color: var(--primary-color); }
+        .timer.danger { color: var(--danger-color); animation: pulse 1s infinite; }
+
+        /* --- ชุดที่ 3: ปรับแต่ง Legend แบบมีกล่องสีหน้าข้อความ (แก้ข้อ 4) --- */
+        .legend { margin-top: 15px; text-align: left; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; font-weight: bold; color: var(--text-color-secondary);}
+        .legend-color { width: 18px; height: 18px; border-radius: 4px; margin-right: 10px; border: 1px solid #ccc; display: inline-block;}
+        .legend-current { background: var(--secondary-color); border-color: var(--primary-color); }
+        .legend-answered { background: var(--primary-color); }
+        .legend-unanswered { background: var(--bg-color-light); }
+        .legend-correct { background: var(--success-color); border-color: var(--success-color); }
+        .legend-incorrect { background: var(--danger-color); border-color: var(--danger-color); }
+
+        #result-screen .action-buttons .btn {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 150px; /* บังคับความกว้างขั้นต่ำเล็กน้อยไม่ให้ปุ่มดูสั้นเกินไป (ถ้าไม่ชอบลบบรรทัดนี้ได้ครับ) */
+        }
+
+        /* --- กู้คืน CSS ของหน้าสรุปผล (Result Screen) แบบ Rev12 --- */
+        .results-container { max-width: 700px; margin: 0 auto; padding: 0; width: 100%; text-align: center; }
+        .result-comparison { display: flex; gap: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
+        .result-column { flex: 1; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-color-dark); text-align: left; }
+        .result-column h3 { color: var(--text-color-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; text-align: center; font-size: 1.2rem; }
+        .result-grid { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; }
+        .result-grid span { font-weight: 700; color: var(--primary-color); }
+        .result-grid strong { 
+            display: block;
+            width: 100%;
+            font-weight: 400; 
+            text-align: right; 
+            color: var(--primary-color); 
+            font-size: 1.1rem; 
+        }
+
+        /* กู้คืนขนาดปุ่มในหน้าสรุปผลให้พอดีกับความยาวข้อความ */
+        #result-screen .action-buttons .btn {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 150px;
+        }
+
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -303,6 +455,11 @@
                 </div>
             </div>
 
+            <h3 style="margin-top: 15px;">3. Important Rule</h3>
+            <p style="color: var(--danger-color); font-weight: bold; background: #ffe6e6; padding: 10px; border-radius: 8px;">
+                ⚠️ Do not skip questions! Any skipped question will result in an immediate TEST FAIL (0 Score).
+            </p>
+
             <div style="text-align:center; margin-top:20px;">
                 <button class="btn btn-secondary" onclick="toggleHowToPlay(false)">Back</button>
             </div>
@@ -319,20 +476,37 @@
             </div>
         </div>
     </div>
-
+    
     <div class="header">
-        <h1>📄 Scanning Text</h1>
-        <div class="header-buttons">
-            <div id="headerTimer" class="header-timer">00:00</div>
-            <button id="backToMenuBtn" class="btn outline-btn hidden" style="padding: 5px 15px; font-size: 0.8rem;">Back</button>
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn" onclick="toggleMenu()">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1>📄 Scanning Text</h1>
         </div>
+
+        <div class="header-right">
+            <div id="header-timer-display" class="header-timer hidden">06:00</div>
+
+            <div class="header-buttons">
+                <button id="back-to-menu-btn" class="btn btn-secondary header-btn hidden" onclick="location.reload()">Menu</button>
+                <button id="back-to-results-btn" class="btn btn-secondary header-btn hidden" onclick="switchScreen('result')">Results</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="nav-overlay" class="nav-overlay" onclick="closeMenu()"></div>
+
+    <div id="rotate-warning">
+        <div style="font-size: 3rem;">⟳</div>
+        <p>Please rotate your device to portrait mode.</p>
     </div>
 
     <div class="container">
         
         <div id="startScreen" class="test-container" style="max-width: 600px;">
-            <h1>Scanning Text (SCT)</h1>
-            <p style="margin-bottom: 20px;">Compare strings and count the differences.</p>
+            <h1 style="color: var(--secondary-color); font-size: 2.2rem; font-weight: bold; margin-bottom: 20px;">Scanning Text Skill Test</h1>
+            <p style="margin-bottom: 20px;">This test evaluates your ability to quickly and accurately identify differences between strings of text.</p>
             
             <div class="action-buttons">
                 <button onclick="selectMode('practice')" class="btn btn-secondary">Practice Mode</button>
@@ -349,34 +523,28 @@
                 <button onclick="startGame('normal')" class="btn btn-secondary">Normal (20 chars)</button>
                 <button onclick="startGame('hard')" class="btn btn-primary">Hard (30 chars)</button>
                 <button onclick="startGame('hell')" class="btn" style="background:#5d0014; color:white;">Hell (4 Columns)</button>
-                <button onclick="switchScreen('start')" class="btn outline-btn">Back</button>
+                <button onclick="switchScreen('start')" class="btn outline-btn">Menu</button>
             </div>
         </div>
 
         <div id="gameScreen" class="test-container hidden" style="padding: 15px; max-width: 1200px;">
             <div class="game-layout">
-                <div id="sidebar" class="question-sidebar">
-                    <div class="sidebar-header">
-                        <span class="sidebar-title">Questions</span>
+                <div id="nav-panel" class="nav-panel">
+                    <div class="timer-container">
+                        <div id="timer-display" class="timer hidden">06:00</div>
                     </div>
-                    
-                    <div class="nav-grid-container">
-                        <div id="navGrid" class="nav-grid"></div>
+                    <div class="nav-header" style="border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; text-align: center;">
+                        <h3 style="color: var(--secondary-color); font-size: 1.25rem; font-weight: bold; margin: 0;">Question Map</h3>
                     </div>
-                    
-                    <div class="legend-container">
-                         <div class="legend-item"><div class="legend-box" style="border:2px solid var(--primary-color);"></div> Current</div>
-                         <div class="legend-item"><div class="legend-box" style="background:var(--secondary-color);"></div> Answered</div>
-                         <div class="legend-item"><div class="legend-box" style="background:var(--bg-color-dark);"></div> Not Answered</div>
-                         <div class="legend-item"><div class="legend-box" style="background:var(--success-color);"></div> Correct</div>
-                         <div class="legend-item"><div class="legend-box" style="background:var(--danger-color);"></div> Incorrect</div>
-                    </div>
+                    <div id="nav-items" class="question-nav-container"></div>
+                    <div class="legend" id="nav-legend">
+                        </div>
                 </div>
 
                 <div class="game-content">
-                    <div class="status-bar" style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold; color:var(--primary-color);">
-                        <span id="qCount">Q 1/30</span>
-                        <span id="diffLabel">NORMAL</span>
+                    <div class="status-bar" style="display:flex; justify-content:center; align-items: center; margin-bottom: 15px; position: relative;">
+                        <div class="question-number" id="qCount">Question 1 of 30</div>
+                        <span id="diffLabel" style="font-weight:bold; color:var(--primary-color); font-size: 1.1rem; position: absolute; right: 0;">NORMAL</span>
                     </div>
 
                     <div id="stringsArea" class="strings-area"></div>
@@ -404,59 +572,49 @@
             </div>
         </div>
 
-        <div id="resultsScreen" class="test-container hidden">
-            <h1 id="resultsTitle" class="result-header">Quiz Results</h1>
-            <p class="result-sub">Here is how you performed</p>
-            
-            <div class="result-columns">
-                <div class="result-card">
-                    <div class="card-title">Current Score</div>
-                    <div class="score-big" id="resScoreBig">-</div>
-                    
-                    <div class="stat-row">
-                        <span class="stat-label">Correct Answers</span>
-                        <span class="stat-value" id="resCorrect">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Total Questions</span>
-                        <span class="stat-value" id="resTotal">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Accuracy</span>
-                        <span class="stat-value" id="resAcc">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Time Used</span>
-                        <span class="stat-value" id="resTime">-</span>
-                    </div>
-                    
-                    <div class="percentile-badge">
-                        Percentile: <span id="resPerc">-</span>
-                    </div>
+        <div id="result-screen" class="test-container hidden">
+            <div class="results-container">
+                <h1 id="result-title" style="color: var(--primary-color); font-size: 2.2rem; font-weight: bold;">Test Complete!</h1>
+
+                <div id="fail-message-box" class="hidden" style="background-color: #ffe6e6; color: #dc3545; padding: 10px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dc3545;">
+                    <h3 style="margin: 0; font-size: 1.2rem;">❌ TEST FAILED</h3>
+                    <p style="margin: 5px 0 0 0;">You skipped questions. Score adjusted to 0.</p>
+                </div>
+
+                <div id="practice-result-summary" class="result-summary hidden">
+                    <p><strong>Score:</strong> <span id="practice-score-display">N/A</span></p>
+                    <p><strong>Accuracy:</strong> <span id="practice-accuracy-display">N/A</span></p>
                 </div>
                 
-                <div class="result-card">
-                    <div class="card-title">Best Score</div>
-                    
-                    <div class="stat-row" style="margin-top:20px;">
-                         <span class="stat-label">Best Score</span>
-                         <span class="stat-value" id="bestScore">-</span>
-                    </div>
-                    <div class="stat-row">
-                         <span class="stat-label">Accuracy</span>
-                         <span class="stat-value" id="bestAcc">-</span>
-                    </div>
-                    <div class="stat-row">
-                         <span class="stat-label">Percentile</span>
-                         <span class="stat-value" id="bestPerc">-</span>
+                <div id="test-result-details" class="hidden">
+                    <div class="result-comparison">
+                        <div class="result-column">
+                            <h3>Current Score</h3>
+                            <div class="result-grid">
+                                <span>Score</span><strong id="score-display">N/A</strong>
+                                <span>Accuracy</span><strong id="accuracy-display">N/A</strong>
+                                <span>Avg Time/Q</span><strong id="time-display">N/A</strong>
+                                <span class="percentile-row hidden">Rank</span><strong id="rank-display" class="percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                <span class="percentile-row hidden">Percentile</span><strong id="percentile-display" class="percentile-row hidden">N/A</strong>
+                            </div>
+                        </div>
+                        <div id="best-score-column" class="result-column">
+                            <h3>Your Best Score</h3>
+                            <div class="result-grid">
+                                <span>Score</span><strong id="best-score-display">N/A</strong>
+                                <span>Accuracy</span><strong id="best-accuracy-display">N/A</strong>
+                                <span class="percentile-row hidden">Rank</span><strong id="best-rank-display" class="percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                <span class="percentile-row hidden">Percentile</span><strong id="best-percentile-display" class="percentile-row hidden">N/A</strong>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="action-buttons" style="flex-direction: row; justify-content: center; flex-wrap: wrap;">
-                <button id="reviewBtn" class="btn btn-secondary" onclick="startReview()">Review Answers</button>
-                <button onclick="location.reload()" class="btn btn-primary">Back to Menu</button>
-                <button onclick="location.href='index.html'" class="btn outline-btn">Back to Main Page</button>
+                <div class="action-buttons" style="flex-direction: row; justify-content: center; flex-wrap: wrap;">
+                    <button id="reviewBtn" class="btn btn-secondary" onclick="startReview()">Review Answers</button>
+                    <button id="retake-button" class="btn btn-primary" onclick="location.reload()">Back to Menu</button>
+                    <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
+                </div>
             </div>
         </div>
 
@@ -474,13 +632,46 @@
             startTime: 0,
             timer: null,
             timeLeft: 360,
-            practiceAnswered: false 
+            practiceAnswered: false,
+            isFail: false // ✅ เพิ่มบรรทัดนี้
         };
 
         let userEmail = "guest@example.com";
+        
+        // [ตั้งค่า Auto Start และซ่อนหน้าจอตอนเริ่ม]
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMockup = urlParams.get('mode') === 'mockup';
+
+        if (isMockup) {
+            // โหมด Mockup: บังคับซ่อน Header และเข้าเกมทันที ไม่ต้องรอ Login
+            document.getElementById('startScreen').classList.add('hidden');
+            document.querySelector('.header').style.setProperty('display', 'none', 'important');
+            document.querySelector('.container').style.setProperty('margin-top', '0', 'important');
+            document.querySelector('.container').style.setProperty('height', '100vh', 'important');
+            document.getElementById('loader').style.display = 'flex';
+            
+            gameState.mode = 'test';
+            startGame(urlParams.get('difficulty') || 'normal');
+        } else {
+            // โหมดเล่นเดี่ยวปกติ: ต้องรอ Login เพื่อดึง Email
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                firebase.auth().onAuthStateChanged(u => {
+                    if (u) {
+                        userEmail = u.email;
+                    }
+                });
+            }
+        }
+
         if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
             firebase.auth().onAuthStateChanged(u => {
-                if (u) userEmail = u.email;
+                if (u) {
+                    userEmail = u.email;
+                    if (isMockup) {
+                        gameState.mode = 'test';
+                        startGame(urlParams.get('difficulty') || 'normal');
+                    }
+                }
             });
         }
 
@@ -488,30 +679,59 @@
             start: document.getElementById('startScreen'),
             difficulty: document.getElementById('difficultyScreen'),
             game: document.getElementById('gameScreen'),
-            results: document.getElementById('resultsScreen')
+            result: document.getElementById('result-screen') // ✅ แก้ทั้งชื่อคีย์ และ ID ให้เหมือน APR
         };
 
         // --- NAVIGATION & MODALS ---
         function switchScreen(name) {
-            Object.values(screens).forEach(s => s.classList.add('hidden'));
-            screens[name].classList.remove('hidden');
+            Object.values(screens).forEach(s => { if (s) s.classList.add('hidden'); });
+            const activeScreen = screens[name];
+            if (activeScreen) activeScreen.classList.remove('hidden');
             
-            const headerTimer = document.getElementById('headerTimer');
-            const backBtn = document.getElementById('backToMenuBtn');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const headerTimerMobile = document.getElementById('header-timer-display'); 
+            const mainTimerPC = document.getElementById('timer-display'); 
+            const backMenuBtn = document.getElementById('back-to-menu-btn');
+            const backToResultsBtn = document.getElementById('back-to-results-btn');
             
-            if (name === 'game') {
-                if (gameState.mode === 'practice') {
-                    headerTimer.style.display = 'none';
-                    backBtn.classList.remove('hidden');
-                    backBtn.onclick = () => location.reload(); 
-                } else {
-                    headerTimer.style.display = 'block';
-                    backBtn.classList.add('hidden');
-                }
-            } else {
-                backBtn.classList.add('hidden');
-                headerTimer.style.display = 'none';
+            const showHamburger = (name === 'game' && gameState.mode === 'test') || (name === 'game' && gameState.mode === 'review');
+            if (hamburgerBtn) {
+                if (showHamburger) hamburgerBtn.classList.add('show-nav');
+                else hamburgerBtn.classList.remove('show-nav');
             }
+
+            if (name === 'game') {
+                activeScreen.style.maxWidth = '1400px';
+                if (gameState.mode === 'practice') {
+                    if (headerTimerMobile) headerTimerMobile.classList.add('hidden');
+                    if (mainTimerPC) mainTimerPC.classList.add('hidden');
+                    if (backMenuBtn) backMenuBtn.classList.remove('hidden');
+                    if (backToResultsBtn) backToResultsBtn.classList.add('hidden');
+                } else if (gameState.mode === 'review') {
+                    if (headerTimerMobile) headerTimerMobile.classList.add('hidden');
+                    if (mainTimerPC) mainTimerPC.classList.add('hidden');
+                    if (backMenuBtn) backMenuBtn.classList.add('hidden');
+                    if (backToResultsBtn) backToResultsBtn.classList.remove('hidden');
+                } else {
+                    if (headerTimerMobile) headerTimerMobile.classList.remove('hidden');
+                    if (mainTimerPC) mainTimerPC.classList.remove('hidden');
+                    if (backMenuBtn) backMenuBtn.classList.add('hidden');
+                    if (backToResultsBtn) backToResultsBtn.classList.add('hidden');
+                }
+            } else if (name === 'result') {
+                activeScreen.style.maxWidth = '750px';
+                if (headerTimerMobile) headerTimerMobile.classList.add('hidden');
+                if (mainTimerPC) mainTimerPC.classList.add('hidden');
+                if (backMenuBtn) backMenuBtn.classList.add('hidden');
+                if (backToResultsBtn) backToResultsBtn.classList.add('hidden');
+            } else {
+                activeScreen.style.maxWidth = '600px';
+                if (headerTimerMobile) headerTimerMobile.classList.add('hidden');
+                if (mainTimerPC) mainTimerPC.classList.add('hidden');
+                if (backMenuBtn) backMenuBtn.classList.add('hidden');
+                if (backToResultsBtn) backToResultsBtn.classList.add('hidden');
+            }
+            window.scrollTo(0, 0);
         }
 
         function toggleHowToPlay(show) {
@@ -533,6 +753,8 @@
                 modal.style.display = 'none';
             };
         }
+
+        
 
         function selectMode(mode) {
             gameState.mode = mode;
@@ -573,48 +795,62 @@
 
         // --- UI SETUP ---
         function setupGameUI() {
-            const sidebar = document.getElementById('sidebar');
+            const sidebar = document.getElementById('nav-panel');
             const pracControls = document.getElementById('practiceControls');
             const testControls = document.getElementById('testControls');
+            const isReview = (gameState.mode === 'review');
+
+            const legendContainer = document.getElementById('nav-legend');
+            if (isReview) {
+                legendContainer.innerHTML = `
+                    <div class="legend-item"><span class="legend-color legend-correct"></span> Correct</div>
+                    <div class="legend-item"><span class="legend-color legend-incorrect"></span> Incorrect</div>
+                `;
+            } else {
+                legendContainer.innerHTML = `
+                    <div class="legend-item"><span class="legend-color legend-current"></span> Current</div>
+                    <div class="legend-item"><span class="legend-color legend-answered"></span> Answered</div>
+                    <div class="legend-item"><span class="legend-color legend-unanswered"></span> Not Answered</div>
+                `;
+            }
 
             if (gameState.mode === 'practice') {
-                sidebar.style.display = 'none'; 
+                sidebar.style.display = 'none';
                 pracControls.style.display = 'flex';
                 testControls.style.display = 'none';
             } else {
-                sidebar.style.display = 'flex';
+                sidebar.style.display = 'block';
                 pracControls.style.display = 'none';
                 testControls.style.display = 'flex';
                 renderNavGrid();
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) submitBtn.style.display = isReview ? 'none' : 'block';
             }
 
             renderQuestion();
             document.getElementById('diffLabel').textContent = gameState.difficulty.toUpperCase();
-            
             document.getElementById('prevBtn').onclick = () => navigate(-1);
             document.getElementById('nextBtn').onclick = () => navigate(1);
             document.getElementById('submitBtn').onclick = () => {
                 showConfirmModal("Confirm Submission", "Are you sure you want to finish the test?", () => submitTest());
             };
-            
             document.getElementById('checkAnsBtn').onclick = checkPracticeAnswer;
-            document.getElementById('pracNextBtn').onclick = () => {
-                gameState.practiceAnswered = false;
-                navigate(1);
-            };
+            document.getElementById('pracNextBtn').onclick = () => { gameState.practiceAnswered = false; navigate(1); };
         }
 
         // --- HIGHLIGHT DIFF LOGIC ---
-        function highlightDiff(str, compareStr) {
-            let html = "";
-            for (let i = 0; i < str.length; i++) {
-                if (str[i] !== compareStr[i]) {
-                    html += `<span class="diff-char">${str[i]}</span>`;
+        function highlightDiff(str1, str2) {
+            if (!str1 || !str2) return str1 || '';
+            let res = '';
+            for (let i = 0; i < str1.length; i++) {
+                if (str1[i] !== str2[i]) {
+                    // ลบ style="color:red;" ออก เพื่อให้ CSS diff-char ทำงาน (สีเหลือง)
+                    res += `<span class="diff-char">${str1[i]}</span>`;
                 } else {
-                    html += str[i];
+                    res += str1[i];
                 }
             }
-            return html;
+            return res;
         }
 
         function renderQuestion() {
@@ -641,9 +877,9 @@
                     <div class="string-box"><div class="label">BOT-RIGHT</div>${showDiff ? highlightDiff(q.right2, l1) : q.right2}</div>
                 `;
             } else {
-                // Standard: Compare Left vs Right
+                // Standard: Compare Left vs Right (Highlight ทั้ง 2 ฝั่ง)
                 stringsArea.innerHTML = `
-                    <div class="string-box"><div class="label">LEFT</div>${q.left}</div>
+                    <div class="string-box"><div class="label">LEFT</div>${showDiff ? highlightDiff(q.left, q.right) : q.left}</div>
                     <div class="string-box"><div class="label">RIGHT</div>${showDiff ? highlightDiff(q.right, q.left) : q.right}</div>
                 `;
             }
@@ -677,16 +913,23 @@
             } 
             // --- STANDARD MODE (Buttons) ---
             else {
+                choicesArea.className = 'options-container'; // ดึง CSS ของ APR มาใช้
                 choicesArea.style.display = 'grid';
                 const options = q.shuffledOptions || [0,1,2,3];
                 const labels = ['A', 'B', 'C', 'D'];
-
+                
                 options.forEach((opt, idx) => {
                     const btn = document.createElement('div');
-                    btn.className = 'choice-btn';
+                    btn.className = 'option';
+                    
+                    // ป้องกันการกดซ้ำเมื่อเฉลยแล้ว
+                    if (isReview || (gameState.mode === 'practice' && gameState.practiceAnswered)) {
+                        btn.classList.add('disabled');
+                    }
+                    
                     btn.innerHTML = `
-                        <span class="choice-label">${labels[idx]}</span>
-                        <span class="choice-text">${opt}</span>
+                        <div class="option-letter">${labels[idx]}</div>
+                        <span>${opt}</span>
                     `;
 
                     if (isReview || (gameState.mode === 'practice' && gameState.practiceAnswered)) {
@@ -720,8 +963,9 @@
         }
 
         function updateControlsState() {
-            document.getElementById('qCount').textContent = `Q ${gameState.currentIndex + 1}/${gameState.questions.length}`;
-
+            // แก้ข้อ 1 ให้โชว์คำว่า Question 1 of 30
+            document.getElementById('qCount').textContent = `Question ${gameState.currentIndex + 1} of ${gameState.questions.length}`;
+            
             if (gameState.mode === 'practice') {
                 const checkBtn = document.getElementById('checkAnsBtn');
                 const nextBtn = document.getElementById('pracNextBtn');
@@ -747,6 +991,7 @@
             renderQuestion();
         }
 
+        // 1. นำโค้ดนี้ไปแทนที่ function navigate(dir) เดิม
         function navigate(dir) {
             const nextIdx = gameState.currentIndex + dir;
             if (nextIdx >= 0 && nextIdx < gameState.questions.length) {
@@ -758,71 +1003,133 @@
         }
 
         function startTimer() {
-            const timerEl = document.getElementById('headerTimer');
             if(gameState.timer) clearInterval(gameState.timer);
+            gameState.timeLeft = 360; 
+            const timerEl = document.getElementById('timer-display'); 
+            const headerTimerEl = document.getElementById('header-timer-display'); 
             
-            gameState.timer = setInterval(() => {
-                gameState.timeLeft--;
+            const updateUI = () => {
                 const m = Math.floor(gameState.timeLeft / 60);
                 const s = gameState.timeLeft % 60;
-                timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                if(timerEl) timerEl.textContent = timeStr;
+                if(headerTimerEl) headerTimerEl.textContent = timeStr;
                 
-                if (gameState.timeLeft <= 60) timerEl.classList.add('danger');
+                // ✅ ส่งเวลาไปหน้าหลัก (MockupTest) เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                if (window.parent && window.innerWidth <= 1024 && gameState.mode === 'test') {
+                    window.parent.postMessage({
+                        type: 'TICK_TIMER',
+                        timeLeft: timeStr,
+                        rawSeconds: gameState.timeLeft
+                    }, '*');
+                }
+
+                if (gameState.timeLeft <= 30) {
+                    if(timerEl) timerEl.classList.add('danger');
+                    if(headerTimerEl) headerTimerEl.classList.add('danger');
+                }
+            };
+
+            updateUI();
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateUI();
                 if (gameState.timeLeft <= 0) {
                     clearInterval(gameState.timer);
-                    submitTest(true); 
+                    submitTest(true);
                 }
             }, 1000);
         }
 
+        // 1. นำโค้ดนี้ไปแทนที่ function submitTest() เดิม (ทั้งหมด)
         async function submitTest(timesUp = false) {
-            clearInterval(gameState.timer);
+            if (gameState.timer) clearInterval(gameState.timer);
+            
+            // ✅ สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
             document.getElementById('loader').style.display = 'flex';
 
-            let correct = 0;
-            let answered = 0;
+            // ✅ เช็คช่องโหว่ตรงกลาง (ถ้าหมดเวลาแล้วเจอว่าข้อก่อนหน้าไม่ได้ทำ ถือว่า Fail)
+            if (gameState.mode === 'test' && !gameState.isFail) {
+                let lastIdx = -1;
+                for (let i = gameState.questions.length - 1; i >= 0; i--) {
+                    if (gameState.answers[i] !== null) { lastIdx = i; break; }
+                }
+                if (lastIdx !== -1) {
+                    for (let i = 0; i < lastIdx; i++) {
+                        if (gameState.answers[i] === null) { gameState.isFail = true; break; }
+                    }
+                }
+            }
+
+            let correct = 0; let attempted = 0;
             gameState.questions.forEach((q, i) => {
-                if (gameState.answers[i] !== null) answered++;
-                if (gameState.answers[i] === q.diff) correct++;
+                if (gameState.answers[i] !== null) {
+                    attempted++;
+                    if (gameState.answers[i] === q.diff) correct++;
+                }
             });
-            const accuracy = (answered > 0) ? (correct / answered) * 100 : 0;
+            const total = gameState.questions.length;
+            
+            // ✅ นำกฎ Fail มาใช้ (ปรับเป็น 0 ทันที)
+            if (gameState.isFail) {
+                correct = 0;
+                attempted = 0;
+            }
+
+            const accuracy = (attempted > 0 && !gameState.isFail) ? (correct / attempted) * 100 : 0;
             const timeUsed = 360 - gameState.timeLeft;
-            const m = Math.floor(timeUsed / 60);
-            const s = timeUsed % 60;
-            const timeStr = `${m}m ${s}s`;
+            const avgTime = total > 0 ? (timeUsed / total).toFixed(1) : "0.0";
 
-            try {
-                if (gameState.mode === 'test') {
-                    const payload = {
-                        userEmail: userEmail,
-                        difficulty: gameState.difficulty,
-                        correctCount: correct,
-                        totalQuestions: gameState.questions.length,
-                        answeredCount: answered,
-                        accuracy: accuracy,
-                        timeUsed: timeUsed,
-                        userAnswers: gameState.answers
+            if (gameState.mode === 'test') {
+                if (urlParams.get('mode') === 'mockup') {
+                    window.parent.postMessage({
+                        type: 'MOCKUP_SUBTEST_COMPLETED',
+                        result: {
+                            score: correct,
+                            totalQuestions: total,
+                            accuracy: parseFloat(accuracy.toFixed(2)),
+                            timeUsed: timeUsed,
+                            answers: gameState.answers,
+                            isFail: gameState.isFail // ✅ ส่งบอกยานแม่
+                        }
+                    }, '*');
+                    return; 
+                }
+
+                try {
+                    const payload = { 
+                        userEmail: userEmail, difficulty: gameState.difficulty,
+                        correctCount: correct, totalQuestions: total, 
+                        answeredCount: attempted, accuracy: parseFloat(accuracy.toFixed(2)), 
+                        timeUsed: timeUsed, userAnswers: gameState.answers,
+                        isFail: gameState.isFail // ✅ ส่งบอก Backend
                     };
-
-                    const response = await fetch(`${API_BASE}/saveSCTScore`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(payload)
+                    const response = await fetch(`${API_BASE}/saveSCTScore`, { 
+                        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) 
                     });
                     const serverData = await response.json();
                     
-                    showResults(correct, accuracy, timeStr, serverData.percentile || 0);
-                    fetchBestScore();
-                    document.getElementById('resultsTitle').textContent = timesUp ? "Time's Up!" : "Quiz Results";
+                    await fetchBestScore(); 
                     
-                } else {
-                    showResults(correct, accuracy, timeStr, '-');
-                    document.getElementById('resultsTitle').textContent = "Practice Completed";
+                    // ✅ อัปเดต Title ถ้า Fail
+                    document.getElementById('result-title').textContent = timesUp ? "Time's Up!" : (gameState.isFail ? "Test Failed" : "Test Complete!");
+                    // ส่ง object serverData ไปให้ฟังก์ชันแกะ rank และ totalUsers เอง
+                    showResults(correct, accuracy, avgTime, serverData, gameState.isFail);
+                } catch (e) {
+                    console.error("Save Error:", e);
+                    await fetchBestScore(); 
+                    document.getElementById('result-title').textContent = "Test Complete (Offline)";
+                    showResults(correct, accuracy, avgTime, { percentile: 'N/A', rank: '-', totalUsers: '-' }, gameState.isFail); 
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
                 }
-            } catch (e) {
-                console.error(e);
-                showResults(correct, accuracy, timeStr, '-');
-            } finally {
+            } else {
+                document.getElementById('result-title').textContent = "Practice Complete!";
+                showResults(correct, accuracy, avgTime, 0, false);
                 document.getElementById('loader').style.display = 'none';
             }
         }
@@ -833,21 +1140,140 @@
                 const json = await res.json();
                 if (json.success && json.data) {
                     const d = json.data;
-                    document.getElementById('bestScore').textContent = `${d.bestScore} / ${d.totalQuestions}`;
-                    document.getElementById('bestAcc').textContent = d.bestAccuracy.toFixed(1) + '%';
-                    document.getElementById('bestPerc').textContent = d.bestPercentile + '%';
+                    window.bestScoreData = d; // เก็บข้อมูล Best ไว้ใช้เทียบ
+                    document.getElementById('best-score-display').textContent = `${d.bestScore} / ${d.totalQuestions}`;
+                    document.getElementById('best-accuracy-display').textContent = d.bestAccuracy.toFixed(1) + '%';
+                    document.getElementById('best-percentile-display').textContent = d.bestPercentile + '%';
+                    document.getElementById('best-score-column').style.display = 'block';
+                } else {
+                    document.getElementById('best-score-column').style.display = 'none';
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) { 
+                console.log("Fetch Best Score Error:", e);
+                document.getElementById('best-score-column').style.display = 'none';
+            }
         }
 
-        function showResults(score, acc, time, perc) {
-            switchScreen('results');
-            document.getElementById('resScoreBig').textContent = Math.round((score/gameState.questions.length)*100);
-            document.getElementById('resCorrect').textContent = score;
-            document.getElementById('resTotal').textContent = gameState.questions.length;
-            document.getElementById('resAcc').textContent = acc.toFixed(1) + "%";
-            document.getElementById('resTime').textContent = time;
-            document.getElementById('resPerc').textContent = (perc === '-') ? '-' : perc + "%";
+       // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
+            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
+            return 'var(--primary-color)'; // Tier Low (แดง)
+        }
+
+        // 2. ฟังก์ชันแสดงผลอัปเดตใหม่ (กันกระสุน 100% สำหรับ SCT)
+        function showResults(score, acc, timeStr, serverData, isFail = false) {
+            switchScreen('result');
+            const total = gameState.questions.length;
+            
+            // ✅ ควบคุมการแสดงกล่อง Fail Message
+            const failBox = document.getElementById('fail-message-box');
+            if (failBox) {
+                if (isFail) { failBox.classList.remove('hidden'); } else { failBox.classList.add('hidden'); }
+            }
+
+            if (gameState.mode === 'practice') {
+                if (document.getElementById('practice-result-summary')) document.getElementById('practice-result-summary').classList.remove('hidden');
+                if (document.getElementById('test-result-details')) document.getElementById('test-result-details').classList.add('hidden');
+                if (failBox) failBox.classList.add('hidden'); // Practice ไม่มี Fail
+                
+                const reviewBtn = document.getElementById('reviewBtn') || document.getElementById('review-button');
+                if (reviewBtn) reviewBtn.style.display = 'none'; 
+                
+                if (document.getElementById('practice-score-display')) document.getElementById('practice-score-display').textContent = `${score} / ${total}`;
+                if (document.getElementById('practice-accuracy-display')) document.getElementById('practice-accuracy-display').textContent = `${acc.toFixed(2)}%`;
+            } else {
+                if (document.getElementById('practice-result-summary')) document.getElementById('practice-result-summary').classList.add('hidden');
+                if (document.getElementById('test-result-details')) document.getElementById('test-result-details').classList.remove('hidden');
+                
+                const reviewBtn = document.getElementById('reviewBtn') || document.getElementById('review-button');
+                if (reviewBtn) reviewBtn.style.display = 'inline-block';
+                
+                // ✅ จัดการเรื่องสีถ้า Fail
+                const scoreDisplay = document.getElementById('score-display');
+                if (scoreDisplay) {
+                    scoreDisplay.textContent = `${score} / ${total}`;
+                    scoreDisplay.style.color = isFail ? 'var(--danger-color)' : 'var(--primary-color)';
+                }
+                
+                if (document.getElementById('accuracy-display')) document.getElementById('accuracy-display').textContent = `${acc.toFixed(2)}%`;
+                if (document.getElementById('time-display')) document.getElementById('time-display').textContent = timeStr + "s";
+                
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+
+                // --- จัดการ Current Data ---
+                let curPercentile = 'N/A';
+                let curRank = '-';
+                let curTotalUsers = '-';
+
+                if (serverData && serverData.current) {
+                    curPercentile = serverData.current.percentile !== undefined ? Number(serverData.current.percentile) : 'N/A';
+                    curRank = serverData.current.rank !== undefined ? serverData.current.rank : '-';
+                    curTotalUsers = serverData.current.totalUsers !== undefined ? serverData.current.totalUsers : '-';
+                }
+
+                const curTierColor = getColorByPercentile(curPercentile);
+                const rankEl = document.getElementById('rank-display');
+                if (rankEl) {
+                    rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                    rankEl.style.color = curTierColor;
+                }
+
+                const percentileEl = document.getElementById('percentile-display');
+                if (percentileEl) {
+                    percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                    percentileEl.style.color = curTierColor;
+                }
+
+                // --- จัดการ Best Data ---
+                // เช็คจาก serverData.best เป็นอันดับแรก ถ้าไม่มีค่อยดึงจาก window.bestScoreData ที่ไป fetch มา
+                let bestData = null;
+                if (serverData && serverData.best) {
+                    bestData = serverData.best;
+                } else if (window.bestScoreData) {
+                    bestData = window.bestScoreData;
+                }
+
+                if (bestData) {
+                    if (document.getElementById('best-score-display')) {
+                        const bestScoreVal = bestData.score !== undefined ? bestData.score : bestData.bestScore;
+                        const bestTotalVal = bestData.totalQuestions || total;
+                        document.getElementById('best-score-display').textContent = `${bestScoreVal} / ${bestTotalVal}`;
+                    }
+                    if (document.getElementById('best-accuracy-display')) {
+                        const bestAccVal = bestData.accuracy !== undefined ? bestData.accuracy : bestData.bestAccuracy;
+                        document.getElementById('best-accuracy-display').textContent = `${Number(bestAccVal).toFixed(2)}%`;
+                    }
+
+                    const bestPercentile = (bestData.percentile !== undefined) ? Number(bestData.percentile) : 
+                                           (bestData.bestPercentile !== undefined) ? Number(bestData.bestPercentile) : 'N/A';
+                    
+                    const bestRank = (bestData.rank !== undefined) ? bestData.rank : 
+                                     (bestData.bestRank !== undefined) ? bestData.bestRank : 'N/A';
+                    
+                    const bestTotalUsers = bestData.totalUsers || '-';
+                    
+                    const bestTierColor = getColorByPercentile(bestPercentile);
+
+                    const bestRankEl = document.getElementById('best-rank-display');
+                    if (bestRankEl) {
+                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                        bestRankEl.style.color = bestTierColor;
+                    }
+
+                    const bestPercentileEl = document.getElementById('best-percentile-display');
+                    if (bestPercentileEl) {
+                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                        bestPercentileEl.style.color = bestTierColor;
+                    }
+                    if (document.getElementById('best-score-column')) document.getElementById('best-score-column').style.display = 'block';
+                } else {
+                    if (document.getElementById('best-score-column')) document.getElementById('best-score-column').style.display = 'none';
+                }
+            }
         }
 
         function startReview() {
@@ -858,16 +1284,20 @@
         }
 
         function renderNavGrid() {
-            const grid = document.getElementById('navGrid');
+            const grid = document.getElementById('nav-items');
+            if (!grid) return;
             grid.innerHTML = '';
             gameState.questions.forEach((_, i) => {
-                const item = document.createElement('div');
-                item.className = 'nav-item';
+                const item = document.createElement('button'); // ใช้ button เหมือน APR
+                item.className = 'question-nav-btn'; 
                 item.textContent = i + 1;
                 item.id = `nav-${i}`;
-                item.onclick = () => {
-                    gameState.currentIndex = i;
-                    renderQuestion();
+          
+                // ✅ แก้ให้กดเปลี่ยนข้อได้อย่างอิสระ
+                item.onclick = () => { 
+                    gameState.currentIndex = i; 
+                    renderQuestion(); 
+                    if(window.innerWidth <= 1024) closeMenu();
                 };
                 grid.appendChild(item);
             });
@@ -876,8 +1306,8 @@
         function updateNavGrid() {
             gameState.questions.forEach((q, i) => {
                 const el = document.getElementById(`nav-${i}`);
-                el.className = 'nav-item'; 
-                if (i === gameState.currentIndex) el.classList.add('current');
+                if (!el) return;
+                el.className = 'question-nav-btn'; // รีเซ็ตคลาส
                 
                 if (gameState.mode === 'review') {
                     const myAns = gameState.answers[i];
@@ -885,8 +1315,84 @@
                     else el.classList.add('incorrect');
                 } else {
                     if (gameState.answers[i] !== null) el.classList.add('answered');
+                    else el.classList.add('unanswered');
                 }
+                
+                if (i === gameState.currentIndex) el.classList.add('current');
             });
+        }
+
+        function endGame(isTimeOut = false) {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            
+            // ยกเลิกคำสั่งเดิมที่ไปแก้ innerHTML แล้วใช้ของใหม่
+            const score = gameState.answers.filter((ans, i) => ans === gameState.questions[i].diff).length;
+            const total = gameState.questions.length;
+            const accuracy = (score / total) * 100;
+            const timeUsed = 180 - gameState.timeLeft;
+
+            if (gameState.mode === 'practice') {
+                document.getElementById('practice-result-summary').classList.remove('hidden');
+                document.getElementById('test-result-details').classList.add('hidden');
+                document.getElementById('review-button').classList.add('hidden');
+                document.getElementById('practice-score-display').textContent = `${score} / ${total}`;
+                document.getElementById('practice-accuracy-display').textContent = `${accuracy.toFixed(2)}%`;
+            } else {
+                document.getElementById('practice-result-summary').classList.add('hidden');
+                document.getElementById('test-result-details').classList.remove('hidden');
+                document.getElementById('review-button').classList.remove('hidden');
+                
+                document.getElementById('score-display').textContent = `${score} / ${total}`;
+                document.getElementById('accuracy-display').textContent = `${accuracy.toFixed(2)}%`;
+                
+                const m = Math.floor(timeUsed / 60);
+                const s = timeUsed % 60;
+                document.getElementById('time-display').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}s`;
+                document.getElementById('percentile-display').textContent = `N/A`; // รอ Backend
+                document.getElementById('best-score-column').style.display = 'none'; // โชว์ตอนต่อ Firebase แล้ว
+            }
+            switchScreen('result');
+        }
+
+        function toggleMenu() {
+            const navPanel = document.getElementById('nav-panel');
+            const navOverlay = document.getElementById('nav-overlay');
+            if(navPanel) navPanel.classList.toggle('active');
+            if(navOverlay) navOverlay.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const navPanel = document.getElementById('nav-panel');
+            const navOverlay = document.getElementById('nav-overlay');
+            if(navPanel) navPanel.classList.remove('active');
+            if(navOverlay) navOverlay.classList.remove('active');
+        }
+        
+        // รันจัดหน้าจอให้เป็นหน้าเริ่มเกม
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') !== 'mockup') {
+                switchScreen('start');
+            }
+        });
+ 
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
         }
 
     </script>

@@ -1,12 +1,1124 @@
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
-*/ Test//
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Short Term Memory (STR) - Silp Pilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        :root { --primary-color: #722F37; --secondary-color: #8B4513; --accent-color: #A0826D; --background-color-light: #FAF7F2; --background-color-dark: #F5F2EA; --text-color: #722F37; --text-color-secondary: #8B4513; --border-color: #E8DDD4; --success-color: #28a745; --danger-color: #dc3545;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-dark) 100%); min-height: 100vh; line-height: 1.6; color: var(--text-color); }
+        .header { background: rgba(255,253,250,0.95); padding: 15px 20px; box-shadow: 0 2px 10px rgba(139,69,19,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1001; border-bottom: 2px solid var(--secondary-color); }
+        .header h1 { color: var(--primary-color); font-size: 24px; font-weight: bold;}
+        .header-buttons { display: flex; gap: 10px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .test-container { background: #FFFEF9; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(139,69,19,0.1); border: 1px solid var(--border-color); }
+        .question-header { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--background-color-dark); border-radius: 10px; border: 1px solid var(--border-color); }
+        .question-number { background: var(--primary-color); color: white; padding: 10px 20px; border-radius: 25px; font-weight: bold; font-size: 16px; display: inline-block; margin-bottom: 15px; }
+        .option { display: flex; align-items: center; padding: 20px; border: 3px solid var(--border-color); border-radius: 12px; background: var(--background-color-light); cursor: pointer; transition: all 0.3s ease; font-size: 16px; }
+        @media (hover: hover) {
+            .option:hover { background: var(--background-color-dark); border-color: var(--primary-color); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(114,47,55,0.2); }
+        }
+        .option.selected { background: var(--background-color-dark); border-color: var(--secondary-color); font-weight: bold; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139,69,19,0.3); }
+        .option-letter { background: var(--secondary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; font-size: 16px; flex-shrink: 0; }
+        .option.selected .option-letter { background: var(--primary-color); }
+        .btn { background: var(--primary-color); color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-decoration: none; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(114,47,55,0.3); opacity: 0.9; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .header-btn { padding: 8px 20px; font-size: 16px; }
+        .outline-btn { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
+        .outline-btn:hover { background-color: var(--primary-color); color: white; }
+        .question-nav-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; margin-top: 10px; }
+        .question-nav-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
+        .question-nav-btn.answered { background-color: var(--primary-color); color: white; }
+        .question-nav-btn.unanswered { background-color: var(--background-color-light); color: var(--text-color-secondary); border: 1px solid var(--border-color); }
+        .question-nav-btn.current { border-color: var(--primary-color); transform: scale(1.1); background-color: var(--secondary-color); color: white; }
+        .question-nav-btn.correct { background-color: var(--success-color); color: white; }
+        .question-nav-btn.incorrect { background-color: var(--danger-color); color: white; }
+        .legend { margin-top: 15px; text-align: left; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .legend-color { width: 18px; height: 18px; border-radius: 4px; margin-right: 10px; border: 1px solid #ccc;}
+        .math-question-text { font-size: 1.5rem; font-weight: bold; color: var(--text-color); }
+        .math-input { font-size: 1.25rem; }
+        .option span { font-size: 1.2rem; }
+        .action-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;}
+        .secondary-btn { background: var(--secondary-color); }
+        .back-btn { background: var(--secondary-color); color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
+        .start-actions { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .mode-selection { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+        .result-comparison { display: flex; gap: 2rem; justify-content: center; text-align: left; width: 100%; margin-top: 1.5rem; margin-bottom: 1.5rem; }
+        .result-column { flex: 1; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px; background: var(--background-color-dark); min-width: 250px; max-width: 400px; margin: 0 auto; }
+        .result-column h3 { color: var(--text-color-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; text-align: center; font-weight: bold; }
+        .result-grid { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; font-size: 1.1rem; align-items: center; }
+        .result-grid span { font-weight: 700; color: var(--primary-color); }
+        .result-grid strong { 
+            display: block;
+            width: 100%;
+            font-weight: 400; 
+            text-align: right; 
+            color: var(--primary-color); 
+            font-size: 1.1rem; 
+        }
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(250, 247, 242, 0.85); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(2px); }
+        .loader-spinner { border: 8px solid var(--border-color); border-top: 8px solid var(--primary-color); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .option.review-correct { border-color: var(--success-color) !important; background-color: #d4edda !important; font-weight: bold; }
+        .option.review-incorrect { border-color: var(--danger-color) !important; background-color: #f8d7da !important; }
+        .option.review-user-selected { box-shadow: 0 0 0 3px var(--secondary-color) inset; }
+        #review-story-container { border: 1px solid var(--border-color); }
+        .timer-container { text-align: center; margin-bottom: 1rem; }
+        .timer { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); }
+        .timer.danger { color: var(--danger-color); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .modal { position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #FFFEF9; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+    
+        /* --- Mobile & Tablet Responsive Additions --- */
+        .hamburger-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; display: none; }
+        .hamburger-btn svg { width: 28px; height: 28px; fill: currentColor; }
+        .hamburger-btn.show-nav { display: block !important; }
+        .header-timer { font-size: 1.3rem; font-weight: bold; color: var(--primary-color); display: none; }
+        .header-timer.show-timer { display: block !important; }
+        .header-timer.danger { color: var(--danger-color); animation: pulse 1s infinite; }
+        
+        /* Side Menu */
+        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1090; display: none; opacity: 0; transition: opacity 0.3s; }
+        .side-menu-overlay.active { display: block; opacity: 1; }
+        .side-menu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: var(--background-color-light); z-index: 1100; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s; display: flex; flex-direction: column; overflow-y: auto;}
+        .side-menu.active { left: 0; }
+        .side-menu-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg-color-dark); border-bottom: 1px solid var(--border-color); }
+        .side-menu-header h3 { margin: 0; color: var(--primary-color); font-size: 18px; font-weight: bold;}
+        .close-menu-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-color-secondary); }
+        .side-menu-content { padding: 15px; }
+        
+        /* Rotate Warning */
+        #rotate-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #722F37; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px;}
+        #rotate-warning .rotate-icon { font-size: 4rem; margin-bottom: 20px; animation: rotatePhone 2s infinite ease-in-out; }
+        #rotate-warning h2 { font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; color: white; }
+        #rotate-warning p { font-size: 1.1rem; color: white; max-width: 80%; line-height: 1.5; opacity: 0.9; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+
+        /* ป้องกัน Hamburger Menu และ Header Timer โผล่ในจอคอม 100% */
+        @media (min-width: 1025px) {
+            .hamburger-btn, .hamburger-btn.show-nav { display: none !important; }
+            .header-timer.show-timer { display: none !important; }
+        }
+
+        /* Tablet (Portrait) */
+        @media (max-width: 1024px) {
+            .test-container { padding: 20px !important; } /* ลดขอบเพื่อเพิ่มพื้นที่หน้าจอ */
+            #desktop-nav-panel, #review-desktop-nav-panel { display: none !important; } /* ซ่อน Nav แผงซ้าย */
+            .w-3\/4 { width: 100% !important; max-width: 100% !important; flex: none !important; } /* ขยายโจทย์เต็ม 100% */
+            .flex-row { flex-direction: column !important; gap: 0 !important; } /* ลบช่องว่างระหว่างคอมลัมน์ทิ้ง */
+            #memorize-timer, #math-timer, .timer-container { display: none !important; } 
+            .result-comparison { flex-direction: column !important; align-items: center; } 
+            .result-column { max-width: 100% !important; width: 100%; margin-bottom: 1rem; }
+        }
+
+        /* Mobile */
+        @media (max-width: 767px) {
+            .test-container { padding: 12px !important; } /* ลดขอบให้สุดในมือถือ */
+            .header h1 { font-size: 1.1rem; margin: 0; }
+            .header-btn { padding: 4px 10px !important; font-size: 12px !important; min-width: unset !important; }
+            .text-4xl { font-size: 1.6rem !important; }
+            .text-3xl { font-size: 1.3rem !important; }
+            .text-xl { font-size: 1rem !important; }
+            .text-lg { font-size: 0.95rem !important; }
+            
+            /* ย่อปุ่มทั่วไป */
+            .btn { padding: 8px 12px !important; font-size: 13px !important; }
+            
+            /* ย่อขนาดกล่องตัวเลือก A-D และตัวอักษรด้านใน */
+            .option { padding: 8px 12px !important; font-size: 13px !important; min-height: 45px; }
+            .option span { font-size: 13px !important; }
+            .option-letter { width: 26px !important; height: 26px !important; font-size: 13px !important; margin-right: 10px !important; }
+            
+            #math-questions-container { grid-template-columns: 1fr !important; } 
+            
+            /* จัดเรียงปุ่มด้านล่าง (Prev, Skip, Submit, Next) ให้อยู่ในหน้าจอพอดี */
+            .flex.justify-between.w-full.mt-8 { flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .flex.justify-between.w-full.mt-8 > button { width: 48%; margin: 0; }
+            .flex.justify-between.w-full.mt-8 > .flex.gap-2 { width: 100%; justify-content: center; }
+            .flex.justify-between.w-full.mt-8 > .flex.gap-2 > button { width: 48%; }
+        }
+
+        /* Landscape Mobile Lock (อนุญาตให้ iPad แนวนอนได้) */
+        @media (max-width: 900px) and (orientation: landscape) {
+            #app, .header { display: none !important; }
+            #rotate-warning { display: flex !important; }
+        }
+    
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="hamburger-btn" class="hamburger-btn" onclick="toggleMenu()">
+                <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            </button>
+            <h1>📖 Short Term Memory - Story</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
+            <div id="header-timer" class="header-timer">00:00</div>
+            <div class="header-buttons">
+                <button id="back-to-results-btn-header" class="btn secondary-btn header-btn hidden">Results</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container flex items-center justify-center min-h-screen">
+        <div id="app" class="test-container w-full" style="max-width: 600px; transition: max-width 0.3s ease; margin: 0 auto;">
+        
+            <div id="instruction-screen" class="flex flex-col items-center text-center">
+                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Short Term Memory Story Test</h1>
+                <p class="text-lg mb-6" style="color: var(--text-color-secondary);">This test evaluates your short-term memory using a short story.</p>
+                <div class="mode-selection">
+                    <button id="practice-mode-btn" class="btn secondary-btn">Practice Mode</button>
+                    <button id="test-mode-btn" class="btn">Test Mode</button>
+                    <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
+                    <a href="index.html" class="btn outline-btn">Back to Main Page</a>
+                </div>
+            </div>
+
+            <div id="how-to-play-screen" class="hidden flex flex-col items-center text-center">
+                <h1 class="text-3xl font-bold mb-4" style="color: var(--primary-color);">How to Play</h1>
+                <div class="text-left max-w-2xl mx-auto">
+                    <p class="text-center" style="color: var(--text-color-secondary);">This test has three phases:</p>
+                    <ul class="list-disc list-inside space-y-2 mt-4 mb-6">
+                        <li><strong>Phase 1: Memorize</strong> - You will have 3 minutes to read and memorize a short story. In Practice Mode, you can proceed whenever you are ready.</li>
+                        <li><strong>Phase 2: Math Problems</strong> - You will be given 3 minutes to solve 12 math problems. This is to distract your short-term memory.</li>
+                        <li><strong>Phase 3: Recall</strong> - You will have 3 minutes to answer 15 questions about the story you memorized.</li>
+                    </ul>
+                    <p class="text-center font-semibold">Good luck!</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="back-to-menu-btn" class="btn">Back</button>
+                </div>
+            </div>
+
+            <div id="memorize-screen" class="hidden flex-col items-center" style="position: relative;">
+                <h1 id="memorize-title" class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Memorize</h1>
+                <div id="memorize-timer" class="text-3xl font-bold mb-4" style="color: var(--primary-color);">03:00</div>
+                <div id="story-container" class="w-full mt-4 p-6 rounded-lg text-lg" style="background-color: var(--background-color-dark); color: var(--text-color);"></div>
+                <div id="practice-start-recall-container" class="mt-6 hidden text-center">
+                    <button id="practice-start-recall-btn" class="btn">Start Recall Phase</button>
+                </div>
+                <button id="skip-memorize-btn" class="btn outline-btn mt-6 px-4 py-2 text-sm">Skip Phase (Test Only)</button>
+            </div>
+
+            <div id="math-screen" class="hidden flex-col items-center" style="position: relative;">
+                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Math Problems</h1>
+                <div class="text-3xl font-bold mb-4" style="color: var(--primary-color);" id="math-timer">03:00</div>
+                <div class="w-full mt-4 p-4 rounded-lg shadow-inner" style="background-color: var(--background-color-dark);">
+                    <p class="text-lg mb-4 text-center math-instructions" style="color: var(--text-color-secondary);">Solve the following 12 multiplication problems:</p>
+                    <div id="math-questions-container" class="grid grid-cols-2 gap-4"></div>
+                </div>
+                <button id="skip-math-btn" class="btn outline-btn mt-6 px-4 py-2 text-sm">Skip Phase (Test Only)</button>
+            </div>
+  
+            <div id="recall-screen" class="hidden flex flex-row w-full gap-4" style="position: relative;">
+                <div id="desktop-nav-panel" class="w-1/4 p-4 rounded-lg h-full" style="background-color: var(--background-color-dark);">
+                    <div id="recall-timer-container" class="timer-container hidden">
+                        <div id="recall-timer" class="timer text-3xl mb-4">03:00</div>
+                    </div>
+                    <h2 class="text-xl font-semibold mb-2" style="color: var(--primary-color);">Questions</h2>
+                    <div id="nav-items" class="question-nav-container"></div>
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
+                        <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
+                        <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light)"></div> Not Answered</div>
+                    </div>
+                </div>
+  
+                <div class="w-3/4 flex flex-col items-center">
+                    <h1 class="text-4xl font-bold mb-4 text-center" style="color: var(--primary-color);">Recall</h1>
+                    <div class="question-header mt-8 w-full">
+                        <div class="question-number" id="recall-question-number">Question 1</div>
+                        <p id="question-text" class="text-xl mt-4" style="color: var(--text-color);"></p>
+                    </div>
+                    <div class="options-container mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full" id="recall-options-container"></div>
+                    <div class="flex justify-between w-full mt-8">
+                        <button id="prev-button" class="btn secondary-btn px-6 py-2">Previous</button>
+                        <div class="flex gap-2">
+                            <button id="skip-recall-btn" class="btn outline-btn px-4 py-2 hidden">Skip (Test)</button>
+                            <button id="submit-button" class="btn px-6 py-2">Submit</button>
+                        </div>
+                        <button id="next-button" class="btn secondary-btn px-6 py-2">Next</button>
+                    </div>
+                 </div>
+            </div>
+   
+            <div id="result-screen" class="hidden flex-col items-center text-center">
+                <h1 id="result-title" class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Test Complete!</h1>
+                 <div id="result-comparison-container" class="result-comparison">
+                    <div class="result-column">
+                        <h3>Current Score</h3>
+                        <div id="test-result-grid" class="result-grid">
+                            <span>Story Score</span><strong id="story-score-display">N/A</strong>
+                            <span>Math Score</span><strong id="math-score-display">N/A</strong>
+                            <span>Total Score</span><strong id="total-score-display">N/A</strong>
+                            <span>Accuracy</span><strong id="accuracy-display">N/A</strong>
+                            <span class="percentile-row">Rank</span><strong id="rank-display" class="percentile-row" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                            <span class="percentile-row">Percentile</span><strong id="percentile-display" class="percentile-row">N/A</strong>
+                        </div>
+                        <div id="practice-result-grid" class="result-grid hidden">
+                            <span>Score</span><strong id="practice-score-display">N/A</strong>
+                            <span>Accuracy</span><strong id="practice-accuracy-display">N/A</strong>
+                        </div>
+                    </div>
+                    <div id="best-score-column" class="result-column">
+                        <h3>Your Best Score</h3>
+                        <div class="result-grid">
+                            <span>Total Score</span><strong id="best-score-display">N/A</strong>
+                            <span>Accuracy</span><strong id="best-accuracy-display">N/A</strong>
+                            <span class="percentile-row">Rank</span><strong id="best-rank-display" class="percentile-row" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                            <span class="percentile-row">Percentile</span><strong id="best-percentile-display" class="percentile-row">N/A</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="review-button" class="btn secondary-btn" style="width: auto; min-width: 150px;">Review Answers</button>
+                    <button id="retake-button" class="btn" style="width: auto; min-width: 150px;">Back to Menu</button>
+                    <button onclick="window.location.href='index.html'" class="btn outline-btn" style="width: auto; min-width: 150px;">Back to Main Page</button>
+                </div>
+            </div>
+
+            <div id="review-screen" class="hidden flex-col items-center text-center">
+                <h1 class="text-4xl font-bold mb-4" style="color: var(--primary-color);">Review Answers</h1>
+                <div id="review-story-container" class="w-full mb-4 p-4 rounded-lg text-left" style="background-color: var(--background-color-dark);">
+                </div>
+                <div class="flex flex-row w-full gap-4">
+                    <div id="review-desktop-nav-panel" class="w-1/4 p-4 rounded-lg h-full" style="background-color: var(--background-color-dark);">
+                        <h2 class="text-xl font-semibold mb-2" style="color: var(--primary-color);">Review</h2>
+                        <div id="review-nav-items" class="question-nav-container"></div>
+                    </div>
+                    <div class="w-3/4 flex flex-col items-center">
+                        <div class="question-header mt-0 w-full">
+                            <div class="question-number" id="review-question-number">Question 1</div>
+                            <p id="review-question-text" class="text-xl mt-4" style="color: var(--text-color);"></p>
+                        </div>
+                        <div class="options-container mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full" id="review-options-container"></div>
+                        <div class="flex justify-center w-full mt-8 gap-4">
+                            <button id="review-prev-button" class="btn px-6 py-2" disabled>Previous</button>
+                            <button id="review-next-button" class="btn px-6 py-2">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="side-menu-overlay" class="side-menu-overlay" onclick="closeMenu()"></div>
+    <div id="side-menu" class="side-menu">
+        <div class="side-menu-header">
+            <h3>Questions Map</h3>
+            <button class="close-menu-btn" onclick="closeMenu()">&times;</button>
+        </div>
+        <div class="side-menu-content">
+            <div id="mobile-nav-items" class="question-nav-container"></div>
+            <div class="legend mt-6">
+                <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color)"></div> Current</div>
+                <div class="legend-item"><div class="legend-color" style="background:var(--primary-color)"></div> Answered</div>
+                <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light)"></div> Not Answered</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="rotate-warning">
+        <div class="rotate-icon">📱</div>
+        <h2>Please Rotate Your Device</h2>
+        <p>This test is best experienced in portrait mode. Please rotate your device to continue.</p>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4" style="color: var(--primary-color);">Confirm Submission</h2>
+            <p style="color: var(--text-color-secondary);">Are you sure you want to submit your answers?</p>
+             <div class="modal-actions">
+                <button id="cancelSubmitBtn" class="btn secondary-btn">Cancel</button>
+                <button id="confirmSubmitBtn" class="btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:03db0208153406603a110a"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const API_BASE = 'https://us-central1-silp-pilot-platform.cloudfunctions.net';
+        let userEmail = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const screens = { 
+                instruction: document.getElementById('instruction-screen'), 
+                howToPlay: document.getElementById('how-to-play-screen'), 
+                memorize: document.getElementById('memorize-screen'), 
+                math: document.getElementById('math-screen'), 
+                recall: document.getElementById('recall-screen'), 
+                result: document.getElementById('result-screen'), 
+                review: document.getElementById('review-screen') 
+            };
+            
+            const modal = document.getElementById('confirmModal');
+            const memorizeTimer = document.getElementById('memorize-timer');
+            const mathTimer = document.getElementById('math-timer');
+            const recallTimer = document.getElementById('recall-timer'); 
+            const storyContainer = document.getElementById('story-container'); 
+            const mathQuestionsContainer = document.getElementById('math-questions-container'); 
+            const questionText = document.getElementById('question-text');
+            const recallQuestionNumber = document.getElementById('recall-question-number');
+            const recallOptionsContainer = document.getElementById('recall-options-container'); 
+            const prevButton = document.getElementById('prev-button'); 
+            const nextButton = document.getElementById('next-button'); 
+            const submitButton = document.getElementById('submit-button');
+            const navItemsContainer = document.getElementById('nav-items');
+            const loader = document.getElementById('loader-overlay');
+            
+            let state = {};
+            function resetState() { 
+                state = { mode: null, memorizeTimerInterval: null, mathTimerInterval: null, recallTimerInterval: null, memorizeTime: 180, mathTime: 180, recallTime: 180, storyData: null, mathQuestions: [], storyQuestions: [], storyAnswers: [], currentStoryQuestion: 0, startTime: null };
+            }
+            resetState();
+
+            // ==========================================
+            // 🚀 MOCKUP AUTO-START SYSTEM (FOOLPROOF VERSION)
+            // ==========================================
+            const currentUrl = window.location.href.toLowerCase();
+            const urlParams = new URLSearchParams(window.location.search);
+            window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
+
+            if (window.isMockupMode) {
+                // 1. บังคับซ่อน UI เก่าทั้งหมดทันที
+                if (screens.instruction) {
+                    screens.instruction.classList.add('hidden');
+                    screens.instruction.classList.remove('flex');
+                }
+                
+                const mainHeader = document.querySelector('.header');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                
+                const mainContainer = document.querySelector('.container');
+                if (mainContainer) {
+                    mainContainer.style.setProperty('margin-top', '0', 'important');
+                    mainContainer.style.setProperty('padding', '0', 'important');
+                    mainContainer.style.setProperty('min-height', '100vh', 'important');
+                }
+                
+                loader.style.display = 'flex';
+
+                // 2. ตรวจสอบ Phase และเริ่มเกม
+                const phase = urlParams.get('phase') || (currentUrl.includes('phase=recall') ? 'recall' : 'memorize');
+                
+                if (phase === 'memorize') {
+                    state.mode = 'test';
+                    fetchStoryAndQuestions(); // ฟังก์ชันนี้จะดึงเนื้อเรื่องและเริ่มจับเวลาให้เอง
+                } else if (phase === 'recall') {
+                    const savedData = localStorage.getItem('mockup_str_data');
+                    if (savedData) {
+                        const parsed = JSON.parse(savedData);
+                        state.storyData = parsed.storyData;
+                        state.storyQuestions = parsed.storyQuestions;
+                        state.storyAnswers = Array(state.storyQuestions.length).fill('');
+                        state.mode = 'test';
+                        
+                        loader.style.display = 'none';
+                        state.startTime = new Date();
+                        
+                        // ข้ามไปหน้า Recall ทันที
+                        switchScreen('recall');
+                        renderRecallScreen();
+                        document.getElementById('recall-timer-container').classList.remove('hidden');
+                        state.recallTimerInterval = startTimer(state.recallTime, document.getElementById('recall-timer'), calculateTestResults);
+                    }
+                }
+            } else {
+                // --- AUTH CHECK (ทำงานเฉพาะตอนเล่นแยกปกติ) ---
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        userEmail = user.email;
+                        loader.style.display = 'none';
+                    } else {
+                        window.location.href = 'Auth.html';
+                    }
+                });
+            }
+            
+            // ----------------------------------------------------
+            // เริ่มต้นชุดฟังก์ชันที่อัปเดตใหม่
+            // ----------------------------------------------------
+            function toggleMenu() {
+                document.getElementById('side-menu').classList.toggle('active');
+                document.getElementById('side-menu-overlay').classList.toggle('active');
+            }
+
+            function closeMenu() {
+                document.getElementById('side-menu').classList.remove('active');
+                document.getElementById('side-menu-overlay').classList.remove('active');
+            }
+            window.toggleMenu = toggleMenu;
+            window.closeMenu = closeMenu;
+
+            function switchScreen(screenId) { 
+                Object.values(screens).forEach(s => { s.classList.add('hidden'); s.classList.remove('flex'); });
+                screens[screenId].classList.remove('hidden'); 
+                screens[screenId].classList.add('flex');
+                document.getElementById('back-to-results-btn-header').classList.toggle('hidden', screenId !== 'review');
+                
+                const appContainer = document.getElementById('app');
+                if (screenId === 'instruction' || screenId === 'howToPlay') {
+                    appContainer.style.maxWidth = '600px';
+                } else if (screenId === 'result') {
+                    appContainer.style.maxWidth = '750px';
+                } else {
+                    appContainer.style.maxWidth = '1200px'; 
+                }
+
+                // ควบคุม Hamburger Menu (โชว์เฉพาะตอนตอบโจทย์และ Review)
+                const hamburgerBtn = document.getElementById('hamburger-btn');
+                if (screenId === 'recall' || screenId === 'review') {
+                    hamburgerBtn.classList.add('show-nav');
+                } else {
+                    hamburgerBtn.classList.remove('show-nav');
+                    closeMenu(); 
+                }
+
+                // ควบคุม Timer ด้านบนขวา (โชว์เฉพาะ Test Mode)
+                const headerTimer = document.getElementById('header-timer');
+                if (state.mode === 'test' && (screenId === 'memorize' || screenId === 'math' || screenId === 'recall')) {
+                    headerTimer.classList.add('show-timer');
+                } else {
+                    headerTimer.classList.remove('show-timer');
+                }
+
+                window.scrollTo(0,0);
+            }
+
+            function startTimer(duration, element, onEnd) { 
+                const headerTimerEl = document.getElementById('header-timer');
+                let time = duration;
+                
+                const updateUI = () => {
+                    const formatted = formatTime(time);
+                    if(element) element.textContent = formatted;
+                    if(headerTimerEl) headerTimerEl.textContent = formatted;
+                    
+                    // ✅ เพิ่มส่วนนี้: ส่งเวลาไปหน้าหลัก (MockupTest) เฉพาะเมื่อเป็น Mobile/Tablet
+                    if (window.parent && window.innerWidth <= 1024 && state.mode === 'test') {
+                        window.parent.postMessage({
+                            type: 'TICK_TIMER',
+                            timeLeft: formatted,
+                            rawSeconds: time
+                        }, '*');
+                    }
+
+                    if (time <= 30) { 
+                        if(element) element.classList.add('danger'); 
+                        if(headerTimerEl) headerTimerEl.classList.add('danger');
+                    } else { 
+                        if(element) element.classList.remove('danger'); 
+                        if(headerTimerEl) headerTimerEl.classList.remove('danger');
+                    } 
+                };
+                
+                updateUI();
+                const interval = setInterval(() => { 
+                    time--; 
+                    updateUI();
+                    if (time <= 0) { 
+                        clearInterval(interval); 
+                        // ✅ สั่งซ่อนนาฬิกาทันทีที่จบ Phase เพื่อเคลียร์ค่าก่อนเข้า Phase ใหม่
+                        if (window.parent) window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+                        onEnd(); 
+                    } 
+                }, 1000);
+                return interval; 
+            }
+
+            function renderRecallScreen() { 
+                navItemsContainer.innerHTML = '';
+                const mobileNavContainer = document.getElementById('mobile-nav-items');
+                if(mobileNavContainer) mobileNavContainer.innerHTML = '';
+
+                for (let i = 0; i < state.storyQuestions.length; i++) { 
+                    const createBtn = () => {
+                        const btn = document.createElement('button'); 
+                        btn.className = 'question-nav-btn unanswered';
+                        btn.textContent = i + 1; 
+                        btn.addEventListener('click', () => { 
+                            state.currentStoryQuestion = i; 
+                            displayCurrentRecallQuestion(); 
+                            if(window.innerWidth <= 1024) closeMenu();
+                        });
+                        return btn;
+                    };
+                    navItemsContainer.appendChild(createBtn()); 
+                    if(mobileNavContainer) mobileNavContainer.appendChild(createBtn()); 
+                } 
+                displayCurrentRecallQuestion();
+            }
+
+            function updateNavigationPanel() { 
+                const navButtons = navItemsContainer.children;
+                const mobileNavContainer = document.getElementById('mobile-nav-items');
+                const mobileNavButtons = mobileNavContainer ? mobileNavContainer.children : [];
+
+                for (let i = 0; i < navButtons.length; i++) { 
+                    [navButtons[i], mobileNavButtons[i]].forEach(btn => {
+                        if(!btn) return;
+                        btn.classList.remove('answered', 'unanswered', 'current'); 
+                        if (i === state.currentStoryQuestion) { 
+                            btn.classList.add('current');
+                        } else if (state.storyAnswers[i]) { 
+                            btn.classList.add('answered'); 
+                        } else { 
+                            btn.classList.add('unanswered');
+                        } 
+                    });
+                } 
+            }
+
+            function renderReviewNavPanel() { 
+                const navItemsContainer = document.getElementById('review-nav-items'); 
+                const mobileNavContainer = document.getElementById('mobile-nav-items');
+                navItemsContainer.innerHTML = '';
+                if(mobileNavContainer) mobileNavContainer.innerHTML = '';
+
+                state.storyQuestions.forEach((q, index) => { 
+                    const createBtn = () => {
+                        const btn = document.createElement('button'); 
+                        btn.textContent = index + 1; 
+                        btn.className = 'question-nav-btn'; 
+                        const userAnswer = state.storyAnswers[index]; 
+                        const correctAnswer = q.correctAnswer; 
+                        
+                        if (!userAnswer) { btn.classList.add('unanswered'); } 
+                        else if (userAnswer === correctAnswer) { btn.classList.add('correct'); } 
+                        else { btn.classList.add('incorrect'); } 
+                        
+                        if (index === state.reviewQuestionIndex) { btn.classList.add('current'); } 
+                        btn.addEventListener('click', () => { 
+                            state.reviewQuestionIndex = index; 
+                            renderReviewQuestion(index); 
+                            if(window.innerWidth <= 1024) closeMenu();
+                        }); 
+                        return btn;
+                    };
+                    navItemsContainer.appendChild(createBtn()); 
+                    if(mobileNavContainer) mobileNavContainer.appendChild(createBtn()); 
+                });
+            }
+            // ----------------------------------------------------
+            // สิ้นสุดชุดฟังก์ชันที่อัปเดตใหม่
+            // ----------------------------------------------------
+
+            function formatTime(seconds) { 
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60; 
+                return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            }
+
+            // --- PHASE 2: MATH QUESTIONS (Frontend Generation) ---
+            function generateMathQuestions() { 
+                const questions = [];
+                for (let i = 0; i < 12; i++) { 
+                    const num1 = Math.floor(Math.random() * 90) + 10;
+                    const num2 = Math.floor(Math.random() * 90) + 10; 
+                    questions.push({ question: `${num1} &times; ${num2} = ?`, answer: num1 * num2 });
+                } 
+                return questions; 
+            }
+            
+            function renderStory() { 
+                storyContainer.innerHTML = `<h2 class="text-2xl font-bold mb-4" style="color: var(--primary-color);">Story</h2><p style="text-align: left; white-space: pre-wrap;">${state.storyData.story}</p>`;
+            }
+
+            function renderMathQuestions() { 
+                mathQuestionsContainer.innerHTML = '';
+                state.mathQuestions.forEach((q, index) => { 
+                    const container = document.createElement('div'); 
+                    container.className = 'flex flex-col space-y-1'; 
+                    container.innerHTML = `<label for="math-q-${index}" class="math-question-text" style="color: var(--text-color-secondary);">${q.question}</label><input type="number" id="math-q-${index}" class="math-input px-3 py-2 rounded-md bg-[var(--background-color-light)] border border-[var(--secondary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]" style="color: var(--text-color);">`; 
+                    mathQuestionsContainer.appendChild(container); 
+                });
+            }
+            
+            
+            
+            function displayCurrentRecallQuestion() {
+                const questionIndex = state.currentStoryQuestion;
+                if (questionIndex >= state.storyQuestions.length) return; 
+                const currentQuestion = state.storyQuestions[questionIndex]; 
+                recallQuestionNumber.textContent = `Question ${questionIndex + 1}`; 
+                questionText.textContent = currentQuestion.questionText;
+                recallOptionsContainer.innerHTML = '';
+                
+                const letters = ['A', 'B', 'C', 'D']; 
+                const options = [currentQuestion.optionA, currentQuestion.optionB, currentQuestion.optionC, currentQuestion.optionD];
+                
+                options.forEach((optionText, index) => {
+                    const choiceValue = letters[index]; 
+                    if (!String(optionText).trim() || String(optionText).trim() === '-') return;
+                    
+                    const optionEl = document.createElement('div'); // เปลี่ยนจาก label เป็น div
+                    optionEl.className = 'option'; 
+                    optionEl.dataset.value = choiceValue;
+                    
+                    const letterDiv = document.createElement('div'); 
+                    letterDiv.className = 'option-letter'; 
+                    letterDiv.textContent = choiceValue;
+                    
+                    const textSpan = document.createElement('span'); 
+                    textSpan.textContent = optionText;
+   
+                    // ลบ hidden radio input ทิ้ง และใช้ onclick ทำงานแทน
+                    optionEl.onclick = () => selectAnswer(choiceValue);
+                    
+                    optionEl.append(letterDiv, textSpan);
+                    recallOptionsContainer.appendChild(optionEl);
+                });
+
+                const previousAnswer = state.storyAnswers[state.currentStoryQuestion]; 
+                if (previousAnswer) { 
+                    const option = recallOptionsContainer.querySelector(`[data-value="${previousAnswer}"]`); 
+                    if (option) option.classList.add('selected');
+                }
+                updateNavigationPanel(); 
+                updateNavigationButtons();
+            }
+
+            function selectAnswer(value) {
+                state.storyAnswers[state.currentStoryQuestion] = value;
+                
+                // จำกัดขอบเขตการหากล่องตัวเลือกเฉพาะในหน้า Recall เพื่อไม่ให้ไปตีกับหน้า Review
+                const container = document.getElementById('recall-options-container');
+                container.querySelectorAll('.option').forEach(option => option.classList.remove('selected'));
+                
+                const selectedOption = container.querySelector(`[data-value="${value}"]`);
+                if(selectedOption) selectedOption.classList.add('selected');
+                
+                updateNavigationPanel(); 
+                
+                // ระบบ Auto-Advance ให้เลื่อนข้ออัตโนมัติ 100%
+                if ((state.mode === 'test' || state.mode === 'practice') && state.currentStoryQuestion < state.storyQuestions.length - 1) { 
+                    setTimeout(() => navigateRecall(1), 400);
+                }
+            }
+
+            function navigateRecall(direction) { 
+                let nextIndex = state.currentStoryQuestion + direction;
+                if (nextIndex >= 0 && nextIndex < state.storyQuestions.length) { 
+                    state.currentStoryQuestion = nextIndex; 
+                    displayCurrentRecallQuestion();
+                } 
+            }
+
+            function updateNavigationButtons() { 
+                prevButton.disabled = (state.currentStoryQuestion === 0);
+                nextButton.disabled = (state.currentStoryQuestion === state.storyQuestions.length - 1); 
+            }
+
+            
+
+            // --- FETCH DATA FROM FIREBASE ---
+            async function fetchStoryAndQuestions() {
+                try {
+                    const res = await fetch(`${API_BASE}/getSTRStory`);
+                    
+                    // อ่านข้อมูลดิบเพื่อดักจับ Error จากเซิร์ฟเวอร์
+                    const text = await res.text();
+                    let json;
+                    try {
+                        json = JSON.parse(text);
+                    } catch (err) {
+                        throw new Error(`Server returned invalid data: ${text.substring(0, 100)}`);
+                    }
+
+                    if (json.success) {
+                        state.storyData = { story: json.story };
+                        state.storyQuestions = json.questions;
+                        state.storyAnswers = Array(state.storyQuestions.length).fill('');
+                        
+                        loader.style.display = 'none';
+                        switchScreen('memorize'); 
+                        renderStory();
+
+                        if (state.mode === 'test') { 
+                            document.getElementById('memorize-title').textContent = 'Memorize';
+                            document.getElementById('memorize-timer').style.display = 'block'; 
+                            document.getElementById('practice-start-recall-container').classList.add('hidden');
+                            state.memorizeTimerInterval = startTimer(state.memorizeTime, memorizeTimer, moveToMathPhase); 
+                        } else { 
+                            document.getElementById('memorize-title').textContent = 'Practice: Read Story';
+                            document.getElementById('memorize-timer').style.display = 'none'; 
+                            document.getElementById('practice-start-recall-container').classList.remove('hidden'); 
+                        }
+                    } else {
+                        // ดึง Error ออกมาโชว์ให้ชัดเจน (รับทั้ง message และ error)
+                        throw new Error(json.message || json.error || JSON.stringify(json));
+                    }
+                } catch(e) {
+                    loader.style.display = 'none';
+                    console.error("Fetch Error Details:", e);
+                    alert(`Error: ${e.message}`);
+                }
+            }
+            
+            function startTest() { 
+                resetState();
+                state.mode = 'test'; 
+                state.startTime = new Date(); 
+                loader.style.display = 'flex'; 
+                fetchStoryAndQuestions();
+            }
+
+            function startPractice() { 
+                resetState();
+                state.mode = 'practice'; 
+                loader.style.display = 'flex';
+                fetchStoryAndQuestions();
+            }
+
+            function moveToMathPhase() { 
+                if(state.memorizeTimerInterval) clearInterval(state.memorizeTimerInterval);
+
+                // [ดักจับเมื่อจบ Phase 1 ของโหมด Mockup]
+                if (window.isMockupMode) {
+                    localStorage.setItem('mockup_str_data', JSON.stringify({
+                        storyData: state.storyData,
+                        storyQuestions: state.storyQuestions
+                    }));
+                    window.parent.postMessage({
+                        type: 'MOCKUP_SUBTEST_COMPLETED',
+                        result: { score: 0, totalQuestions: state.storyQuestions.length, accuracy: 0, timeUsed: 180, answers: {} }
+                    }, '*');
+                    return; // สั่งหยุดตรงนี้ ไม่ต้องเด้งไปทำเลข
+                }
+
+                switchScreen('math');
+                state.mathQuestions = generateMathQuestions(); 
+                renderMathQuestions(); 
+                state.mathTimerInterval = startTimer(state.mathTime, mathTimer, moveToRecallPhase);
+            }
+
+            function moveToRecallPhase() { 
+                if(state.mathTimerInterval) clearInterval(state.mathTimerInterval);
+                switchScreen('recall'); 
+                renderRecallScreen(); 
+
+                if (state.mode === 'test') { 
+                    document.getElementById('recall-timer-container').classList.remove('hidden');
+                    state.recallTimerInterval = startTimer(state.recallTime, recallTimer, calculateTestResults); 
+                } else {
+                    document.getElementById('recall-timer-container').classList.add('hidden');
+                }
+            }
+            
+            // --- SAVE AND DISPLAY RESULTS ---
+            async function fetchBestScore() {
+                try {
+                    const res = await fetch(`${API_BASE}/getBestSTRScore?email=${userEmail}`);
+                    const json = await res.json();
+                    if (json.success && json.data) {
+                        const d = json.data;
+                        document.getElementById('best-score-display').textContent = `${d.bestScore} / ${d.totalQuestions}`;
+                        document.getElementById('best-accuracy-display').textContent = d.bestAccuracy.toFixed(2) + '%';
+                        document.getElementById('best-percentile-display').textContent = d.bestPercentile.toFixed(2) + '%';
+                    } else {
+                        document.getElementById('best-score-display').textContent = 'N/A';
+                        document.getElementById('best-accuracy-display').textContent = 'N/A';
+                        document.getElementById('best-percentile-display').textContent = 'N/A';
+                    }
+                } catch (e) {
+                    console.error("Fetch Best Score Error:", e);
+                }
+            }
+
+            async function calculateTestResults() {
+                [state.memorizeTimerInterval, state.mathTimerInterval, state.recallTimerInterval].forEach(interval => { if(interval) clearInterval(interval); });
+                
+                // ✅ สั่งซ่อนนาฬิกาหน้าหลักทันที
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+                }
+
+                loader.style.display = 'flex';
+                
+                let storyCorrectCount = 0;
+                state.storyAnswers.forEach((ans, i) => { if (ans === state.storyQuestions[i].correctAnswer) storyCorrectCount++; });
+                const storyAttemptedCount = state.storyAnswers.filter(a => !!a).length;
+                
+                if (state.mode === 'test') {
+                    const timeUsed = Math.floor((new Date() - state.startTime) / 1000);
+                    
+                    // [ดักจับเมื่อจบ Phase 3 ของโหมด Mockup]
+                    if (window.isMockupMode) {
+                        const accuracy = storyAttemptedCount > 0 ? (storyCorrectCount / storyAttemptedCount) * 100 : 0;
+                        window.parent.postMessage({
+                            type: 'MOCKUP_SUBTEST_COMPLETED',
+                            result: {
+                                score: storyCorrectCount,
+                                totalQuestions: state.storyQuestions.length,
+                                accuracy: parseFloat(accuracy.toFixed(2)),
+                                timeUsed: timeUsed,
+                                answers: state.storyAnswers
+                            }
+                        }, '*');
+                        return; // หยุดทำงานตรงนี้ ส่งคะแนนกลับยานแม่เรียบร้อย
+                    }
+
+                    let mathCorrectCount = 0, mathAttemptedCount = 0;
+                    document.querySelectorAll('#math-questions-container input').forEach((input, index) => { 
+                        if (input.value) { 
+                            mathAttemptedCount++; 
+                            if (parseInt(input.value, 10) === state.mathQuestions[index].answer) mathCorrectCount++; 
+                        } 
+                    });
+                    
+                    const totalCorrect = storyCorrectCount + mathCorrectCount;
+                    const totalQuestions = state.storyQuestions.length + 12; // Story + Math
+                    const totalAttempted = storyAttemptedCount + mathAttemptedCount;
+                    const accuracy = totalAttempted > 0 ? (totalCorrect / totalAttempted) * 100 : 0;
+                    
+                    const scoreData = { 
+                        userEmail: userEmail,
+                        difficulty: 'normal',
+                        storyCorrectCount, 
+                        mathCorrectCount, 
+                        totalScore: totalCorrect, 
+                        totalQuestions: totalQuestions,
+                        accuracy: parseFloat(accuracy.toFixed(2)), 
+                        timeUsed 
+                    };
+
+                    try {
+                        const response = await fetch(`${API_BASE}/saveSTRScore`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(scoreData)
+                        });
+                        const serverData = await response.json();
+                        
+                        document.getElementById('result-title').textContent = 'Test Complete!';
+                        document.getElementById('practice-result-grid').classList.add('hidden');
+                        document.getElementById('test-result-grid').classList.remove('hidden');
+                        document.getElementById('best-score-column').style.display = 'block';
+                        
+                        document.getElementById('story-score-display').textContent = `${storyCorrectCount} / ${state.storyQuestions.length}`;
+                        document.getElementById('math-score-display').textContent = `${mathCorrectCount} / 12`;
+                        document.getElementById('total-score-display').textContent = `${totalCorrect} / ${totalQuestions}`;
+                        document.getElementById('accuracy-display').textContent = `${accuracy.toFixed(2)}%`;
+                        
+                        // --- RANKING & TIER COLOR LOGIC ---
+                        const getColorByPercentile = (p_val) => {
+                            if (p_val === 'N/A' || p_val === null || p_val === undefined) return 'var(--text-color)';
+                            const p = Number(p_val);
+                            if (p >= 97) return '#1E3A8A'; 
+                            if (p >= 90) return '#166534'; 
+                            if (p >= 60) return 'var(--secondary-color)'; 
+                            return 'var(--primary-color)'; 
+                        };
+
+                        document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+
+                        if (serverData && serverData.current) {
+                            const curPercentile = serverData.current.percentile !== undefined ? Number(serverData.current.percentile) : 'N/A';
+                            const curRank = serverData.current.rank !== undefined ? serverData.current.rank : '-';
+                            const curTotalUsers = serverData.current.totalUsers !== undefined ? serverData.current.totalUsers : '-';
+                            const curTierColor = getColorByPercentile(curPercentile);
+
+                            const rankEl = document.getElementById('rank-display');
+                            if (rankEl) {
+                                rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                                rankEl.style.color = curTierColor;
+                            }
+
+                            const percentileEl = document.getElementById('percentile-display');
+                            if (percentileEl) {
+                                percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                                percentileEl.style.color = curTierColor;
+                            }
+                        }
+
+                        if (serverData && serverData.best) {
+                            document.getElementById('best-score-display').textContent = `${serverData.best.score} / ${totalQuestions}`;
+                            document.getElementById('best-accuracy-display').textContent = `${Number(serverData.best.accuracy).toFixed(2)}%`;
+
+                            const bestPercentile = serverData.best.percentile !== undefined ? Number(serverData.best.percentile) : 'N/A';
+                            const bestRank = serverData.best.rank !== undefined ? serverData.best.rank : '-';
+                            const bestTotalUsers = serverData.best.totalUsers !== undefined ? serverData.best.totalUsers : '-';
+                            const bestTierColor = getColorByPercentile(bestPercentile);
+
+                            const bestRankEl = document.getElementById('best-rank-display');
+                            if (bestRankEl) {
+                                bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                                bestRankEl.style.color = bestTierColor;
+                            }
+
+                            const bestPercentileEl = document.getElementById('best-percentile-display');
+                            if (bestPercentileEl) {
+                                bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                                bestPercentileEl.style.color = bestTierColor;
+                            }
+                        }
+
+                        document.getElementById('retake-button').textContent = 'Back to Menu';
+                        loader.style.display = 'none';
+                        switchScreen('result');
+                    } catch(e) {
+                        console.error("Save Error:", e);
+                        loader.style.display = 'none';
+                        alert("Offline/Error saving score.");
+                    }
+                } else {
+                    const accuracy = storyAttemptedCount > 0 ? (storyCorrectCount / storyAttemptedCount) * 100 : 0;
+                    document.getElementById('result-title').textContent = 'Practice Completed!';
+                    document.getElementById('test-result-grid').classList.add('hidden');
+                    document.getElementById('practice-result-grid').classList.remove('hidden');
+                    document.getElementById('best-score-column').style.display = 'none';
+                    
+                    document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+
+                    document.getElementById('practice-score-display').textContent = `${storyCorrectCount} / ${state.storyQuestions.length}`;
+                    document.getElementById('practice-accuracy-display').textContent = `${accuracy.toFixed(2)}%`;
+                    document.getElementById('retake-button').textContent = 'Back to Menu';
+                    
+                    loader.style.display = 'none';
+                    switchScreen('result');
+                }
+            }
+
+            // --- REVIEW SYSTEM ---
+            function showReview() {
+                const reviewStoryContainer = document.getElementById('review-story-container');
+                reviewStoryContainer.innerHTML = `<h3 class="font-bold mb-2 text-lg">Original Story:</h3><p style="white-space: pre-wrap;">${state.storyData.story}</p>`;
+                state.reviewQuestionIndex = 0; 
+                renderReviewNavPanel(); 
+                renderReviewQuestion(0); 
+                switchScreen('review');
+            }
+
+            
+
+            function renderReviewQuestion(index) {
+                const q = state.storyQuestions[index];
+                document.getElementById('review-question-number').textContent = `Question ${index + 1}`; 
+                document.getElementById('review-question-text').textContent = q.questionText; 
+                const reviewOptionsContainer = document.getElementById('review-options-container'); 
+                reviewOptionsContainer.innerHTML = '';
+                
+                const letters = ['A', 'B', 'C', 'D']; 
+                [q.optionA, q.optionB, q.optionC, q.optionD].forEach((optionText, i) => {
+                    if (!String(optionText).trim() || String(optionText).trim() === '-') return;
+                    const optionEl = document.createElement('div'); 
+                    optionEl.className = 'option disabled'; 
+                    const choiceValue = letters[i]; 
+                    const userAnswer = state.storyAnswers[index]; 
+                    const correctAnswer = q.correctAnswer;
+                    
+                    if (choiceValue === correctAnswer) optionEl.classList.add('review-correct');
+                    if (choiceValue === userAnswer && userAnswer !== correctAnswer) optionEl.classList.add('review-incorrect');
+                    if (choiceValue === userAnswer) optionEl.classList.add('review-user-selected');
+                    
+                    optionEl.innerHTML = `<div class="option-letter">${choiceValue}</div><span>${optionText}</span>`; 
+                    reviewOptionsContainer.appendChild(optionEl);
+                });
+                updateReviewNavButtons(); 
+                renderReviewNavPanel();
+            }
+
+            function updateReviewNavButtons() { 
+                document.getElementById('review-prev-button').disabled = state.reviewQuestionIndex === 0;
+                document.getElementById('review-next-button').disabled = state.reviewQuestionIndex === state.storyQuestions.length - 1; 
+            }
+            
+            // --- EVENT LISTENERS ---
+            document.getElementById('test-mode-btn').addEventListener('click', startTest);
+            document.getElementById('practice-mode-btn').addEventListener('click', startPractice);
+            document.getElementById('practice-start-recall-btn').addEventListener('click', () => {
+                if (state.mode === 'practice') moveToRecallPhase();
+                else moveToMathPhase();
+            });
+            prevButton.addEventListener('click', () => navigateRecall(-1));
+            nextButton.addEventListener('click', () => navigateRecall(1));
+            submitButton.addEventListener('click', () => modal.classList.add('active'));
+            document.getElementById('cancelSubmitBtn').addEventListener('click', () => modal.classList.remove('active'));
+            document.getElementById('confirmSubmitBtn').addEventListener('click', () => { 
+                modal.classList.remove('active');
+                calculateTestResults();
+            });
+            
+            document.getElementById('retake-button').addEventListener('click', () => { resetState(); switchScreen('instruction'); });
+            document.getElementById('review-button').addEventListener('click', showReview);
+            document.getElementById('review-prev-button').addEventListener('click', () => { state.reviewQuestionIndex--; renderReviewQuestion(state.reviewQuestionIndex); });
+            document.getElementById('review-next-button').addEventListener('click', () => { state.reviewQuestionIndex++; renderReviewQuestion(state.reviewQuestionIndex); });
+            document.getElementById('back-to-results-btn-header').addEventListener('click', () => switchScreen('result'));
+            document.getElementById('how-to-play-btn').addEventListener('click', () => switchScreen('howToPlay'));
+            document.getElementById('back-to-menu-btn').addEventListener('click', () => switchScreen('instruction'));
+            document.getElementById('skip-memorize-btn').addEventListener('click', moveToMathPhase);
+            document.getElementById('skip-math-btn').addEventListener('click', moveToRecallPhase);
+            document.getElementById('skip-recall-btn').addEventListener('click', calculateTestResults);
+        });
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
+    </script>
+</body>
+</html>

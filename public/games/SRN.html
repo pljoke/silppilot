@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Series Number Test</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+
+    <style>
+        /* --- CSS Standard --- */
+        :root {
+            --primary-color: #722F37;
+            --secondary-color: #8B4513;
+            --accent-color: #A0826D;
+            --background-color-light: #FAF7F2;
+            --background-color-dark: #F5F2EA;
+            --text-color: #722F37;
+            --text-color-secondary: #8B4513;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --border-color: #E8DDD4;
+            --diff-color: #ffc107; /* ✅ เพิ่มสีเหลืองสำหรับ Medium */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        html, body { height: 100%; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-dark) 100%); line-height: 1.6; color: var(--text-color); display: flex; flex-direction: column; }
+
+        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; background-color: var(--background-color-light); border-bottom: 2px solid var(--primary-color); height: 60px; width: 100%; position: fixed; top: 0; left: 0; z-index: 2000; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-title { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); margin: 0; display: flex; align-items: center; gap: 8px;}
+        .timer-badge { font-family: monospace; font-size: 1.2rem; font-weight: bold; color: var(--primary-color); background: transparent; padding: 0; }
+        
+        .hamburger-btn { background: none; border: none; cursor: pointer; padding: 5px 15px 5px 0; display: flex; flex-direction: column; gap: 4px; z-index: 2001; }
+        .hamburger-btn div { width: 25px; height: 3px; background-color: var(--primary-color); border-radius: 2px; }
+
+        .container { margin-top: 60px; height: calc(100vh - 60px); width: 100%; overflow-y: auto; position: relative; z-index: 1; display: flex; justify-content: center; align-items: flex-start;}
+        .test-container { background: #FFFEF9; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(139,69,19,0.1); border: 1px solid #E8DDD4; width: 100%; max-width: 1400px; margin: 20px auto 40px auto; }
+        
+        .screen { display: none; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        #instruction-screen, #how-to-play-screen { align-items: center; text-align: center; }
+        #instruction-screen ul { text-align: left; display: inline-block; margin-top: 1rem; }
+        
+        .mode-selection { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; width: 100%; max-width: 350px;}
+        .difficulty-select { padding: 12px; font-size: 1rem; border-radius: 8px; border: 2px solid var(--border-color); color: var(--text-color); outline: none; text-align: center; cursor: pointer;}
+        .difficulty-select:focus { border-color: var(--primary-color); }
+
+        .quiz-layout { display: flex; flex-direction: row; gap: 20px; width: 100%; }
+        .nav-panel { width: 25%; max-width: 280px; background-color: var(--background-color-dark); padding: 20px; border-radius: 10px; border: 1px solid #E8DDD4; align-self: flex-start; }
+        .question-content { width: 75%; position: relative; }
+
+        .question-nav-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
+        .question-nav-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
+        .question-nav-btn.answered { background-color: var(--primary-color); color: white; }
+        .question-nav-btn.unanswered { background-color: var(--background-color-light); color: var(--text-color-secondary); border: 1px solid #E8DDD4; }
+        .question-nav-btn.current { border-color: var(--primary-color); transform: scale(1.1); background-color: var(--secondary-color); color: white; }
+        .question-nav-btn.correct { background-color: var(--success-color); color: white; }
+        .question-nav-btn.incorrect { background-color: var(--danger-color); color: white; }
+
+        .legend { margin-top: 15px; text-align: left; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .legend-color { width: 18px; height: 18px; border-radius: 4px; margin-right: 10px; border: 1px solid #ccc; }
+
+        .question-header { text-align: center; margin-bottom: 30px; padding: 30px 20px; background: var(--background-color-dark); border-radius: 10px; border: 1px solid #E8DDD4; }
+        .question-number { background: var(--primary-color); color: white; padding: 8px 20px; border-radius: 25px; font-weight: bold; font-size: 14px; display: inline-block; margin-bottom: 20px; }
+        .srn-series-text { font-size: 2.2rem; font-weight: bold; color: var(--text-color); letter-spacing: 2px; }
+
+        .options-container { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; }
+        @media (min-width: 768px) { .options-container { grid-template-columns: repeat(2, 1fr); } }
+        
+        .option { display: flex; align-items: center; padding: 20px; border: 2px solid #E8DDD4; border-radius: 12px; background: var(--background-color-light); cursor: pointer; transition: all 0.3s ease; font-size: 18px; font-weight: bold;}
+        .option.disabled { cursor: not-allowed; pointer-events: none; }
+        @media (hover: hover) { .option:not(.disabled):hover { background: var(--background-color-dark); border-color: var(--primary-color); } }
+        .option.selected { border-color: var(--secondary-color); background-color: var(--background-color-dark); }
+        .option.correct { border-color: var(--success-color) !important; background-color: #d4edda !important; }
+        .option.incorrect { border-color: var(--danger-color) !important; background-color: #f8d7da !important; opacity: 0.7; }
+        .option.user-selected { border-width: 3px; }
+
+        .option-letter { background: var(--secondary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; transition: all 0.3s ease; font-size: 16px;}
+        .option.selected .option-letter { background: var(--primary-color); }
+        .option.correct .option-letter { background: var(--success-color) !important; }
+
+        .btn { background: var(--primary-color); color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-decoration: none; text-align: center; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(114,47,55,0.3); opacity: 0.9; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .submit-btn { background-color: var(--primary-color); }
+        .secondary-btn { background: var(--secondary-color); color: white; }
+        .outline-btn { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
+        .outline-btn:hover { background-color: var(--primary-color); color: white; }
+        .action-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        .header-btn { padding: 8px 20px; font-size: 16px; }
+
+        .navigation-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 2.5rem; width: 100%; }
+        .navigation-controls.center { justify-content: center; }
+
+        .results-container { max-width: 650px; margin: 0 auto; padding: 0; width: 100%; }
+        .result-comparison { display: flex; gap: 2rem; margin-top: 1rem; margin-bottom: 1rem; }
+        .result-column { flex: 1; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px; background: var(--background-color-dark); text-align: left; }
+        .result-column h3 { color: var(--text-color-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; text-align: center; font-size: 1.2rem; }
+        .result-grid { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; }
+        .result-grid span { font-weight: 700; color: var(--text-color); }
+        .result-grid strong { 
+            display: block;
+            width: 100%;
+            font-weight: 400; 
+            text-align: right; 
+            color: var(--primary-color); 
+            font-size: 1.1rem; 
+        }
+
+        .result-summary { text-align: left; background: var(--background-color-dark); padding: 2rem; border-radius: 10px; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto; }
+        .result-summary p { font-size: 1.25rem; margin: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .result-summary p strong { color: var(--primary-color); }
+        .result-summary p span { font-size: 1.5rem; font-weight: bold; color: var(--text-color); }
+
+        .explanation { text-align: left; background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid var(--primary-color); font-size: 1.1rem; }
+        .explanation h4 { color: var(--primary-color); margin-bottom: 8px; }
+
+        .hidden { display: none !important; }
+        
+        /* Loaders and Modals */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(250, 247, 242, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(2px); flex-direction: column; gap: 15px;}
+        .loader-spinner { border: 8px solid var(--border-color); border-top: 8px solid var(--primary-color); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        .loader-text { color: var(--primary-color); font-size: 1.2rem; font-weight: bold; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .modal { position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--background-color-light); padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid var(--border-color); }
+        .modal-content h2 { color: var(--primary-color); margin-bottom: 1rem; font-size: 1.75rem; }
+        .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;}
+
+        /* Mobile/Tablet Adjustments */
+        .practice-mode-active .quiz-layout { justify-content: center; }
+        .practice-mode-active .nav-panel { display: none; }
+        .practice-mode-active .question-content { width: 100%; max-width: 800px; flex-grow: 0; }
+
+        @media (min-width: 1025px) {
+            .hamburger-btn { display: none !important; }
+            #header-timer-display { display: none !important; }
+            #timer-display { display: block !important; }
+        }
+        /* Timer Styles */
+        .timer-container { text-align: center; margin-bottom: 1rem; }
+        .timer { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); }
+        .timer.danger { color: var(--danger-color); }
+        #header-timer-display.active { display: block; }
+
+        /* Mobile/Tablet Adjustments */
+        .practice-mode-active .quiz-layout { justify-content: center; }
+        .practice-mode-active .nav-panel { display: none; }
+        .practice-mode-active .question-content { width: 100%; max-width: 800px; flex-grow: 0; }
+
+        @media (min-width: 1025px) {
+            .hamburger-btn { display: none !important; }
+            #header-timer-display { display: none !important; }
+            #timer-display { display: block !important; }
+        }
+        @media (max-width: 1024px) {
+            #timer-display { display: none !important; }
+            /* ✅ ลบบรรทัด #header-timer-display ออก เพื่อให้ JS และ Class hidden เป็นตัวคุมแทน */
+            .nav-panel { display: none !important; }
+            #back-to-results-button-review { display: none !important; }
+            .quiz-layout, .review-layout { flex-direction: column !important; width: 100% !important; }
+            .question-content { width: 100% !important; padding: 0 !important; }
+            .test-container { width: 95% !important; padding: 20px !important; margin-bottom: 20px; }
+        }
+        @media (max-width: 768px) {
+            /* ✅ ปรับขนาด Mobile ให้เท่า APR */
+            #instruction-screen h1, #howToPlay-screen h1, #difficulty-screen h1 { font-size: 1.5rem !important; margin-bottom: 1rem; }
+            #instruction-screen p, #difficulty-screen p { font-size: 0.95rem !important; }
+            .srn-series-text { font-size: 1.4rem !important; margin-bottom: 15px; } 
+            .option { padding: 10px 15px !important; font-size: 0.9rem !important; min-height: 45px; }
+            .option-letter { width: 25px; height: 25px; font-size: 12px; margin-right: 10px; }
+            .navigation-controls { gap: 10px !important; margin-top: 15px !important; flex-wrap: nowrap; }
+            .btn { padding: 10px 15px !important; font-size: 0.9rem !important; flex: 1; }
+            .result-comparison { flex-direction: column; }
+            #result-title { font-size: 1.5rem !important; }
+        }
+
+        /* Hamburger Menu Styles */
+        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2999; display: none; }
+        .side-menu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: var(--background-color-light); z-index: 3000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.3s ease; display: flex; flex-direction: column; padding: 1rem; }
+        .side-menu.active { left: 0; }
+        .side-menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .question-nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; overflow-y: auto; }
+        .mobile-nav-btn { width: 35px; height: 35px; border-radius: 50%; font-size: 0.9rem; font-weight: bold; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; margin: auto; color: var(--text-color); background: transparent; }
+
+        /* Rotate Warning Styles */
+        #rotate-warning { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        #rotate-warning .rotate-icon { font-size: 4rem; margin-bottom: 20px; animation: rotatePhone 2s infinite ease-in-out; }
+        #rotate-warning h2 { font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; color: white; }
+        #rotate-warning p { font-size: 1.1rem; color: white; max-width: 80%; line-height: 1.5; opacity: 0.9; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+        
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            #rotate-warning { display: flex; }
+            .container, .main-header { display: none; }
+        }
+
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-header" id="main-header">
+        <div class="header-left">
+            <button id="hamburgerBtn" class="hamburger-btn"><div></div><div></div><div></div></button>
+            <h1 class="header-title">🔢 Series Number Test</h1>
+        </div>
+
+        <div class="header-right" style="display:flex; align-items:center;">
+            <div id="header-timer-display" class="timer-badge hidden">00:00</div>
+            <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Menu</button>
+            <button id="back-to-results-button" class="btn secondary-btn header-btn hidden">Results</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="app" class="test-container">
+
+            <div id="instruction-screen" class="screen active">
+                <h1 style="color: var(--primary-color);">Series Number Test</h1>
+                <p class="text-lg mb-6" style="color: var(--text-color-secondary);">Find the next number in the logical sequence.</p>
+                <div class="mode-selection mx-auto">
+                    <button id="practice-mode-btn" class="btn secondary-btn">Practice Mode</button>
+                    <button id="test-mode-btn" class="btn submit-btn">Test Mode</button>
+                    <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
+                    <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
+                </div>
+                <p id="auth-status" style="font-size: 0.8rem; color: #888; margin-top: 10px; display: none;">Checking Login...</p>
+            </div>
+
+            <div id="difficulty-screen" class="screen" style="align-items: center; text-align: center;">
+                <h1 style="color: var(--primary-color);">Select Difficulty</h1>
+                <p style="margin-bottom: 20px; color: var(--text-color-secondary);">Choose the level of complexity for your test.</p>
+                <div class="mode-selection mx-auto">
+                    <button class="btn" style="background-color: var(--secondary-color);" onclick="startQuizWithDifficulty('easy')">Easy</button>
+                    <button class="btn" style="background-color: var(--secondary-color);" onclick="startQuizWithDifficulty('medium')">Medium</button>
+                    <button class="btn" style="background-color: var(--primary-color);" onclick="startQuizWithDifficulty('hard')">Hard</button>
+                    <button class="btn outline-btn" onclick="switchScreen('instruction')">Back</button>
+                </div>
+            </div>
+
+            <div id="howToPlay-screen" class="screen">
+                <h1 style="color: var(--primary-color);">How to Play</h1>
+                <ul>
+                    <li>You will see a series of numbers with a logical pattern.</li>
+                    <li>Select the correct number that completes the sequence.</li>
+                    <li>In <strong>Test Mode</strong>, you have 6 minutes for 25 questions. Scores are recorded.</li>
+                    <li>In <strong>Practice Mode</strong>, there is no time limit and immediate explanations are provided.</li>
+                </ul>
+                <div class="action-buttons">
+                    <button id="back-to-instructions-btn" class="btn submit-btn">Back</button>
+                </div>
+            </div>
+
+            <div id="quiz-screen" class="screen">
+                <div class="quiz-layout">
+                    <div id="nav-panel" class="nav-panel">
+                        <div class="timer-container">
+                            <div id="timer-display" class="timer">06:00</div>
+                        </div>
+                        <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 10px; color: var(--secondary-color);">Questions</h2>
+                        <div id="nav-items" class="question-nav-container"></div>
+                        <div class="legend" style="color: var(--secondary-color);">
+                            <div class="legend-item"><div class="legend-color" style="background:var(--secondary-color); border:none;"></div> Current</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--primary-color); border:none;"></div> Answered</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--background-color-light); border:none;"></div> Unanswered</div>
+                        </div>
+                    </div>
+                    <div class="question-content">
+                        <div class="question-header">
+                            <div class="question-number" id="quiz-question-number">Question 1</div>
+                            <p id="question-text" class="srn-series-text"></p>
+                        </div>
+                        <div class="options-container" id="quiz-options-container"></div>
+                        <div id="explanation-container" class="explanation" style="display: none;"></div>
+                        <div class="navigation-controls" id="navigation-controls"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="result-screen" class="screen">
+                <div class="results-container">
+                    <h1 id="result-title" style="color: var(--primary-color); font-size: 2.2rem; font-weight: bold; margin-bottom: 20px; text-align: center; width: 100%;">Test Complete!</h1>
+
+                    <div id="practice-result-summary" class="result-summary hidden">
+                        <p><strong>Score:</strong> <span id="practice-score-display">N/A</span></p>
+                        <p><strong>Accuracy:</strong> <span id="practice-accuracy-display">N/A</span></p>
+                    </div>
+                    
+                    <div id="test-result-details" class="hidden">
+                        <div class="result-comparison">
+                            <div class="result-column">
+                                <h3>Current Score</h3>
+                                <div class="result-grid">
+                                    
+                                    <span>Score</span><strong id="score-display">N/A</strong>
+                                    <span>Accuracy</span><strong id="accuracy-display">N/A</strong>
+                                    <span>Time Used</span><strong id="time-display">N/A</strong>
+                                    <span class="percentile-row hidden">Rank</span><strong id="current-rank-display" class="percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                    <span class="percentile-row hidden">Percentile</span><strong id="percentile-display" class="percentile-row hidden">N/A</strong>
+                                </div>
+                                </div>
+                            </div>
+                            <div id="best-score-column" class="result-column">
+                                <h3>Your Best Score</h3>
+                                <div class="result-grid">
+                                    <span>Score</span><strong id="best-score-display">N/A</strong>
+                                    <span>Accuracy</span><strong id="best-accuracy-display">N/A</strong>
+                                    <span class="percentile-row hidden">Rank</span><strong id="best-rank-display" class="percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                    <span class="percentile-row hidden">Percentile</span><strong id="best-percentile-display" class="percentile-row hidden">N/A</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="review-button" class="btn secondary-btn">Review Answers</button>
+                        <button id="retake-button" class="btn secondary-btn">Back to Menu</button>
+                        <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="review-screen" class="screen">
+                <div class="quiz-layout review-layout">
+                    <div id="review-nav-panel" class="nav-panel">
+                        <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 10px; color: var(--secondary-color);">Review</h2>
+                        <div id="review-nav-items" class="question-nav-container"></div>
+                    </div>
+                    <div class="question-content">
+                        <div class="question-header">
+                            <div class="question-number" id="review-question-number">Question 1</div>
+                            <p id="review-question-text" class="srn-series-text"></p>
+                        </div>
+                        <div class="options-container" id="review-options-container"></div>
+                        <div id="review-explanation" class="explanation" style="display: none;"></div>
+                        <div class="navigation-controls">
+                            <button id="review-prev-button" class="btn secondary-btn">Previous</button>
+                            <button id="review-next-button" class="btn secondary-btn">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Submission</h2>
+            <p>Are you sure you want to submit? You cannot change your answers after submitting.</p>
+            <div class="modal-actions">
+                <button id="cancelSubmitBtn" class="btn secondary-btn">Cancel</button>
+                <button id="confirmSubmitBtn" class="btn submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div id="side-menu" class="side-menu">
+        <div class="side-menu-header">
+            <h3 style="color: var(--primary-color); font-weight: bold; font-size: 1.2rem; margin: 0;">Question Map</h3>
+            <button id="close-side-menu" style="background:none; border:none; font-size:1.8rem; color:var(--text-color-secondary); cursor:pointer;">&times;</button>
+        </div>
+        <div id="mobile-nav-grid" class="question-nav-grid"></div>
+    </div>
+
+    <div id="rotate-warning">
+        <div class="rotate-icon">📱</div>
+        <h2>Please Rotate Your Device</h2>
+        <p>This test is best experienced in portrait mode. Please rotate your device to continue.</p>
+    </div>
+
+    <script>
+        // ===============================================
+        // ⚠️ อย่าลืมใส่ Config Firebase ของคุณตรงนี้!
+        // ===============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+            authDomain: "silp-pilot-platform.firebaseapp.com",
+            projectId: "silp-pilot-platform",
+            storageBucket: "silp-pilot-platform.firebasestorage.app",
+            messagingSenderId: "307814159914",
+            appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
+            measurementId: "G-PLWSHCRFGY"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const optionLabels = ['A', 'B', 'C', 'D'];
+
+        // --- GLOBAL UI REFS ---
+        const screens = { instruction: document.getElementById('instruction-screen'), howToPlay: document.getElementById('how-to-play-screen'), quiz: document.getElementById('quiz-screen'), result: document.getElementById('result-screen'), review: document.getElementById('review-screen') };
+        const appContainer = document.getElementById('app');
+        const loader = document.getElementById('loader-overlay');
+        
+        const confirmModal = document.getElementById('confirmModal');
+        let state = {};
+
+        function resetState() { 
+            state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 360, startTime: null, mode: null, difficulty: 'medium' };
+        }
+        resetState();
+
+        // ==========================================
+        // 🚀 MOCKUP AUTO-START SYSTEM (FOOLPROOF VERSION)
+        // ==========================================
+        const currentUrl = window.location.href.toLowerCase();
+        const urlParams = new URLSearchParams(window.location.search);
+        window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
+
+        if (window.isMockupMode) {
+            // บังคับซ่อน UI ทั้งหมดทันที
+            document.addEventListener("DOMContentLoaded", () => {
+                const instrScreen = document.getElementById('instruction-screen');
+                if (instrScreen) instrScreen.classList.remove('active');
+                
+                const mainHeader = document.getElementById('main-header');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                
+                const mainContainer = document.querySelector('.container');
+                if (mainContainer) {
+                    mainContainer.style.setProperty('margin-top', '0', 'important');
+                    mainContainer.style.setProperty('height', '100vh', 'important');
+                }
+                if (loader) loader.style.display = 'flex';
+            });
+
+            // ข้ามระบบ Login แล้วเริ่มเกมทันที
+            window.addEventListener('load', () => {
+                const diff = urlParams.get('difficulty') || 'normal';
+                state.difficulty = diff;
+                startQuiz('test');
+            });
+        }
+
+        if (!window.isMockupMode) {
+            auth.onAuthStateChanged(user => {
+                if (!user) {
+                    document.getElementById('auth-status').innerText = 'Not Logged In. Redirecting...';
+                    document.getElementById('auth-status').style.color = 'red';
+                    document.getElementById('auth-status').style.display = 'block';
+                    setTimeout(() => { window.location.href = 'Auth.html'; }, 1500);
+                }
+            });
+        }
+
+        function switchScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenName + '-screen');
+            if (target) target.classList.add('active');
+
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const headerTimer = document.getElementById('header-timer-display');
+            const backMenuBtn = document.getElementById('back-to-menu-btn');
+            const resultsBtn = document.getElementById('back-to-results-button');
+
+            if (hamburgerBtn) hamburgerBtn.style.display = 'none';
+            if (headerTimer) { headerTimer.classList.add('hidden'); headerTimer.style.display = 'none'; }
+            if (backMenuBtn) backMenuBtn.classList.add('hidden');
+            if (resultsBtn) resultsBtn.classList.add('hidden');
+
+            if (screenName === 'quiz') {
+                if (state.mode === 'test') {
+                    if (hamburgerBtn) hamburgerBtn.style.display = 'flex';
+                    // ✅ ปลดล็อก Class แล้วปล่อยให้ CSS เป็นตัวจัดการโชว์/ซ่อนตามขนาดหน้าจอ
+                    if (headerTimer) { headerTimer.classList.remove('hidden'); headerTimer.classList.add('active'); headerTimer.style.display = ''; }
+                } else if (state.mode === 'practice') {
+                    if (backMenuBtn) backMenuBtn.classList.remove('hidden');
+                }
+            } else if (screenName === 'review') {
+                if (resultsBtn) resultsBtn.classList.remove('hidden');
+                if (hamburgerBtn) hamburgerBtn.style.display = 'flex';
+            }
+
+            const mainContainer = document.querySelector('.container');
+            if (['quiz', 'review'].includes(screenName)) {
+                appContainer.style.maxWidth = '1400px';
+                appContainer.style.margin = '20px auto 40px auto';
+                if (mainContainer) mainContainer.style.alignItems = 'flex-start';
+            } else if (screenName === 'result') {
+                appContainer.style.maxWidth = '700px';
+                appContainer.style.margin = 'auto';
+                if (mainContainer) mainContainer.style.alignItems = 'center';
+            } else {
+                appContainer.style.maxWidth = '600px';
+                appContainer.style.margin = 'auto';
+                if (mainContainer) mainContainer.style.alignItems = 'center';
+            }
+            window.scrollTo(0, 0);
+            if (mainContainer) mainContainer.scrollTop = 0;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60); const s = seconds % 60; 
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // --- FETCH DATA FROM BACKEND ---
+        async function fetchQuizData() {
+            // ✅ ดึงโจทย์จาก Firebase Functions
+            const functionUrl = `https://us-central1-silp-pilot-platform.cloudfunctions.net/getSRNQuizData?difficulty=${state.difficulty}`;
+            const response = await fetch(functionUrl);
+            if (!response.ok) throw new Error("Failed to fetch data");
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+        }
+
+        async function submitScore(userAnswersObj, timeUsed) {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not logged in");
+            
+            let correctCount = 0;
+            let attemptedCount = 0;
+            state.questions.forEach(q => {
+                if (userAnswersObj[q.id] !== undefined) {
+                    attemptedCount++;
+                    if (userAnswersObj[q.id] === q.correctAnswer) correctCount++;
+                }
+            });
+
+            // ✅ ส่งคะแนนไปที่ Firebase Functions
+            const functionUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/submitSRNScore";
+            const payload = {
+                email: user.email,
+                score: correctCount,
+                total: state.questions.length,
+                attempted: attemptedCount,
+                answers: userAnswersObj,
+                mode: state.mode,
+                difficulty: state.difficulty,
+                timeSpent: timeUsed
+            };
+
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+            return result;
+        }
+
+        let tempSelectedMode = ''; // ตัวแปรเก็บค่า Practice/Test ชั่วคราว
+
+        // ฟังก์ชันเริ่มข้อสอบหลังจากกดเลือกความยาก
+        window.startQuizWithDifficulty = function(diff) {
+            state.difficulty = diff;
+            startQuiz(tempSelectedMode);
+        };
+
+        async function startQuiz(mode) {
+            if (!window.isMockupMode && !auth.currentUser) { alert("Please login first"); return; }
+            
+            // เก็บค่า difficulty ปัจจุบันไว้ก่อนรีเซ็ตค่า
+            const currentDiff = state.difficulty;
+            resetState();
+            state.difficulty = currentDiff;
+            state.mode = mode;
+            
+            // ไม่ต้องอ่านจาก Dropdown แล้ว
+            appContainer.classList.toggle('practice-mode-active', mode === 'practice');
+
+            loader.style.display = 'flex';
+
+            try {
+                const data = await fetchQuizData();
+                state.questions = data.questions;
+                state.timeRemaining = data.quizInfo.timeLimit;
+                state.userAnswers = Array(state.questions.length).fill(null);
+                state.startTime = new Date();
+                
+                loader.style.display = 'none';
+                switchScreen('quiz');
+                renderQuestion(0);
+                if (mode === 'test') { renderNavPanel(); startTimer(); }
+            } catch (error) {
+                loader.style.display = 'none';
+                alert('Failed to load quiz: ' + error.message);
+            }
+        }
+
+        function startTimer() {
+            const headerTimer = document.getElementById('header-timer-display');
+            const desktopTimer = document.getElementById('timer-display'); 
+
+            if (headerTimer) headerTimer.classList.remove('hidden');
+            if (desktopTimer) desktopTimer.classList.remove('hidden');
+
+            const updateDisplay = (val) => {
+                const str = formatTime(val);
+                if (headerTimer) {
+                    headerTimer.textContent = str;
+                    headerTimer.style.color = val <= 30 ? 'var(--danger-color)' : 'var(--primary-color)';
+                }
+                if (desktopTimer) {
+                    desktopTimer.textContent = str;
+                    if (val <= 30) desktopTimer.classList.add('danger'); else desktopTimer.classList.remove('danger');
+                }
+
+                // ✅ เพิ่มส่วนนี้: ส่งเวลาไปหน้าหลัก (MockupTest) เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                if (window.parent && window.innerWidth <= 1024) {
+                    window.parent.postMessage({
+                        type: 'TICK_TIMER',
+                        timeLeft: str,
+                        rawSeconds: val
+                    }, '*');
+                }
+            };
+
+            updateDisplay(state.timeRemaining);
+            state.quizTimerInterval = setInterval(() => {
+                state.timeRemaining--;
+                updateDisplay(state.timeRemaining);
+                if (state.timeRemaining <= 0) {
+                    clearInterval(state.quizTimerInterval);
+                    finishQuiz();
+                }
+            }, 1000);
+        }
+
+        function renderNavPanel() {
+            if (state.mode !== 'test') return;
+            const navItemsContainer = document.getElementById('nav-items');
+            navItemsContainer.innerHTML = '';
+            state.questions.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = index + 1;
+                btn.className = `question-nav-btn ${state.userAnswers[index] !== null ? 'answered' : 'unanswered'}`;
+                if (index === state.currentQuestionIndex) btn.classList.add('current');
+                btn.addEventListener('click', () => jumpToQuestion(index));
+                navItemsContainer.appendChild(btn);
+            });
+        }
+
+        function renderQuestion(index) {
+            state.currentQuestionIndex = index;
+            const q = state.questions[index];
+            document.getElementById('quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`;
+            document.getElementById('question-text').textContent = q.text;
+            document.getElementById('explanation-container').style.display = 'none';
+
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((optValue, i) => {
+                const label = optionLabels[i];
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option';
+                optionEl.dataset.value = optValue;
+                optionEl.innerHTML = `<div class="option-letter">${label}</div><span>${optValue}</span>`;
+                if (state.userAnswers[index] === optValue) optionEl.classList.add('selected');
+                optionEl.addEventListener('click', () => selectAnswer(optValue));
+                optionsContainer.appendChild(optionEl);
+            });
+
+            updateNavigationControls();
+            if (state.mode === 'test') renderNavPanel();
+        }
+
+        function selectAnswer(optValue) {
+            if (state.mode === 'practice' && state.isAnswerChecked) return;
+            state.userAnswers[state.currentQuestionIndex] = optValue;
+            
+            document.querySelectorAll('#quiz-options-container .option').forEach(opt => {
+                opt.classList.toggle('selected', parseInt(opt.dataset.value) === optValue);
+            });
+
+            if (state.mode === 'practice') {
+                updateNavigationControls();
+            } else {
+                renderNavPanel();
+                if (state.currentQuestionIndex < state.questions.length - 1) {
+                    // ✅ เคลียร์ Focus ค้างใน Mobile เพื่อให้ Auto-Advance ทำงาน
+                    if (document.activeElement) document.activeElement.blur(); 
+                    setTimeout(() => jumpToQuestion(state.currentQuestionIndex + 1), 250);
+                } else {
+                    updateNavigationControls();
+                }
+            }
+        }
+
+        function handleCheckAnswer() {
+            const userAnswer = state.userAnswers[state.currentQuestionIndex];
+            const q = state.questions[state.currentQuestionIndex];
+            const explanationEl = document.getElementById('explanation-container');
+            
+            document.querySelectorAll('#quiz-options-container .option').forEach(opt => {
+                opt.classList.add('disabled');
+                const val = parseInt(opt.dataset.value);
+                if (val === q.correctAnswer) opt.classList.add('correct');
+                else if (val === userAnswer) opt.classList.add('incorrect');
+            });
+            
+            explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
+            explanationEl.style.display = 'block';
+            updateNavigationControls(true);
+        }
+
+        function jumpToQuestion(index) { if (index >= 0 && index < state.questions.length) renderQuestion(index); }
+
+        function updateNavigationControls(isAnswered = false) {
+            const navContainer = document.getElementById('navigation-controls');
+            navContainer.innerHTML = '';
+            navContainer.className = 'navigation-controls';
+
+            if (state.mode === 'practice') {
+                navContainer.classList.add('center');
+                if (isAnswered) {
+                    if (state.currentQuestionIndex < state.questions.length - 1) {
+                        const nextBtn = document.createElement('button'); nextBtn.className = 'btn'; nextBtn.textContent = 'Next Question'; nextBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex + 1); navContainer.appendChild(nextBtn);
+                    } else {
+                        const finishBtn = document.createElement('button'); finishBtn.className = 'btn secondary-btn'; finishBtn.textContent = 'Finish Practice'; finishBtn.onclick = finishPractice; navContainer.appendChild(finishBtn);
+                    }
+                } else {
+                    const checkBtn = document.createElement('button'); checkBtn.className = 'btn submit-btn'; checkBtn.textContent = 'Check Answer'; checkBtn.disabled = state.userAnswers[state.currentQuestionIndex] === null; checkBtn.onclick = handleCheckAnswer; navContainer.appendChild(checkBtn);
+                }
+            } else {
+                const prevBtn = document.createElement('button'); prevBtn.className = 'btn secondary-btn'; prevBtn.textContent = 'Previous'; prevBtn.disabled = state.currentQuestionIndex === 0; prevBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex - 1); navContainer.appendChild(prevBtn);
+                const submitBtn = document.createElement('button'); submitBtn.className = 'btn submit-btn'; submitBtn.textContent = 'Submit'; submitBtn.onclick = () => confirmModal.classList.add('active'); navContainer.appendChild(submitBtn);
+                const nextBtn = document.createElement('button'); nextBtn.className = 'btn secondary-btn'; nextBtn.textContent = 'Next'; nextBtn.disabled = state.currentQuestionIndex === state.questions.length - 1; nextBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex + 1); navContainer.appendChild(nextBtn);
+            }
+        }
+
+        function finishPractice() {
+            let correctCount = 0;
+            state.userAnswers.forEach((ans, i) => { if (ans === state.questions[i].correctAnswer) correctCount++; });
+            const accuracy = state.userAnswers.filter(a=>a!==null).length > 0 ? (correctCount / state.userAnswers.filter(a=>a!==null).length) * 100 : 0;
+            showResults({ correctCount, accuracy });
+        }
+
+        async function finishQuiz() {
+            if (state.mode !== 'test') return;
+            clearInterval(state.quizTimerInterval);
+            
+            // ✅ เพิ่มส่วนนี้: สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
+            loader.style.display = 'flex';
+
+            const timeUsed = Math.round((new Date() - state.startTime) / 1000);
+            const userAnswerObj = {};
+            let correctCount = 0;
+            let attemptedCount = 0;
+
+            state.questions.forEach((q, index) => { 
+                if (state.userAnswers[index] !== null) {
+                    userAnswerObj[q.id] = state.userAnswers[index]; 
+                    attemptedCount++;
+                    if (state.userAnswers[index] === q.correctAnswer) {
+                        correctCount++;
+                    }
+                } 
+            });
+
+            const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
+
+            // [ส่งคะแนนกลับยานแม่ตอนสอบเสร็จ]
+            if (window.isMockupMode) {
+                window.parent.postMessage({
+                    type: 'MOCKUP_SUBTEST_COMPLETED',
+                    result: {
+                        score: correctCount,
+                        totalQuestions: state.questions.length,
+                        accuracy: accuracy,
+                        timeUsed: timeUsed,
+                        answers: userAnswerObj
+                    }
+                }, '*');
+                return; // หยุดการทำงานตรงนี้ ส่งคะแนนกลับยานแม่เรียบร้อย
+            }
+
+            try {
+                const result = await submitScore(userAnswerObj, timeUsed);
+                showResults(result);
+            } catch (error) {
+                alert("Error saving score: " + error.message);
+                loader.style.display = 'none';
+            }
+        }
+
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1
+            if (p >= 90) return '#166534'; // Tier Top 10
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal
+            return 'var(--primary-color)'; // Tier Low
+        }
+
+        // 2. ฟังก์ชันแสดงผลอัปเดตใหม่ (กันกระสุน 100%)
+        function showResults(resultData) {
+            switchScreen('result');
+            loader.style.display = 'none';
+            
+            if (state.mode === 'practice') {
+                if(document.getElementById('practice-result-summary')) document.getElementById('practice-result-summary').classList.remove('hidden');
+                if(document.getElementById('test-result-details')) document.getElementById('test-result-details').classList.add('hidden');
+                if(document.getElementById('review-button')) document.getElementById('review-button').classList.add('hidden');
+                
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+
+                if(document.getElementById('practice-score-display')) document.getElementById('practice-score-display').textContent = `${resultData.correctCount} / ${state.questions.length}`;
+                if(document.getElementById('practice-accuracy-display')) document.getElementById('practice-accuracy-display').textContent = `${resultData.accuracy.toFixed(2)}%`;
+            } else {
+                if(document.getElementById('practice-result-summary')) document.getElementById('practice-result-summary').classList.add('hidden');
+                if(document.getElementById('test-result-details')) document.getElementById('test-result-details').classList.remove('hidden');
+                if(document.getElementById('review-button')) document.getElementById('review-button').classList.remove('hidden');
+                
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+
+                if (resultData.current) {
+                    if(document.getElementById('score-display')) document.getElementById('score-display').textContent = `${resultData.current.score} / ${state.questions.length}`;
+                    if(document.getElementById('accuracy-display')) document.getElementById('accuracy-display').textContent = `${Number(resultData.current.accuracy).toFixed(2)}%`;
+                    if(document.getElementById('time-display')) document.getElementById('time-display').textContent = formatTime(resultData.current.timeSpent || 0);
+
+                    const curPercentile = resultData.current.percentile !== undefined ? Number(resultData.current.percentile) : 'N/A';
+                    const curRank = resultData.current.rank !== undefined ? resultData.current.rank : '-';
+                    const curTotalUsers = resultData.current.totalUsers !== undefined ? resultData.current.totalUsers : '-';
+                    const curTierColor = getColorByPercentile(curPercentile);
+
+                    const rankEl = document.getElementById('current-rank-display');
+                    if (rankEl) {
+                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                        rankEl.style.color = curTierColor;
+                    }
+
+                    const percentileEl = document.getElementById('percentile-display');
+                    if (percentileEl) {
+                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                        percentileEl.style.color = curTierColor;
+                    }
+                }
+                if (resultData.best) {
+                    if(document.getElementById('best-score-display')) document.getElementById('best-score-display').textContent = `${resultData.best.score} / ${state.questions.length}`;
+                    if(document.getElementById('best-accuracy-display')) document.getElementById('best-accuracy-display').textContent = `${Number(resultData.best.accuracy).toFixed(2)}%`;
+
+                    const bestPercentile = resultData.best.percentile !== undefined ? Number(resultData.best.percentile) : 'N/A';
+                    const bestRank = resultData.best.rank !== undefined ? resultData.best.rank : '-';
+                    const bestTotalUsers = resultData.best.totalUsers !== undefined ? resultData.best.totalUsers : '-';
+                    const bestTierColor = getColorByPercentile(bestPercentile);
+
+                    const bestRankEl = document.getElementById('best-rank-display');
+                    if (bestRankEl) {
+                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                        bestRankEl.style.color = bestTierColor;
+                    }
+
+                    const bestPercentileEl = document.getElementById('best-percentile-display');
+                    if (bestPercentileEl) {
+                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                        bestPercentileEl.style.color = bestTierColor;
+                    }
+                }
+            }
+        }
+
+        function showReview() {
+            state.mode = 'review';
+            if (window.innerWidth <= 1024) document.getElementById('hamburgerBtn').style.display = 'flex';
+            state.reviewQuestionIndex = 0;
+            renderReviewNavPanel(); renderReviewQuestion(0); switchScreen('review');
+        }
+
+        function renderReviewNavPanel() {
+            const navItemsContainer = document.getElementById('review-nav-items');
+            navItemsContainer.innerHTML = ''; 
+            state.questions.forEach((q, index) => { 
+                const btn = document.createElement('button'); btn.textContent = index + 1; 
+                const uAns = state.userAnswers[index];
+                btn.className = `question-nav-btn ${uAns === null ? 'unanswered' : (uAns === q.correctAnswer ? 'correct' : 'incorrect')}`;
+                if (index === state.reviewQuestionIndex) btn.classList.add('current'); 
+                btn.addEventListener('click', () => { renderReviewQuestion(index); renderReviewNavPanel(); }); 
+                navItemsContainer.appendChild(btn); 
+            });
+        }
+
+        function renderReviewQuestion(index) {
+            state.reviewQuestionIndex = index;
+            const q = state.questions[index];
+            const userAnswer = state.userAnswers[index];
+            
+            document.getElementById('review-question-number').textContent = `Question ${index + 1}`;
+            document.getElementById('review-question-text').textContent = q.text;
+
+            const optionsContainer = document.getElementById('review-options-container');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((optValue, i) => {
+                const label = optionLabels[i];
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option disabled';
+                optionEl.innerHTML = `<div class="option-letter">${label}</div><span>${optValue}</span>`;
+                
+                if (optValue === q.correctAnswer) optionEl.classList.add('correct');
+                if (optValue === userAnswer) {
+                    optionEl.classList.add('user-selected');
+                    if (userAnswer !== q.correctAnswer) optionEl.classList.add('incorrect');
+                }
+                optionsContainer.appendChild(optionEl);
+            });
+            
+            const explanationEl = document.getElementById('review-explanation');
+            if (q.explanation) {
+                explanationEl.style.display = 'block';
+                explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation.replace(/\\n/g, '<br>')}</p>`;
+            }
+            
+            document.getElementById('review-prev-button').disabled = index === 0;
+            document.getElementById('review-next-button').disabled = index === state.questions.length - 1;
+            renderReviewNavPanel();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // ✅ กด Mode แล้วเด้งไปหน้า Difficulty ก่อน
+            document.getElementById('practice-mode-btn').addEventListener('click', () => { tempSelectedMode = 'practice'; switchScreen('difficulty'); });
+            document.getElementById('test-mode-btn').addEventListener('click', () => { tempSelectedMode = 'test'; switchScreen('difficulty'); });
+            document.getElementById('back-to-menu-btn').addEventListener('click', () => { clearInterval(state.quizTimerInterval); switchScreen('instruction'); });
+            document.getElementById('how-to-play-btn').addEventListener('click', () => switchScreen('howToPlay'));
+            document.getElementById('back-to-instructions-btn').addEventListener('click', () => switchScreen('instruction'));
+            document.getElementById('review-prev-button').addEventListener('click', () => renderReviewQuestion(state.reviewQuestionIndex - 1));
+            document.getElementById('review-next-button').addEventListener('click', () => renderReviewQuestion(state.reviewQuestionIndex + 1));
+            document.getElementById('back-to-results-button').addEventListener('click', () => switchScreen('result'));
+            document.getElementById('retake-button').addEventListener('click', () => { switchScreen('instruction'); });
+            document.getElementById('review-button').addEventListener('click', showReview);
+            document.getElementById('cancelSubmitBtn').addEventListener('click', () => confirmModal.classList.remove('active'));
+            document.getElementById('confirmSubmitBtn').addEventListener('click', () => { confirmModal.classList.remove('active'); finishQuiz(); });
+            
+            // Hamburger
+            const toggleMenu = () => {
+                document.getElementById('side-menu').classList.toggle('active');
+                document.getElementById('side-menu-overlay').style.display = document.getElementById('side-menu').classList.contains('active') ? 'block' : 'none';
+                renderMobileNavGrid();
+            };
+
+            window.toggleMenu = toggleMenu; // ✅ เติมบรรทัดนี้
+
+            document.getElementById('hamburgerBtn').addEventListener('click', toggleMenu);
+            document.getElementById('close-side-menu').addEventListener('click', toggleMenu);
+            document.getElementById('side-menu-overlay').addEventListener('click', toggleMenu);
+            
+            if (!window.isMockupMode) {
+                switchScreen('instruction');
+            }
+        });
+
+        function renderMobileNavGrid() {
+            const container = document.getElementById('mobile-nav-grid');
+            if (!container) return;
+            container.innerHTML = '';
+            state.questions.forEach((q, index) => {
+                const btn = document.createElement('button'); btn.textContent = index + 1; btn.className = 'mobile-nav-btn';
+                const isCurrent = state.mode === 'review' ? index === state.reviewQuestionIndex : index === state.currentQuestionIndex;
+                const uAns = state.userAnswers[index];
+                
+                if (isCurrent) { btn.style.border = '2px solid var(--primary-color)'; btn.style.transform = 'scale(1.1)'; }
+                
+                if (state.mode === 'review') {
+                    if (uAns === q.correctAnswer) { btn.style.backgroundColor = 'var(--success-color)'; btn.style.color = 'white'; }
+                    else if (uAns !== null) { btn.style.backgroundColor = 'var(--primary-color)'; btn.style.color = 'white'; }
+                } else {
+                    if (index === state.currentQuestionIndex) { btn.style.backgroundColor = 'var(--secondary-color)'; btn.style.color = 'white'; }
+                    else if (uAns !== null) { btn.style.backgroundColor = 'var(--primary-color)'; btn.style.color = 'white'; }
+                }
+                
+                btn.addEventListener('click', () => {
+                    if (state.mode === 'review') renderReviewQuestion(index); else jumpToQuestion(index);
+                    document.getElementById('side-menu').classList.remove('active');
+                    document.getElementById('side-menu-overlay').style.display = 'none';
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
+    </script>
+</body>
+</html>

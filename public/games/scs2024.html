@@ -372,6 +372,8 @@
         }
 
         .r-value {
+            display: block;
+            width: 100%;
             font-weight: 800;
             text-align: right;
             color: var(--primary-color);
@@ -537,6 +539,26 @@
                 height: 300px;
             }
         }
+
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -641,6 +663,7 @@
                         <span class="r-label practice-only hidden">Total Time</span><span id="total-time-text" class="r-value practice-only hidden">N/A</span>
 
                         <!-- Test Only Rows (Default Hidden) -->
+                        <span class="r-label percentile-row hidden">Rank</span><strong id="current-rank-text" class="r-value percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label percentile-row hidden">Percentile</span><span id="current-percentile-text" class="r-value percentile-row hidden">N/A</span>
                     </div>
                 </div>
@@ -649,6 +672,7 @@
                     <div class="result-grid">
                         <span class="r-label">Score</span><span id="best-score-text" class="r-value">N/A</span>
                         <span class="r-label">Accuracy</span><span id="best-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label percentile-row hidden">Rank</span><strong id="best-rank-text" class="r-value percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label">Percentile</span><span id="best-percentile-text" class="r-value">N/A</span>
                     </div>
                 </div>
@@ -668,7 +692,7 @@
                     <div id="review-questions-container" style="margin-top: 1rem;"></div>
                 </div>
             </div>
-            <button id="back-to-results-btn" class="btn btn-primary" style="margin-top: 1.5rem; max-width: 380px; align-self: center;">Back to Results</button>
+            <button id="back-to-results-btn" class="btn btn-primary" style="margin-top: 1.5rem; max-width: 380px; align-self: center;">Results</button>
         </div>
     </div>
 
@@ -730,49 +754,73 @@
             problemHtmlCache: {}
         };
 
-        // --- AUTH & INIT ---
+        // --- AUTH & INIT & MOCKUP MODE ---
         const loader = document.getElementById('loader-overlay');
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                state.userEmail = user.email || user.providerData[0]?.email;
+        
+        // ตรวจสอบว่าเป็นโหมด Mockup หรือไม่
+        const urlParams = new URLSearchParams(window.location.search);
+        window.isMockupMode = urlParams.get('mode') === 'mockup';
 
-                if (!state.userEmail && window.location.hostname === 'localhost') {
-                    state.userEmail = "kritsadawongtiwanon@gmail.com";
-                }
+        if (window.isMockupMode) {
+            // โหมด Mockup: บังคับซ่อน Header และเข้าเกมทันที ไม่ต้องรอ Login
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById('center-container').classList.add('hidden');
+                const mainHeader = document.getElementById('mainHeader');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                document.body.style.setProperty('padding-top', '0', 'important'); // ดันกระดานขึ้น
+                loader.style.display = 'flex';
+            });
+            
+            // รอโหลดเสร็จแล้วพุ่งเข้าเกมเลย
+            window.addEventListener('load', () => {
+                state.gameMode = 'quiz';
+                state.difficulty = urlParams.get('difficulty') || 'normal';
+                startGame();
+            });
+        } else {
+            // โหมดเล่นเดี่ยวปกติ: รอเช็ค Login
+            auth.onAuthStateChanged(async user => {
+                if (user) {
+                    state.userEmail = user.email || user.providerData[0]?.email;
 
-                if (state.userEmail) {
-                    state.userEmail = state.userEmail.trim().toLowerCase();
-                    const parts = state.userEmail.split("@");
-                    if (parts.length === 2 && parts[1] === "gmail.com") {
-                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                    if (!state.userEmail && window.location.hostname === 'localhost') {
+                        state.userEmail = "kritsadawongtiwanon@gmail.com";
                     }
-                }
 
-                try {
-                    const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
-                    const response = await fetch(checkAccessUrl, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: state.userEmail, courseId: 'scs2024' })
-                    });
-                    const result = await response.json();
+                    if (state.userEmail) {
+                        state.userEmail = state.userEmail.trim().toLowerCase();
+                        const parts = state.userEmail.split("@");
+                        if (parts.length === 2 && parts[1] === "gmail.com") {
+                            state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                        }
+                    }
 
-                    if (result.hasAccess) {
-                        loader.style.display = 'none';
-                        document.getElementById('mainHeader').classList.remove('hidden');
-                    } else {
-                        alert(`Access Denied: ${result.reason}. Redirecting...`);
+                    try {
+                        const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
+                        const response = await fetch(checkAccessUrl, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: state.userEmail, courseId: 'scs2024' })
+                        });
+                        const result = await response.json();
+
+                        if (result.hasAccess) {
+                            loader.style.display = 'none';
+                            document.getElementById('mainHeader').classList.remove('hidden');
+                        } else {
+                            alert(`Access Denied: ${result.reason}. Redirecting...`);
+                            window.location.href = '/index.html';
+                        }
+                    } catch (error) {
+                        console.error("Auth Error:", error);
+                        alert("Connection Error. Redirecting...");
                         window.location.href = '/index.html';
                     }
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                    alert("Connection Error. Redirecting...");
-                    window.location.href = '/index.html';
-                }
 
-            } else {
-                window.location.href = '/Auth.html';
-            }
-        });
+                } else {
+                    window.location.href = '/Auth.html';
+                }
+            });
+        }
 
         // --- EVENT LISTENERS ---
         document.getElementById('practice-btn').addEventListener('click', () => setMode('practice'));
@@ -847,6 +895,10 @@
         }
 
         async function startGame() {
+            // [เพิ่มส่วนนี้] ถ้าไม่ใช่โหมด Mockup ค่อยเช็ค Login
+            if (!window.isMockupMode && !state.userEmail) { 
+                alert("Please login first"); return; 
+            }
             loader.style.display = 'flex';
             state.currentQuestionIdx = 0;
             state.userAnswers = new Array(TOTAL_QUESTIONS).fill(null);
@@ -1106,14 +1158,30 @@
             const display = document.getElementById('timer-display');
 
             state.timerInterval = setInterval(() => {
+                let timeToShow = 0;
+                let formattedTime = "";
+
                 if (state.gameMode === 'quiz') {
                     state.timeLeft--;
-                    const m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
-                    const s = (state.timeLeft % 60).toString().padStart(2, '0');
-                    display.textContent = `${m}:${s}`;
                     if (state.timeLeft <= 0) {
                         clearInterval(state.timerInterval);
                         submitQuiz(true);
+                        return;
+                    }
+                    timeToShow = state.timeLeft;
+                    
+                    const m = Math.floor(timeToShow / 60).toString().padStart(2, '0');
+                    const s = (timeToShow % 60).toString().padStart(2, '0');
+                    formattedTime = `${m}:${s}`;
+                    display.textContent = formattedTime;
+
+                    // ✅ ส่งเวลาไปหน้าหลัก (MockupTest) เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                    if (window.parent && window.innerWidth <= 1024) {
+                        window.parent.postMessage({
+                            type: 'TICK_TIMER',
+                            timeLeft: formattedTime,
+                            rawSeconds: timeToShow
+                        }, '*');
                     }
                 } else {
                     const elapsed = Math.floor((Date.now() - state.practiceStartTime) / 1000);
@@ -1126,6 +1194,12 @@
 
         async function submitQuiz(isTimeUp) {
             if (state.timerInterval) clearInterval(state.timerInterval);
+            
+            // ✅ สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
             loader.style.display = 'flex';
 
             // --- FAIL LOGIC START ---
@@ -1167,99 +1241,157 @@
                 timeUsed = Math.floor((Date.now() - state.practiceStartTime) / 1000);
             }
 
+            // ==========================================
+            // ✅ [เพิ่มส่วนนี้] ส่งคะแนนกลับยานแม่ตอนสอบเสร็จ
+            // ==========================================
+            if (window.isMockupMode) {
+                window.parent.postMessage({
+                    type: 'MOCKUP_SUBTEST_COMPLETED',
+                    result: {
+                        score: correctCount, // ส่ง 0 ถ้า Fail
+                        totalQuestions: TOTAL_QUESTIONS,
+                        accuracy: parseFloat(accuracy.toFixed(2)),
+                        timeUsed: timeUsed,
+                        answers: state.userAnswers,
+                        isFail: isFailBySkip // ✅ ส่งสถานะ Fail ให้ยานแม่รู้
+                    }
+                }, '*');
+                return; // สั่งหยุดตรงนี้ ไม่ต้องเซฟลง Database แยก และไม่ต้องโชว์หน้า Result
+            }
+            // ==========================================
+
             if (state.gameMode === 'quiz') {
                 const scoreData = {
-                    score: correctCount, // ส่ง 0 ถ้า Fail
+                    score: correctCount, 
                     questionsAnswered: answeredCount,
                     accuracy: parseFloat(accuracy.toFixed(2)),
                     timeUsed: timeUsed,
-                    isFail: isFailBySkip, // ส่งสถานะ Fail ไป Backend
+                    isFail: isFailBySkip, 
                     difficulty: state.difficulty,
                     userEmail: state.userEmail
                 };
                 try {
                     const saveUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/saveSCS2024Score";
-                    const getBestUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCS2024Score";
 
                     const saveResp = await fetch(saveUrl, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(scoreData)
                     });
                     const saveResult = await saveResp.json();
+                    
+                    if (!saveResult.success) throw new Error(saveResult.message || "Failed to save score");
 
-                    const bestResp = await fetch(`${getBestUrl}?email=${encodeURIComponent(state.userEmail)}&difficulty=${state.difficulty}`);
-                    const bestResult = await bestResp.json();
-
-                    // ส่ง isFailBySkip ไปแสดงผล
-                    showResults(correctCount, accuracy, timeUsed, answeredCount, saveResult.percentile, bestResult.data, isFailBySkip);
+                    showResultsObj(saveResult, scoreData);
 
                 } catch (e) {
                     console.error("Submit Error:", e);
-                    showResults(correctCount, accuracy, timeUsed, answeredCount, "Error", null, isFailBySkip);
+                    alert("Error saving score: " + e.message);
+                    loader.style.display = 'none';
                 }
 
             } else {
                 // Practice Mode
                 setTimeout(() => {
-                    showResults(correctCount, accuracy, timeUsed, answeredCount, "N/A", null, false);
+                    showResultsObj({
+                        current: { score: correctCount, accuracy: accuracy, timeSpent: timeUsed }
+                    }, { timeUsed: timeUsed, totalAnswered: answeredCount, isFail: false });
                 }, 500);
             }
         }
 
-        function showResults(score, accuracy, timeUsed, answered, percentile, bestData, isFail = false) {
-            loader.style.display = 'none';
-            document.getElementById('game-container').classList.add('hidden');
-            document.getElementById('center-container').classList.remove('hidden');
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1
+            if (p >= 90) return '#166534'; // Tier Top 10
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal
+            return 'var(--primary-color)'; // Tier Low
+        }
+
+        // ฟังก์ชันแสดงผลคะแนนและแรงค์ (รุ่นกันกระสุน 100%)
+        function showResultsObj(resultData, payload) {
+            if(document.getElementById('loader-overlay')) document.getElementById('loader-overlay').style.display = 'none';
+            if(document.getElementById('game-container')) document.getElementById('game-container').classList.add('hidden');
+            if(document.getElementById('center-container')) document.getElementById('center-container').classList.remove('hidden');
 
             const resultsScreen = document.getElementById('results-screen');
-            resultsScreen.classList.remove('hidden');
+            if(resultsScreen) resultsScreen.classList.remove('hidden');
 
-            // --- LOGIC แสดงกล่อง Fail ---
             const failBox = document.getElementById('fail-message-box');
-            if (isFail) {
-                failBox.classList.remove('hidden');
-            } else {
-                failBox.classList.add('hidden');
-            }
-            // ---------------------------
-
-            if (state.gameMode !== 'quiz') {
-                resultsScreen.classList.add('practice-result-card');
-                failBox.classList.add('hidden'); // ซ่อนเสมอใน Practice
-            } else {
-                resultsScreen.classList.remove('practice-result-card');
+            if(failBox) {
+                if (payload && payload.isFail) failBox.classList.remove('hidden');
+                else failBox.classList.add('hidden');
             }
 
-            document.getElementById('results-title').textContent =
-                state.gameMode === 'quiz' ? "Quiz Results" : "Practice Finished";
+            if(document.getElementById('results-title')) {
+                document.getElementById('results-title').textContent = state.gameMode === 'quiz' ? "Test Complete!" : "Practice Finished";
+            }
 
-            document.getElementById('current-score-text').textContent = `${score} / ${TOTAL_QUESTIONS}`;
-            document.getElementById('current-accuracy-text').textContent = `${accuracy.toFixed(2)}%`;
-            document.getElementById('avg-time-text').textContent = `${(answered > 0 ? timeUsed / answered : 0).toFixed(2)}s`;
-            document.getElementById('current-percentile-text').textContent = (percentile === -1 || percentile === "Error") ? "N/A" : `${percentile}%`;
+            const m = Math.floor((payload?.timeUsed || 0) / 60).toString().padStart(2, '0');
+            const s = ((payload?.timeUsed || 0) % 60).toString().padStart(2, '0');
+            const avgTime = (payload?.totalAnswered && payload.totalAnswered > 0) ? ((payload.timeUsed || 0) / payload.totalAnswered).toFixed(2) + 's' : '0.00s';
 
-            // Show Total Time for Practice Mode
-            const m = Math.floor(timeUsed / 60).toString().padStart(2, '0');
-            const s = (timeUsed % 60).toString().padStart(2, '0');
-            document.getElementById('total-time-text').textContent = `${m}:${s}`;
-
-            // *** FIX 3: Use classList to toggle visibility correctly for Grid Items ***
-            if (bestData && state.gameMode === 'quiz') {
-                document.getElementById('best-score-column').style.display = 'block';
-                document.getElementById('best-score-text').textContent = `${bestData.bestScore} / ${bestData.totalQuestions}`;
-                document.getElementById('best-accuracy-text').textContent = `${bestData.bestAccuracy.toFixed(2)}%`;
-                document.getElementById('best-percentile-text').textContent = `${bestData.bestPercentile.toFixed(2)}%`;
-
-                // Show Percentile Row (remove hidden)
-                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
-                // Hide Practice Rows (add hidden)
-                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
-            } else {
-                document.getElementById('best-score-column').style.display = 'none';
-                // Hide Percentile Row (add hidden)
+            if (state.gameMode === 'practice') {
+                if(resultsScreen) resultsScreen.classList.add('practice-result-card');
+                if(document.getElementById('best-score-column')) document.getElementById('best-score-column').style.display = 'none';
                 document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
-                // Show Practice Rows (remove hidden)
                 document.querySelectorAll('.practice-only').forEach(el => el.classList.remove('hidden'));
+
+                if(document.getElementById('current-score-text')) document.getElementById('current-score-text').textContent = `${resultData.current?.score || 0} / ${TOTAL_QUESTIONS}`;
+                if(document.getElementById('current-accuracy-text')) document.getElementById('current-accuracy-text').textContent = `${Number(resultData.current?.accuracy || 0).toFixed(2)}%`;
+                if(document.getElementById('avg-time-text')) document.getElementById('avg-time-text').textContent = avgTime;
+                if(document.getElementById('total-time-text')) document.getElementById('total-time-text').textContent = `${m}:${s}`;
+            } else {
+                if(resultsScreen) resultsScreen.classList.remove('practice-result-card');
+                if(document.getElementById('best-score-column')) document.getElementById('best-score-column').style.display = 'block';
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
+
+                if (resultData.current) {
+                    if(document.getElementById('current-score-text')) document.getElementById('current-score-text').textContent = `${resultData.current.score} / ${TOTAL_QUESTIONS}`;
+                    if(document.getElementById('current-accuracy-text')) document.getElementById('current-accuracy-text').textContent = `${Number(resultData.current.accuracy).toFixed(2)}%`;
+                    if(document.getElementById('avg-time-text')) document.getElementById('avg-time-text').textContent = avgTime;
+
+                    const curPercentile = resultData.current.percentile !== undefined ? Number(resultData.current.percentile) : 'N/A';
+                    const curRank = resultData.current.rank !== undefined ? resultData.current.rank : '-';
+                    const curTotalUsers = resultData.current.totalUsers !== undefined ? resultData.current.totalUsers : '-';
+                    const curTierColor = getColorByPercentile(curPercentile);
+
+                    const rankEl = document.getElementById('current-rank-text');
+                    if (rankEl) {
+                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                        rankEl.style.color = curTierColor;
+                    }
+
+                    const percentileEl = document.getElementById('current-percentile-text');
+                    if (percentileEl) {
+                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                        percentileEl.style.color = curTierColor;
+                    }
+                }
+
+                if (resultData.best) {
+                    if(document.getElementById('best-score-text')) document.getElementById('best-score-text').textContent = `${resultData.best.score} / ${TOTAL_QUESTIONS}`;
+                    if(document.getElementById('best-accuracy-text')) document.getElementById('best-accuracy-text').textContent = `${Number(resultData.best.accuracy).toFixed(2)}%`;
+
+                    const bestPercentile = resultData.best.percentile !== undefined ? Number(resultData.best.percentile) : 'N/A';
+                    const bestRank = resultData.best.rank !== undefined ? resultData.best.rank : '-';
+                    const bestTotalUsers = resultData.best.totalUsers !== undefined ? resultData.best.totalUsers : '-';
+                    const bestTierColor = getColorByPercentile(bestPercentile);
+
+                    const bestRankEl = document.getElementById('best-rank-text');
+                    if (bestRankEl) {
+                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                        bestRankEl.style.color = bestTierColor;
+                    }
+
+                    const bestPercentileEl = document.getElementById('best-percentile-text');
+                    if (bestPercentileEl) {
+                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                        bestPercentileEl.style.color = bestTierColor;
+                    }
+                }
             }
         }
 
@@ -1333,6 +1465,26 @@
                 list.appendChild(item);
             });
         }
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
     </script>
 </body>
 </html>

@@ -284,9 +284,19 @@
                 pointer-events: none;
             }
 
-            .option:not(.disabled):hover {
+            /* [แก้ไข 3] ป้องกัน Sticky Hover บน iPhone/iPad */
+            /* คำสั่งนี้บอกว่า: ให้แสดงสีตอน Hover เฉพาะอุปกรณ์ที่ "มีเมาส์จริงๆ" เท่านั้น */
+            @media (hover: hover) {
+                .option:not(.disabled):hover {
+                    background: var(--background-color-dark);
+                    border-color: var(--primary-color);
+                }
+            }
+            
+            /* เพิ่ม State Active เพื่อให้คนใช้มือถือรู้ว่ากดโดนแล้ว (กดปุ๊บสีขึ้นปั๊บ) */
+            .option:active {
                 background: var(--background-color-dark);
-                border-color: var(--primary-color);
+                border-color: var(--secondary-color);
             }
 
             .option.selected {
@@ -413,19 +423,78 @@
                 justify-content: center;
             }
 
+        /* --- ปรับปรุงหน้าสรุปผลให้เหมือน FoldingBox --- */
         #result-screen {
             align-items: center;
             text-align: center;
         }
 
-        .explanation {
+        .results-container {
+            max-width: 700px; /* จำกัดความกว้างสูงสุดไว้ที่ 900px (หรือ 800px ถ้าชอบเล็กๆ) */
+            margin: 0 auto;   /* จัดกึ่งกลางหน้าจอ */
+            padding: 0;
+            width: 100%;      /* ให้ยืดหยุ่นได้ในจอเล็ก */
+        }
+
+        /* ...Code เดิม... */
+        .result-comparison {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* ...Code เดิม... */
+        .result-column {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--background-color-dark);
             text-align: left;
-            background-color: #e7f3ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid var(--primary-color);
-            font-size: 1.1rem;
+        }
+
+        .result-column h3 {
+            color: var(--text-color-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        /* [แก้ไข 2] ปรับ Font หัวข้อให้หนา แต่คะแนนให้เป็นตัวธรรมดา */
+        .result-grid span {
+            font-weight: 700; /* หัวข้อ (ซ้าย) ตัวหนา */
+            color: var(--text-color);
+        }
+
+        .result-grid strong {
+            font-weight: 400; /* คะแนน (ขวา) ตัวธรรมดา */
+            text-align: right;
+            color: var(--primary-color);
+            font-size: 1.1rem; /* เพิ่มขนาดนิดนึงให้อ่านง่าย */
+        }
+
+        /* ปรับปรุง CSS สำหรับ Mobile */
+        @media (max-width: 767px) {
+            .result-comparison {
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+            .results-container {
+                padding: 20px 15px !important;
+            }
+            .result-column {
+                width: 100% !important;
+            }
         }
 
             .explanation h4 {
@@ -535,11 +604,41 @@
             }
         }
 
+        @media (min-width: 768px) {
+            .options-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* --- วาง Code ใหม่ตรงนี้ครับ --- */
+        /* เพิ่มเติม: จัด Layout หน้าผลลัพธ์ให้สวยงามบนจอใหญ่ */
+        @media (min-width: 768px) {
+            .results-container {
+                /* เพิ่ม Margin ด้านบน/ล่าง ให้ดูไม่อึดอัด */
+                margin-top: 2rem;
+                margin-bottom: 2rem;
+            }
+            
+            .result-comparison {
+                /* จัดให้ 2 กล่อง (Current/Best) มีขนาดเท่ากันและขยายเต็มพื้นที่ Container */
+                display: flex;
+                justify-content: center; /* จัดกึ่งกลาง */
+                gap: 2rem;
+            }
+            
+            .result-column {
+                flex: 1; /* แบ่งครึ่งเท่ากัน */
+                max-width: 450px; /* จำกัดความกว้างของแต่ละกล่องไม่ให้ยืดเกินงาม */
+            }
+        }
+
         @media (max-width: 768px) {
             .result-comparison {
                 flex-direction: column;
             }
         }
+        
+        
 
         /* --- Mobile & Tablet Responsive Styles (Fixed) --- */
 
@@ -805,6 +904,25 @@
                 display: none !important;
             }
         }
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -829,8 +947,8 @@
             <div id="header-timer-display" class="header-timer hidden">03:00</div>
 
             <div class="header-buttons">
-                <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Back to Menu</button>
-                <button id="back-to-results-btn" class="btn secondary-btn header-btn hidden">Back to Results</button>
+                <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden">Menu</button>
+                <button id="back-to-results-btn" class="btn secondary-btn header-btn hidden">Results</button>
             </div>
         </div>
     </div>
@@ -895,28 +1013,31 @@
 
             <div id="result-screen" class="screen">
                 <div class="results-container">
-                    <h1 id="result-title" style="font-size: 2.5rem; font-weight: bold; color: var(--primary-color); text-align: center;">Test Complete!</h1>
-                    <div class="result-details">
-                        <div class="result-comparison">
-                            <div class="result-column" id="current-score-column">
-                                <h3>Current Score</h3>
-                                <div class="result-grid">
-                                    <span>Score</span><span id="score-display">N/A</span>
-                                    <span>Accuracy</span><span id="accuracy-display">N/A</span>
-                                    <span id="avg-time-label">Avg. Time / Q</span><span id="avg-time-display">N/A</span>
-                                    <span id="percentile-label">Percentile</span><span id="percentile-display">N/A</span>
-                                </div>
+                    <h1 id="result-title" style="font-size: 2.2rem; font-weight: bold; color: var(--primary-color);">Test Complete!</h1>
+                    
+                    <div class="result-comparison">
+                        <div class="result-column">
+                            <h3>Current Score</h3>
+                            <div class="result-grid">
+                                <span>Score</span><strong id="score-display">N/A</strong>
+                                <span>Accuracy</span><strong id="accuracy-display">N/A</strong>
+                                <span id="avg-time-label">Avg. Time / Q</span><strong id="avg-time-display">N/A</strong>
+                                <span id="rank-label">Rank</span><strong id="rank-display" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                <span id="percentile-label">Percentile</span><strong id="percentile-display">N/A</strong>
                             </div>
-                            <div class="result-column" id="best-score-column">
-                                <h3>Your Best Score</h3>
-                                <div class="result-grid">
-                                    <span>Score</span><span id="best-score-display">N/A</span>
-                                    <span>Accuracy</span><span id="best-accuracy-display">N/A</span>
-                                    <span>Percentile</span><span id="best-percentile-display">N/A</span>
-                                </div>
+                        </div>
+
+                        <div id="best-score-column" class="result-column">
+                            <h3>Your Best Score</h3>
+                            <div class="result-grid">
+                                <span>Score</span><strong id="best-score-display">N/A</strong>
+                                <span>Accuracy</span><strong id="best-accuracy-display">N/A</strong>
+                                <span>Rank</span><strong id="best-rank-display" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
+                                <span>Percentile</span><strong id="best-percentile-display">N/A</strong>
                             </div>
                         </div>
                     </div>
+
                     <div class="action-buttons">
                         <button id="review-button" class="btn secondary-btn">Review Answers</button>
                         <button id="retake-button" class="btn secondary-btn">Back to Menu</button>
@@ -1014,6 +1135,36 @@
             loader = document.getElementById('loader-overlay');
             modal = document.getElementById('confirmModal');
 
+            // ==========================================
+            // 🚀 MOCKUP AUTO-START SYSTEM (FOOLPROOF VERSION)
+            // ==========================================
+            const currentUrl = window.location.href.toLowerCase();
+            const urlParams = new URLSearchParams(window.location.search);
+            window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
+
+            if (window.isMockupMode) {
+                // 1. บังคับซ่อน UI เก่าทั้งหมดทันที (ใช้ !important)
+                if (screens.instruction) screens.instruction.classList.remove('active');
+                
+                const mainHeader = document.querySelector('.header');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                
+                if (appContainer) {
+                    appContainer.style.setProperty('margin-top', '0', 'important');
+                    appContainer.style.setProperty('height', '100vh', 'important');
+                }
+                
+                const loginOverlay = document.getElementById('login-overlay');
+                if (loginOverlay) loginOverlay.style.setProperty('display', 'none', 'important');
+
+                loader.style.display = 'flex';
+
+                // 2. ข้ามระบบ Login แล้วพุ่งเข้าข้อสอบทันที
+                window.addEventListener('load', () => {
+                    startTest();
+                });
+            }
+
             // --- Hamburger Menu Logic ---
             const hamburgerBtn = document.getElementById('hamburger-btn');
             const navOverlay = document.getElementById('nav-overlay');
@@ -1028,6 +1179,8 @@
                 });
                 navOverlay.classList.toggle('active');
             }
+
+            window.toggleMenu = toggleMenu; // ✅ เติมบรรทัดนี้
 
             function closeMenu() {
                 navPanels.forEach(panel => panel.classList.remove('active'));
@@ -1046,16 +1199,18 @@
             }
 
             // --- Auth Logic ---
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    console.log("User found:", user.email);
-                    currentUser = user;
-                    document.getElementById('login-overlay').style.display = 'none';
-                } else {
-                    console.log("No user, showing login");
-                    document.getElementById('login-overlay').style.display = 'flex';
-                }
-            });
+            if (!window.isMockupMode) {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        console.log("User found:", user.email);
+                        currentUser = user;
+                        document.getElementById('login-overlay').style.display = 'none';
+                    } else {
+                        console.log("No user, showing login");
+                        document.getElementById('login-overlay').style.display = 'flex';
+                    }
+                });
+            }
 
             // --- Login Button Logic ---
             const loginBtn = document.getElementById('login-btn');
@@ -1103,6 +1258,16 @@
 
         // --- Helper Functions ---
 
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
+            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
+            return 'var(--primary-color)'; // Tier Low (แดง)
+        }
+
         function resetState() {
             state = {
                 questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0,
@@ -1142,21 +1307,23 @@
             const showBackToResultsBtn = (screenName === 'review');
             document.getElementById('back-to-results-btn').classList.toggle('hidden', !showBackToResultsBtn);
 
-            const isWide = ['quiz', 'review', 'result'].includes(screenName);
-            appContainer.style.maxWidth = isWide ? '1400px' : '600px';
+            // ✅ [แก้ไข] กำหนดความกว้างของกรอบสีขาว แยกตามแต่ละหน้า
+            if (['quiz', 'review'].includes(screenName)) {
+                appContainer.style.maxWidth = '1400px'; // หน้าทำข้อสอบ กับ เฉลย ให้กว้างเต็มจอ
+            } else if (screenName === 'result') {
+                appContainer.style.maxWidth = '900px';  // [แก้ตรงนี้] หน้าสรุปผล ให้กว้างแค่ 900px พอ (จะได้กระชับ)
+            } else {
+                appContainer.style.maxWidth = '600px';  // หน้าอื่นๆ (Start, How to) กว้าง 600px
+            }
         }
 
         function selectAnswer(optionKey) {
             if (state.mode === 'practice' && state.isAnswerChecked) return;
-
             state.userAnswers[state.currentQuestionIndex] = optionKey;
 
-            // ไฮไลท์ข้อที่เลือกในปัจจุบัน
+            // ไฮไลท์ข้อที่เลือกในปัจจุบันทันที
             document.querySelectorAll('#quiz-options-container .option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (opt.dataset.value === optionKey) {
-                    opt.classList.add('selected');
-                }
+                opt.classList.toggle('selected', opt.dataset.value === optionKey);
             });
 
             if (state.mode === 'practice') {
@@ -1164,7 +1331,7 @@
             } else {
                 renderNavPanel();
                 if (state.currentQuestionIndex < state.questions.length - 1) {
-                    // ✅ ใช้การหน่วงเวลาสั้นๆ 250ms แบบ FoldingBox เพื่อความลื่นไหล
+                    // หน่วงเวลา 250ms เพื่อให้ User เห็นว่าเลือกอะไรไป แล้วค่อยเลื่อน (เหมือน FoldingBox)
                     setTimeout(() => {
                         jumpToQuestion(state.currentQuestionIndex + 1);
                     }, 250);
@@ -1233,6 +1400,12 @@
             modal.classList.remove('active');
             if (state.mode !== 'test') return;
             clearInterval(state.quizTimerInterval);
+
+            // ✅ สั่งซ่อนนาฬิกาหน้าหลักทันที
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
             loader.style.display = 'flex';
 
             // ❌ ของเดิม: ใช้ timeLeft (ถ้ารีบกด มันจะยังไม่ลด ทำให้เวลาเป็น 0)
@@ -1258,8 +1431,24 @@
                 }
             });
 
+            const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
+
+            if (window.isMockupMode) {
+                window.parent.postMessage({
+                    type: 'MOCKUP_SUBTEST_COMPLETED',
+                    result: {
+                        score: correctCount,
+                        totalQuestions: state.questions.length,
+                        accuracy: accuracy,
+                        timeUsed: timeUsed,
+                        answers: state.userAnswers
+                    }
+                }, '*');
+                return; // หยุดการทำงานตรงนี้ ส่งคะแนนกลับยานแม่เรียบร้อย
+            }
+
             const scoreData = {
-                email: currentUser.email,
+                email: currentUser ? currentUser.email : 'mockup@tester.com',
                 score: correctCount,
                 total: state.questions.length,
                 attempted: attemptedCount,
@@ -1289,11 +1478,13 @@
 
             document.getElementById('avg-time-label').style.display = 'none';
             document.getElementById('avg-time-display').style.display = 'none';
+            document.getElementById('rank-label').style.display = 'none';
+            document.getElementById('rank-display').style.display = 'none';
             document.getElementById('percentile-label').style.display = 'none';
             document.getElementById('percentile-display').style.display = 'none';
             document.getElementById('best-score-column').style.display = 'none';
             document.getElementById('review-button').style.display = 'none';
-            document.getElementById('retake-button').textContent = 'Back to Menu';
+            document.getElementById('retake-button').textContent = 'Menu';
         }
 
         function showReview() {
@@ -1338,13 +1529,13 @@
 
         function startTimer() {
             const timerDisplay = document.getElementById('timer-display');
-            const headerTimerDisplay = document.getElementById('header-timer-display'); // ✅ NEW
+            const headerTimerDisplay = document.getElementById('header-timer-display');
 
             state.timeLeft = 180;
             const timeStr = formatTime(state.timeLeft);
 
             timerDisplay.textContent = timeStr;
-            headerTimerDisplay.textContent = timeStr; // ✅ Update Header Timer
+            headerTimerDisplay.textContent = timeStr;
 
             timerDisplay.classList.remove('hidden');
 
@@ -1353,13 +1544,25 @@
                 const newTimeStr = formatTime(state.timeLeft);
 
                 timerDisplay.textContent = newTimeStr;
-                headerTimerDisplay.textContent = newTimeStr; // ✅ Update Header Timer
+                headerTimerDisplay.textContent = newTimeStr;
+
+                // ✅ ส่งเวลาไปหน้าหลัก เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                if (window.parent && window.innerWidth <= 1024) {
+                    window.parent.postMessage({
+                        type: 'TICK_TIMER',
+                        timeLeft: newTimeStr,
+                        rawSeconds: state.timeLeft
+                    }, '*');
+                }
 
                 const isDanger = state.timeLeft <= 30;
                 timerDisplay.classList.toggle('danger', isDanger);
-                headerTimerDisplay.classList.toggle('danger', isDanger); // ✅ Update Color
+                headerTimerDisplay.classList.toggle('danger', isDanger);
 
-                if (state.timeLeft <= 0) { finishQuiz(); }
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.quizTimerInterval); // ล้าง interval ก่อนจบ
+                    finishQuiz(); 
+                }
             }, 1000);
         }
 
@@ -1381,7 +1584,7 @@
             const q = state.questions[index];
             const qScreen = screens.quiz;
 
-            // ล้างค่า Focus เก่าออก (ป้องกันกรอบ Focus สี่เหลี่ยมค้าง)
+            // ล้าง Focus เก่า (ป้องกันกรอบ Focus สี่เหลี่ยมสีฟ้าบน Mac/iOS) [cite: 265]
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
             }
@@ -1402,7 +1605,7 @@
             }
 
             const optionsContainer = qScreen.querySelector('#quiz-options-container');
-            optionsContainer.innerHTML = '';
+            optionsContainer.innerHTML = ''; // ล้างทิ้งเพื่อวาดใหม่ทุกครั้ง
 
             ['A', 'B', 'C', 'D'].forEach(key => {
                 const val = q['option' + key];
@@ -1412,8 +1615,7 @@
                     optionEl.dataset.value = key;
                     optionEl.innerHTML = `<div class="option-letter">${key}</div><span>${val}</span>`;
 
-                    // ✅ จุดสำคัญ: จะใส่คลาส selected เฉพาะเมื่อข้อนั้น "มีคำตอบที่เคยเลือกไว้" จริงๆ เท่านั้น
-                    // ถ้าเป็นข้อใหม่ที่ยังไม่เคยทำ state.userAnswers[index] จะเป็น null กรอบจะไม่ขึ้น
+                    // ตรวจสอบว่าข้อนี้ User เคยเลือกไว้หรือไม่ ถ้าไม่มีให้เป็นค่าว่าง (ป้องกันกรอบค้าง) [cite: 274]
                     if (state.userAnswers[index] === key) {
                         optionEl.classList.add('selected');
                     }
@@ -1425,6 +1627,9 @@
 
             updateNavigationControls();
             if (state.mode === 'test') renderNavPanel();
+            
+            // เลื่อนหน้าจอกลับไปด้านบนสุด (กรณีทำใน Tablet/Mobile)
+            window.scrollTo(0, 0);
         }
 
         function handleCheckAnswer() {
@@ -1508,19 +1713,37 @@
             const total = state.questions.length;
             const score = result.current.score;
 
-            // ✅ จุดแก้ที่ 1: รับค่า timeSpent และคำนวณ Avg Time แบบปลอดภัย
+            // ✅ รับค่า timeSpent และคำนวณ Avg Time แบบปลอดภัย
             const timeSpent = Number(result.current.timeSpent) || 0;
             const avgTime = total > 0 ? (timeSpent / total).toFixed(1) : "0.0";
 
-            // แสดงผล
+            // --- Current Ranking & Colors Logic ---
+            const curPercentile = result.current.percentile !== undefined ? Number(result.current.percentile) : 'N/A';
+            const curRank = result.current.rank !== undefined ? result.current.rank : '-';
+            const curTotalUsers = result.current.totalUsers !== undefined ? result.current.totalUsers : '-';
+            const curTierColor = getColorByPercentile(curPercentile);
+
             document.getElementById('score-display').textContent = `${score} / ${total}`;
             document.getElementById('accuracy-display').textContent = `${result.current.accuracy.toFixed(2)}%`;
-            document.getElementById('avg-time-display').textContent = `${avgTime}s`; // ✅ แสดงค่า Avg Time
-            document.getElementById('percentile-display').textContent = `${result.current.percentile}%`;
+            document.getElementById('avg-time-display').textContent = `${avgTime}s`;
+
+            const rankEl = document.getElementById('rank-display');
+            if (rankEl) {
+                rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                rankEl.style.color = curTierColor;
+            }
+
+            const percentileEl = document.getElementById('percentile-display');
+            if (percentileEl) {
+                percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                percentileEl.style.color = curTierColor;
+            }
 
             // เปิดการแสดงผลส่วนต่างๆ
             document.getElementById('avg-time-label').style.display = 'block';
             document.getElementById('avg-time-display').style.display = 'block';
+            document.getElementById('rank-label').style.display = 'block';
+            document.getElementById('rank-display').style.display = 'block';
             document.getElementById('percentile-label').style.display = 'block';
             document.getElementById('percentile-display').style.display = 'block';
             document.getElementById('best-score-column').style.display = 'block';
@@ -1529,7 +1752,24 @@
             if (result.best) {
                 document.getElementById('best-score-display').textContent = `${result.best.score} / ${total}`;
                 document.getElementById('best-accuracy-display').textContent = `${result.best.accuracy.toFixed(2)}%`;
-                document.getElementById('best-percentile-display').textContent = `${result.best.percentile}%`;
+
+                // --- Best Ranking & Colors Logic ---
+                const bestPercentile = result.best.percentile !== undefined ? Number(result.best.percentile) : 'N/A';
+                const bestRank = result.best.rank !== undefined ? result.best.rank : '-';
+                const bestTotalUsers = result.best.totalUsers !== undefined ? result.best.totalUsers : '-';
+                const bestTierColor = getColorByPercentile(bestPercentile);
+
+                const bestRankEl = document.getElementById('best-rank-display');
+                if (bestRankEl) {
+                    bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                    bestRankEl.style.color = bestTierColor;
+                }
+
+                const bestPercentileEl = document.getElementById('best-percentile-display');
+                if (bestPercentileEl) {
+                    bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                    bestPercentileEl.style.color = bestTierColor;
+                }
             }
 
             switchScreen('result');
@@ -1596,6 +1836,26 @@
             document.getElementById('review-prev-button').disabled = state.reviewQuestionIndex === 0;
             document.getElementById('review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
         }
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
     </script>
 </body>
 </html>

@@ -479,6 +479,8 @@
         }
 
         .r-val {
+            display: block;
+            width: 100%;
             text-align: right;
             font-weight: bold;
             color: var(--primary-color);
@@ -639,6 +641,26 @@
             .sidebar-overlay.active {
                 display: block;
             }
+        
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup {
+                padding-top: 0 !important;
+            }
+
+            body.is-mockup .container {
+                height: 100vh !important;
+            }
+
+        }
+
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -654,6 +676,21 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
     </script>
 </head>
 <body>
@@ -666,7 +703,7 @@
         </div>
         <div style="display: flex; align-items: center;">
             <div class="header-timer" id="timerDisplay" style="display: none;">00:00</div>
-            <button id="reviewBackBtn" class="btn btn-primary hidden" style="padding: 5px 15px; font-size: 0.8rem; margin-left: 10px;">Back</button>
+            <button id="reviewBackBtn" class="btn btn-primary hidden" style="padding: 5px 15px; font-size: 0.8rem; margin-left: 10px;">Results</button>
         </div>
     </div>
 
@@ -722,7 +759,7 @@
                 <li style="color: var(--danger-color); margin-top:10px;"><strong>Warning:</strong> Do not skip questions in Test Mode. You must answer sequentially. Skipping results in a FAIL (0 Score).</li>
             </ul>
             <div class="action-buttons">
-                <button onclick="backToStart()" class="btn btn-primary">Back</button>
+                <button onclick="backToStart()" class="btn btn-primary">Menu</button>
             </div>
         </div>
 
@@ -769,6 +806,7 @@
                         <span class="r-label">Accuracy</span><span class="r-val" id="currAcc">N/A</span>
                         <span class="r-label">Avg. Time/Q</span><span class="r-val" id="currAvgTime">N/A</span>
                         <span class="r-label practice-only hidden">Total Time</span><span id="currTotalTime" class="r-val practice-only hidden">N/A</span>
+                        <span class="r-label percentile-row">Rank</span><strong class="r-val percentile-row" id="currRank" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label percentile-row">Percentile</span><span class="r-val percentile-row" id="currPerc">N/A</span>
                     </div>
                 </div>
@@ -777,6 +815,7 @@
                     <div class="result-grid">
                         <span class="r-label">Score</span><span class="r-val" id="bestScore">N/A</span>
                         <span class="r-label">Accuracy</span><span class="r-val" id="bestAcc">N/A</span>
+                        <span class="r-label percentile-row">Rank</span><strong class="r-val percentile-row" id="bestRank" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label">Percentile</span><span class="r-val" id="bestPerc">N/A</span>
                     </div>
                 </div>
@@ -827,6 +866,17 @@
     </div>
 
     <script>
+        
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
+            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
+            return 'var(--primary-color)'; // Tier Low (แดง)
+        }
+
         // --- STATE ---
         let state = {
             userEmail: null,
@@ -865,34 +915,49 @@
 
         overlay.addEventListener('click', closeMenu);
 
-        // --- AUTH ---
-        auth.onAuthStateChanged(async user => {
-            if(user) {
-                state.userEmail = user.email || user.providerData[0]?.email;
-                if (state.userEmail) {
-                     state.userEmail = state.userEmail.trim().toLowerCase();
-                     const parts = state.userEmail.split("@");
-                     if (parts.length === 2 && parts[1] === "gmail.com") {
-                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
-                     }
-                }
-                try {
-                    const res = await fetch("https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess", {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ email: state.userEmail, courseId: 'SCN' })
-                    });
-                    const result = await res.json();
-                    if(result.hasAccess) {
-                        document.getElementById('loader-overlay').classList.add('hidden');
-                    } else {
-                        alert("Access Denied");
-                        window.location.href = '/index.html';
+        // --- AUTO-START MOCKUP & AUTH ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMockup = urlParams.get('mode') === 'mockup';
+
+        if (isMockup) {
+            // ซ่อน UI ที่ไม่จำเป็นสำหรับ iFrame
+            document.getElementById('startScreen').classList.add('hidden');
+            document.querySelector('.header').style.setProperty('display', 'none', 'important');
+            document.body.style.setProperty('padding-top', '0', 'important');
+            
+            // ข้ามการเช็ค Auth และเข้าเกมทันที
+            state.mode = 'test';
+            startGame(urlParams.get('difficulty') || 'normal');
+        } else {
+            // โหมดเล่นปกติ (Standalone) ต้องเช็ค Auth
+            auth.onAuthStateChanged(async user => {
+                if(user) {
+                    state.userEmail = user.email || user.providerData[0]?.email;
+                    if (state.userEmail) {
+                         state.userEmail = state.userEmail.trim().toLowerCase();
+                         const parts = state.userEmail.split("@");
+                         if (parts.length === 2 && parts[1] === "gmail.com") {
+                            state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                         }
                     }
-                } catch(e) { console.error(e); alert("Connection Error"); }
-            } else {
-                window.location.href = '/Auth.html';
-            }
-        });
+                    try {
+                        const res = await fetch("https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess", {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ email: state.userEmail, courseId: 'SCN' })
+                        });
+                        const result = await res.json();
+                        if(result.hasAccess) {
+                            document.getElementById('loader-overlay').classList.add('hidden');
+                        } else {
+                            alert("Access Denied");
+                            window.location.href = '/index.html';
+                        }
+                    } catch(e) { console.error(e); alert("Connection Error"); }
+                } else {
+                    window.location.href = '/Auth.html';
+                }
+            });
+        }
 
         // --- NAVIGATION ---
         function selectMode(m) {
@@ -1065,6 +1130,18 @@
                     if(state.timeLeft <= 0) { clearInterval(state.timerInterval); finishGame(true); return; }
                     timeToShow = state.timeLeft;
                     if(state.timeLeft <= 30) disp.classList.add('danger');
+
+                    // ✅ เพิ่มส่วนนี้: ส่งเวลาไปหน้าหลัก เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                    if (window.parent && window.innerWidth <= 1024) {
+                        const m = Math.floor(timeToShow/60).toString().padStart(2,'0');
+                        const s = (timeToShow%60).toString().padStart(2,'0');
+                        window.parent.postMessage({
+                            type: 'TICK_TIMER',
+                            timeLeft: `${m}:${s}`,
+                            rawSeconds: timeToShow
+                        }, '*');
+                    }
+
                 } else {
                     timeToShow = Math.floor((Date.now() - state.startTime)/1000);
                 }
@@ -1085,6 +1162,12 @@
 
         async function finishGame(timeUp) {
             clearInterval(state.timerInterval);
+
+            // ✅ เพิ่มส่วนนี้: สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
             document.getElementById('loader-overlay').classList.remove('hidden');
 
             let correct = 0;
@@ -1112,6 +1195,22 @@
             const accuracy = answeredCount > 0 ? (correct/answeredCount)*100 : 0;
             const timeUsed = state.mode === 'test' ? (360 - state.timeLeft) : Math.floor((Date.now()-state.startTime)/1000);
 
+            // ✅ ถ้ารันอยู่ใน Mockup ให้ส่งข้อมูลกลับยานแม่ (MockupTest2016.html) ทันที
+            if (isMockup) {
+                window.parent.postMessage({
+                    type: 'MOCKUP_SUBTEST_COMPLETED',
+                    result: {
+                        score: correct,
+                        totalQuestions: total,
+                        accuracy: parseFloat(accuracy.toFixed(2)),
+                        timeUsed: timeUsed,
+                        isFail: isFail
+                    }
+                }, '*');
+                return; // หยุดการทำงานตรงนี้ ไม่ต้องเซฟลง Database แยก และไม่ต้องโชว์หน้า Result
+            }
+
+            // --- โค้ดด้านล่างนี้สำหรับโหมดเล่น Standalone ปกติ ---
             if(state.mode === 'test') {
                 const payload = {
                     correctCount: correct,
@@ -1131,71 +1230,110 @@
                     });
                     const saveJson = await saveRes.json();
 
-                    const bestRes = await fetch(`https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCNScore?email=${state.userEmail}&difficulty=${state.difficulty}`);
-                    const bestJson = await bestRes.json();
-
-                    showResults(payload, saveJson.percentile, bestJson.data);
+                    if (!saveJson.success) throw new Error(saveJson.message || "Failed to save score.");
+                    showResultsObj(saveJson, payload);
                 } catch(e) {
                     console.error(e);
-                    showResults(payload, 'Error', null);
+                    alert("Error saving score: " + e.message);
+                    document.getElementById('loader-overlay').classList.add('hidden');
                 }
             } else {
-                setTimeout(() => showResults({correctCount: correct, accuracy, timeUsed, totalAnswered: answeredCount}, 'N/A', null), 500);
+                // Practice mode (โยนโครงสร้าง Object หลอกๆ ให้ตรงฟังก์ชันใหม่)
+                setTimeout(() => {
+                    showResultsObj({
+                        current: { score: correct, accuracy: accuracy, timeSpent: timeUsed }
+                    }, { timeUsed: timeUsed, totalAnswered: answeredCount, isFail: false }); // แก้ Error ตัวแปร payload not defined
+                }, 500);
             }
         }
 
-        function showResults(curr, percentile, best) {
-            document.getElementById('loader-overlay').classList.add('hidden');
-            document.getElementById('gameScreen').classList.add('hidden');
-
-            document.getElementById('timerDisplay').style.display = 'none';
+        // ฟังก์ชันแสดงผลคะแนนและแรงค์ (รุ่นกันกระสุน 100%)
+        function showResultsObj(resultData, payload) {
+            if(document.getElementById('loader-overlay')) document.getElementById('loader-overlay').classList.add('hidden');
+            if(document.getElementById('gameScreen')) document.getElementById('gameScreen').classList.add('hidden');
+            if(document.getElementById('timerDisplay')) document.getElementById('timerDisplay').style.display = 'none';
 
             const resultsScreen = document.getElementById('resultsScreen');
-            resultsScreen.classList.remove('hidden');
-            document.getElementById('reviewBackBtn').classList.add('hidden');
-
-            if (state.mode !== 'test') {
-                resultsScreen.classList.add('practice-result-card');
-            } else {
-                resultsScreen.classList.remove('practice-result-card');
-            }
+            if(resultsScreen) resultsScreen.classList.remove('hidden');
+            if(document.getElementById('reviewBackBtn')) document.getElementById('reviewBackBtn').classList.add('hidden');
 
             const failBox = document.getElementById('fail-message-box');
-            if(curr.isFail) failBox.classList.remove('hidden'); else failBox.classList.add('hidden');
+            if(failBox) {
+                if (payload && payload.isFail) failBox.classList.remove('hidden');
+                else failBox.classList.add('hidden');
+            }
 
-            document.getElementById('resultsTitle').textContent = state.mode === 'test' ? "Test Results" : "Practice Complete";
+            if(document.getElementById('resultsTitle')) {
+                document.getElementById('resultsTitle').textContent = state.mode === 'test' ? "Test Results" : "Practice Complete";
+            }
 
-            document.getElementById('currScore').textContent = `${curr.correctCount}/${state.questions.length}`;
-            document.getElementById('currAcc').textContent = `${curr.accuracy.toFixed(2)}%`;
+            const m = Math.floor((payload?.timeUsed || 0) / 60).toString().padStart(2, '0');
+            const s = ((payload?.timeUsed || 0) % 60).toString().padStart(2, '0');
+            const avgTime = (payload?.totalAnswered && payload.totalAnswered > 0) ? ((payload.timeUsed || 0) / payload.totalAnswered).toFixed(2) + 's' : '0.00s';
 
-            const m = Math.floor(curr.timeUsed/60).toString().padStart(2,'0');
-            const s = (curr.timeUsed%60).toString().padStart(2,'0');
-
-            const avgTime = curr.totalAnswered > 0 ? (curr.timeUsed/curr.totalAnswered).toFixed(2) + 's' : '0.00s';
-
-            if (state.mode === 'test') {
-                document.getElementById('bestResults').classList.remove('hidden');
-                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
-
-                document.getElementById('currAvgTime').textContent = avgTime;
-                document.getElementById('currPerc').textContent = percentile !== 'N/A' && percentile !== 'Error' ? `${percentile}%` : percentile;
-
-                if(best) {
-                    document.getElementById('bestScore').textContent = `${best.bestScore}/${best.totalQuestions}`;
-                    document.getElementById('bestAcc').textContent = `${best.bestAccuracy.toFixed(2)}%`;
-                    document.getElementById('bestPerc').textContent = `${best.bestPercentile}%`;
-                }
-            } else {
-                document.getElementById('bestResults').classList.add('hidden');
+            if (state.mode === 'practice') {
+                if(resultsScreen) resultsScreen.classList.add('practice-result-card');
+                if(document.getElementById('bestResults')) document.getElementById('bestResults').classList.add('hidden');
                 document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.practice-only').forEach(el => el.classList.remove('hidden'));
 
-                document.getElementById('currAvgTime').textContent = avgTime;
-                document.getElementById('currTotalTime').textContent = `${m}:${s}`;
+                if(document.getElementById('currScore')) document.getElementById('currScore').textContent = `${resultData.current?.score || 0}/${state.questions.length}`;
+                if(document.getElementById('currAcc')) document.getElementById('currAcc').textContent = `${Number(resultData.current?.accuracy || 0).toFixed(2)}%`;
+                if(document.getElementById('currAvgTime')) document.getElementById('currAvgTime').textContent = avgTime;
+                if(document.getElementById('currTotalTime')) document.getElementById('currTotalTime').textContent = `${m}:${s}`;
+            } else {
+                if(resultsScreen) resultsScreen.classList.remove('practice-result-card');
+                if(document.getElementById('bestResults')) document.getElementById('bestResults').classList.remove('hidden');
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
+
+                if (resultData.current) {
+                    if(document.getElementById('currScore')) document.getElementById('currScore').textContent = `${resultData.current.score}/${state.questions.length}`;
+                    if(document.getElementById('currAcc')) document.getElementById('currAcc').textContent = `${Number(resultData.current.accuracy).toFixed(2)}%`;
+                    if(document.getElementById('currAvgTime')) document.getElementById('currAvgTime').textContent = avgTime;
+
+                    const curPercentile = resultData.current.percentile !== undefined ? Number(resultData.current.percentile) : 'N/A';
+                    const curRank = resultData.current.rank !== undefined ? resultData.current.rank : '-';
+                    const curTotalUsers = resultData.current.totalUsers !== undefined ? resultData.current.totalUsers : '-';
+                    const curTierColor = getColorByPercentile(curPercentile);
+
+                    const rankEl = document.getElementById('currRank');
+                    if (rankEl) {
+                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                        rankEl.style.color = curTierColor;
+                    }
+
+                    const percentileEl = document.getElementById('currPerc');
+                    if (percentileEl) {
+                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                        percentileEl.style.color = curTierColor;
+                    }
+                }
+
+                if (resultData.best) {
+                    if(document.getElementById('bestScore')) document.getElementById('bestScore').textContent = `${resultData.best.score}/${state.questions.length}`;
+                    if(document.getElementById('bestAcc')) document.getElementById('bestAcc').textContent = `${Number(resultData.best.accuracy).toFixed(2)}%`;
+
+                    const bestPercentile = resultData.best.percentile !== undefined ? Number(resultData.best.percentile) : 'N/A';
+                    const bestRank = resultData.best.rank !== undefined ? resultData.best.rank : '-';
+                    const bestTotalUsers = resultData.best.totalUsers !== undefined ? resultData.best.totalUsers : '-';
+                    const bestTierColor = getColorByPercentile(bestPercentile);
+
+                    const bestRankEl = document.getElementById('bestRank');
+                    if (bestRankEl) {
+                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                        bestRankEl.style.color = bestTierColor;
+                    }
+
+                    const bestPercentileEl = document.getElementById('bestPerc');
+                    if (bestPercentileEl) {
+                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                        bestPercentileEl.style.color = bestTierColor;
+                    }
+                }
             }
         }
-
+        
         // --- REVIEW ---
         function showReview() {
             document.getElementById('resultsScreen').classList.add('hidden');
@@ -1382,6 +1520,12 @@
                 }
             }
         });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
     </script>
 </body>
 </html>

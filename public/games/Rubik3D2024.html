@@ -3,7 +3,7 @@
 <head>
     <base target="_top">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rubik 3D - Silp Pilot</title>
+    <title>Rubik 3D - 2024</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -380,7 +380,7 @@
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transform: rotateX(-25deg) rotateY(45deg);
+            transform: translateZ(-80px) rotateX(-25deg) rotateY(45deg); /* <--- แก้บรรทัดนี้ */
             transition: transform 0.05s linear;
         }
 
@@ -400,6 +400,8 @@
             border: 1px solid rgba(0,0,0,0.3);
             box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
             opacity: 1.0;
+            backface-visibility: hidden;         /* <--- เพิ่มบรรทัดนี้ */
+            -webkit-backface-visibility: hidden; /* <--- เพิ่มบรรทัดนี้ */
         }
         
         .cf-front { transform: rotateY( 0deg) translateZ(17px); }
@@ -533,8 +535,13 @@
             align-items: center;
             font-size: 0.9rem;
         }
-        .result-grid span:nth-child(odd) { font-weight: 600; }
-        .result-grid span:nth-child(even) { font-weight: bold; text-align: right; }
+        .result-grid > *:nth-child(odd) { font-weight: 600; }
+        .result-grid > *:nth-child(even) { 
+            font-weight: bold; 
+            text-align: right; 
+            display: block; 
+            width: 100%; 
+        }
 
         /* --- 9. MODAL & LOADER --- */
         .modal {
@@ -630,6 +637,46 @@
             
             .results-container .action-buttons { flex-direction: row; }
         }
+
+
+        /* =========================================
+           FIX PC 3D CLIPPING BUG (บังคับใช้แกน 3 มิติทั้งหมด)
+           ========================================= */
+        .puzzle-equation { 
+            transform: scale3d(1.1, 1.1, 1.1) !important; 
+            transform-style: preserve-3d; 
+        }
+        
+        @media (max-width: 599px) {
+            .puzzle-equation { transform: scale3d(0.55, 0.55, 0.55) !important; }
+            .example-section .puzzle-equation { transform: scale3d(0.6, 0.6, 0.6) !important; }
+            .choice-button .cube-container { transform: scale3d(0.55, 0.55, 0.55) !important; }
+        }
+        
+        @media screen and (min-width: 600px) and (max-width: 1024px) and (orientation: portrait) {
+            .puzzle-equation { transform: scale3d(0.85, 0.85, 0.85) !important; }
+            .choice-button .cube-container { transform: scale3d(0.8, 0.8, 0.8) !important; }
+        }
+
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
     </style>
 </head>
 <body data-home-url="index.html">
@@ -646,19 +693,19 @@
     <div id="mainHeader" class="header">
         <div style="display:flex; align-items:center;">
             <button id="hamburgerBtn" class="hamburger-btn">☰</button>
-            <h1>🧊 Rubik 3D</h1>
+            <h1>🧊 Rubik 3D - 2024</h1>
         </div>
 
         <div class="header-buttons">
             <div id="headerTimer" class="header-timer">00:00</div>
-            <button id="backToMenuBtn" class="btn btn-secondary hidden" style="padding: 5px 15px; font-size: 0.8rem;">Back</button>
-            <button id="backToResultsBtn" class="btn btn-primary hidden" style="padding: 5px 15px; font-size: 0.8rem;">Back to Results</button>
+            <button id="backToMenuBtn" class="btn btn-secondary hidden" style="padding: 5px 15px; font-size: 0.8rem;">Menu</button>
+            <button id="backToResultsBtn" class="btn btn-primary hidden" style="padding: 5px 15px; font-size: 0.8rem;">Results</button>
         </div>
     </div>
-
+</body>
     <div class="container">
         <div id="startScreen" class="test-container start-screen-card">
-            <h1>Rubik 3D</h1>
+            <h1>Rubik 3D - 2024</h1>
             <p>Assemble the pieces to complete the 3x3x3 cube.</p>
             <div class="action-buttons">
                 <button id="practiceModeBtn" class="btn btn-secondary">Practice Mode</button>
@@ -688,7 +735,7 @@
             <div id="howToPlayExample" class="example-section"></div>
 
             <div class="action-buttons" style="margin-top: 15px;">
-                <button id="backToStartBtn" class="btn btn-primary">Back</button>
+                <button id="backToStartBtn" class="btn btn-primary">Menu</button>
             </div>
         </div>
 
@@ -734,20 +781,19 @@
                 <div class="result-column">
                     <h3>Current</h3>
                     <div class="result-grid">
-                        <span>Score</span><span id="currentScoreDisplay">N/A</span>
-                        
-                        <span>Accuracy</span><span id="currentAccuracyDisplay">N/A</span>
-                        
+                        <span>Score</span><span id="currentScoreDisplay">N/A</span>                        
+                        <span>Accuracy</span><span id="currentAccuracyDisplay">N/A</span>                       
                         <span>Avg. Time</span><span id="avgTimeDisplay">N/A</span>
+                        <span>Rank</span><strong id="currentRankDisplay" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span>Percentile</span><span id="currentPercentileDisplay">N/A</span>
                     </div>
                 </div>
                 <div class="result-column">
                     <h3>Best</h3>
                     <div class="result-grid">
-                        <span>Score</span><span id="bestScoreDisplay">N/A</span>
-                        
+                        <span>Score</span><span id="bestScoreDisplay">N/A</span>                       
                         <span>Accuracy</span><span id="bestAccuracyDisplay">N/A</span>
+                        <span>Rank</span><strong id="bestRankDisplay" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span>Percentile</span><span id="bestPercentileDisplay">N/A</span>
                     </div>
                 </div>
@@ -773,6 +819,16 @@
     </div>
 
     <script>
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
+            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
+            return 'var(--primary-color)'; // Tier Low (แดง)
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const API_BASE = "https://us-central1-silp-pilot-platform.cloudfunctions.net";
             const TIME_LIMIT = 840;
@@ -793,20 +849,50 @@
 
             let currentUserEmail = null;
 
-            if (typeof firebase !== 'undefined') {
-                const firebaseConfig = {
-                    apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
-                    authDomain: "silp-pilot-platform.firebaseapp.com",
-                    projectId: "silp-pilot-platform"
-                };
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                const auth = firebase.auth();
-                auth.onAuthStateChanged(user => {
-                    if (user) currentUserEmail = user.email || user.providerData[0]?.email;
-                    if (!currentUserEmail) currentUserEmail = "kritsada.wongtiwanon@gmail.com";
+            // ==========================================
+            // 🚀 MOCKUP AUTO-START SYSTEM
+            // ==========================================
+            const currentUrl = window.location.href.toLowerCase();
+            const urlParams = new URLSearchParams(window.location.search);
+            window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
+
+            if (window.isMockupMode) {
+                // โหมด Mockup: บังคับซ่อน Header และเข้าเกมทันที ไม่ต้องรอ Login
+                const startScreen = document.getElementById('startScreen');
+                if (startScreen) startScreen.classList.add('hidden');
+                
+                const mainHeader = document.getElementById('mainHeader');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                
+                const contEl = document.querySelector('.container');
+                if (contEl) {
+                    contEl.style.setProperty('padding-top', '0', 'important'); 
+                    contEl.style.setProperty('height', '100vh', 'important');
+                }
+                
+                document.getElementById('loader-overlay').style.display = 'flex';
+                
+                // เริ่มเกมทันที
+                window.addEventListener('load', () => {
+                    startGame(urlParams.get('difficulty') || 'normal');
                 });
             } else {
-                 currentUserEmail = "kritsada.wongtiwanon@gmail.com";
+                // โหมดเล่นเดี่ยวปกติ: รอเช็ค Login
+                if (typeof firebase !== 'undefined') {
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
+                        authDomain: "silp-pilot-platform.firebaseapp.com",
+                        projectId: "silp-pilot-platform"
+                    };
+                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                    const auth = firebase.auth();
+                    auth.onAuthStateChanged(user => {
+                        if (user) currentUserEmail = user.email || user.providerData[0]?.email;
+                        if (!currentUserEmail) currentUserEmail = "kritsada.wongtiwanon@gmail.com";
+                    });
+                } else {
+                     currentUserEmail = "kritsada.wongtiwanon@gmail.com";
+                }
             }
 
             // --- UI HELPERS ---
@@ -860,6 +946,9 @@
                 sidebar.classList.toggle('active');
                 sidebarOverlay.classList.toggle('active');
             }
+
+            window.toggleMenu = toggleSidebar; // ✅ เติมบรรทัดนี้
+
             hamburger.addEventListener('click', toggleSidebar);
             sidebarOverlay.addEventListener('click', toggleSidebar);
 
@@ -911,11 +1000,16 @@
             }
 
             window.startGame = async (difficulty) => {
+                // [เพิ่มส่วนนี้] ถ้าไม่ใช่โหมด Mockup ค่อยเช็ค Login
+                if (!window.isMockupMode && !currentUserEmail) { 
+                    alert("Please login first"); return; 
+                }
+
                 gameState.difficulty = difficulty;
                 loader.style.display = 'flex';
 
                 try {
-                    const res = await fetch(`${API_BASE}/getRubik3DQuizData?difficulty=${difficulty}`);
+                    const res = await fetch(`${API_BASE}/getRubik3D2024QuizData?difficulty=${difficulty}`);
                     const data = await res.json();
 
                     if (data.success) {
@@ -1052,18 +1146,17 @@
 
             // --- 3D RENDERING LOGIC (FIXED TOUCH SENSITIVITY) ---
             class Rotatable {
-                constructor(element, initX, initY, onUpdate) {
+                constructor(element, initX, initY, onUpdate, isChoice = false) {
                     this.element = element;
                     this.rotX = initX !== undefined ? initX : -25;
                     this.rotY = initY !== undefined ? initY : 45;
                     this.onUpdate = onUpdate;
+                    this.isChoice = isChoice; 
                     
                     this.isDragging = false;
                     this.lastX = 0;
                     this.lastY = 0;
-                    
-                    // [FIX 2] Sensitivity
-                    this.sensitivity = 0.8; // Default PC
+                    this.sensitivity = 0.8;
                     
                     this.init();
                     this.update();
@@ -1079,7 +1172,7 @@
                     window.addEventListener('mouseup', () => this.end());
                     
                     el.addEventListener('touchstart', (e) => {
-                        this.sensitivity = 2.5; // Boost for Touch
+                        this.sensitivity = 2.5; 
                         this.start(e.touches[0].clientX, e.touches[0].clientY);
                     }, {passive: false});
                     window.addEventListener('touchmove', (e) => this.move(e.touches[0].clientX, e.touches[0].clientY), {passive: false});
@@ -1095,12 +1188,10 @@
 
                 move(x, y) {
                     if (!this.isDragging) return;
-                    if(event.type === 'touchmove') event.preventDefault();
+                    if(typeof event !== 'undefined' && event.type === 'touchmove') event.preventDefault();
                     
                     const deltaX = x - this.lastX;
                     const deltaY = y - this.lastY;
-                    
-                    // Use dynamic sensitivity
                     this.rotY += deltaX * this.sensitivity;
                     this.rotX -= deltaY * this.sensitivity;
                     
@@ -1117,7 +1208,10 @@
 
                 update() {
                     const obj = this.element.querySelector('.cube-object');
-                    if (obj) obj.style.transform = `rotateX(${this.rotX}deg) rotateY(${this.rotY}deg)`;
+                    if (obj) {
+                        const scaleStr = this.isChoice ? ' scale3d(0.95, 0.95, 0.95)' : '';
+                        obj.style.transform = `translateZ(-80px) rotateX(${this.rotX}deg) rotateY(${this.rotY}deg)${scaleStr}`;
+                    }
                 }
             }
 
@@ -1125,13 +1219,22 @@
                 const el = document.createElement('div');
                 el.className = 'cubie';
                 const size = 34 * scaleFactor;
-                const x = (cubie.pos.x - 1) * size;
-                const y = (cubie.pos.y - 1) * size;
-                const z = (cubie.pos.z - 1) * size;
-                el.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`;
+                
+                // สำหรับ Rubik3D ตัวดั้งเดิม (มีสี) จะใช้ offset เป็น 2 
+                const is2016 = document.title.includes('2016');
+                const offset = is2016 ? 1 : 2; 
+
+                const x = (cubie.pos.x - offset) * size;
+                const y = (cubie.pos.y - offset) * size;
+                const z = (cubie.pos.z - offset) * size;
+                
+                el.style.transform = `translate3d(${x}px, ${y}px, ${z}px) scale3d(0.98, 0.98, 0.98)`;
+                
+                const faceColorClass = cubie.color ? `color-${cubie.color}` : 'color-base';
+
                 ['front', 'back', 'left', 'right', 'top', 'bottom'].forEach(face => {
                     const f = document.createElement('div');
-                    f.className = `cubie-face cf-${face} color-${cubie.color}`;
+                    f.className = `cubie-face cf-${face} ${faceColorClass}`;
                     el.appendChild(f);
                 });
                 return el;
@@ -1144,8 +1247,8 @@
                 obj.className = 'cube-object';
                 container.appendChild(obj);
                 cubies.forEach(c => { obj.appendChild(createCubieHTML(c)); });
-                if (isChoice) { obj.style.transform += " scale(0.95)"; }
-                new Rotatable(container, initX, initY, onUpdate);
+                
+                new Rotatable(container, initX, initY, onUpdate, isChoice);
                 return container;
             }
 
@@ -1265,9 +1368,24 @@
                     gameState.timeLeft--;
                     const m = Math.floor(gameState.timeLeft / 60);
                     const s = gameState.timeLeft % 60;
-                    timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    const formattedTime = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    
+                    timerEl.textContent = formattedTime;
+
+                    // ✅ เพิ่มส่วนนี้: ส่งเวลาไปหน้าหลัก เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                    if (window.parent && window.innerWidth <= 1024) {
+                        window.parent.postMessage({
+                            type: 'TICK_TIMER',
+                            timeLeft: formattedTime,
+                            rawSeconds: gameState.timeLeft
+                        }, '*');
+                    }
+
                     if (gameState.timeLeft <= 60) timerEl.classList.add('danger');
-                    if (gameState.timeLeft <= 0) { clearInterval(gameState.timer); confirmSubmit(true); }
+                    if (gameState.timeLeft <= 0) { 
+                        clearInterval(gameState.timer); 
+                        confirmSubmit(true); 
+                    }
                 }, 1000);
             }
 
@@ -1293,6 +1411,12 @@
 
             window.confirmSubmit = async (isTimeUp = false) => {
                 if (gameState.timer) clearInterval(gameState.timer);
+                
+                // ✅ เพิ่มส่วนนี้: สั่งซ่อนนาฬิกาหน้าหลักทันที
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+                }
+
                 loader.style.display = 'flex';
 
                 try {
@@ -1305,6 +1429,24 @@
                     const timeUsed = TIME_LIMIT - gameState.timeLeft;
                     const avgTime = timeUsed / totalQ;
 
+                    // ==========================================
+                    // ✅ [เพิ่มส่วนนี้] ส่งคะแนนกลับยานแม่ตอนสอบเสร็จ
+                    // ==========================================
+                    if (window.isMockupMode) {
+                        window.parent.postMessage({
+                            type: 'MOCKUP_SUBTEST_COMPLETED',
+                            result: {
+                                score: correctCount,
+                                totalQuestions: totalQ,
+                                accuracy: accuracy,
+                                timeUsed: timeUsed,
+                                answers: gameState.userAnswers
+                            }
+                        }, '*');
+                        return; // สั่งหยุดตรงนี้ ไม่ต้องเซฟลง Database แยก และไม่ต้องโชว์หน้า Result
+                    }
+                    // ==========================================
+
                     const payload = {
                         userEmail: currentUserEmail,
                         userAnswers: gameState.userAnswers,
@@ -1314,7 +1456,7 @@
                         timeUsed: timeUsed
                     };
 
-                    const res = await fetch(`${API_BASE}/saveRubik3DScore`, {
+                    const res = await fetch(`${API_BASE}/saveRubik3D2024Score`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -1325,43 +1467,73 @@
                     const result = await res.json();
                     if (!result.success) throw new Error(result.error || 'Unknown Error');
 
-                    const safeFixed = (val, digits) => (Number(val) || 0).toFixed(digits);
-
-                    document.getElementById('currentScoreDisplay').textContent = `${correctCount} / ${gameState.questions.length}`;
-                    
-                    // [FIXED] Updated to reference existing elements
-                    if (document.getElementById('currentAccuracyDisplay'))
-                        document.getElementById('currentAccuracyDisplay').textContent = `${safeFixed(accuracy, 2)}%`;
-                    
-                    document.getElementById('avgTimeDisplay').textContent = `${safeFixed(avgTime, 1)}s`;
-                    document.getElementById('currentPercentileDisplay').textContent = `${safeFixed(result.percentile, 2)}%`;
-
-                    try {
-                        const encodedEmail = encodeURIComponent(currentUserEmail);
-                        const bestRes = await fetch(`${API_BASE}/getBestRubik3DScore?email=${encodedEmail}&difficulty=${gameState.difficulty}`);
-                        
-                        if (bestRes.ok) {
-                            const bestData = await bestRes.json();
-                            if (bestData.success && bestData.data) {
-                                document.getElementById('bestScoreDisplay').textContent = `${bestData.data.bestScore} / ${bestData.data.totalQuestions}`;
-                                if (document.getElementById('bestAccuracyDisplay'))
-                                    document.getElementById('bestAccuracyDisplay').textContent = `${safeFixed(bestData.data.bestAccuracy, 2)}%`;
-                                document.getElementById('bestPercentileDisplay').textContent = `${safeFixed(bestData.data.bestPercentile, 2)}%`;
-                            } else {
-                                document.getElementById('bestScoreDisplay').textContent = "-";
-                                if (document.getElementById('bestAccuracyDisplay'))
-                                    document.getElementById('bestAccuracyDisplay').textContent = "-";
-                                document.getElementById('bestPercentileDisplay').textContent = "-";
-                            }
-                        }
-                    } catch (bestErr) {
-                        console.warn("Failed to fetch best score:", bestErr);
-                    }
-
+                    // ============================================
+                    // อัปเดตหน้าจอโดยอิงจาก JSON รูปแบบใหม่ (กันกระสุน 100%)
+                    // ============================================
                     document.getElementById('reviewBtn').classList.remove('hidden');
                     document.getElementById('practiceResults').classList.add('hidden');
                     document.getElementById('testResults').classList.remove('hidden');
-                    document.getElementById('resultsTitle').textContent = isTimeUp ? "Time's Up!" : "Quiz Results";
+                    document.getElementById('resultsTitle').textContent = isTimeUp ? "Time's Up!" : "Test Complete!";
+                    
+                    const totalQs = gameState.questions.length;
+                    const cScore = document.getElementById('currentScoreDisplay');
+                    if(cScore) cScore.textContent = `${result.current.score} / ${totalQs}`;
+                    
+                    const cAcc = document.getElementById('currentAccuracyDisplay');
+                    if(cAcc) cAcc.textContent = `${Number(result.current.accuracy).toFixed(2)}%`;
+                    
+                    const avgT = document.getElementById('avgTimeDisplay');
+                    const answeredCount = gameState.userAnswers.filter(a => a !== null && a !== undefined && a.length > 0).length;
+                    if(avgT) avgT.textContent = `${answeredCount > 0 ? (timeUsed / answeredCount).toFixed(2) : 0}s`;
+
+                    const curPercentile = result.current.percentile !== undefined ? Number(result.current.percentile) : 'N/A';
+                    const curRank = result.current.rank !== undefined ? result.current.rank : '-';
+                    const curTotalUsers = result.current.totalUsers !== undefined ? result.current.totalUsers : '-';
+                    const curTierColor = getColorByPercentile(curPercentile);
+
+                    const rankEl = document.getElementById('currentRankDisplay');
+                    if (rankEl) {
+                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                        rankEl.style.color = curTierColor;
+                    }
+
+                    const percentileEl = document.getElementById('currentPercentileDisplay');
+                    if (percentileEl) {
+                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                        percentileEl.style.color = curTierColor;
+                    }
+
+                    if (result.best) {
+                        const bScore = document.getElementById('bestScoreDisplay');
+                        if(bScore) bScore.textContent = `${result.best.score} / ${totalQs}`;
+                        
+                        const bAcc = document.getElementById('bestAccuracyDisplay');
+                        if(bAcc) bAcc.textContent = `${Number(result.best.accuracy).toFixed(2)}%`;
+
+                        const bestPercentile = result.best.percentile !== undefined ? Number(result.best.percentile) : 'N/A';
+                        const bestRank = result.best.rank !== undefined ? result.best.rank : '-';
+                        const bestTotalUsers = result.best.totalUsers !== undefined ? result.best.totalUsers : '-';
+                        const bestTierColor = getColorByPercentile(bestPercentile);
+
+                        const bestRankEl = document.getElementById('bestRankDisplay');
+                        if (bestRankEl) {
+                            bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                            bestRankEl.style.color = bestTierColor;
+                        }
+
+                        const bestPercentileEl = document.getElementById('bestPercentileDisplay');
+                        if (bestPercentileEl) {
+                            bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                            bestPercentileEl.style.color = bestTierColor;
+                        }
+                        
+                        const bestCol = document.getElementById('best-score-column');
+                        if(bestCol) bestCol.style.display = 'block';
+                    } else {
+                        const bestCol = document.getElementById('best-score-column');
+                        if(bestCol) bestCol.style.display = 'none';
+                    }
+
                     switchScreen('results');
 
                 } catch (e) {
@@ -1372,6 +1544,26 @@
                 }
             };
         });
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
+        }
+
     </script>
 </body>
 </html>

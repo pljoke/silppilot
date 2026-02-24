@@ -39,9 +39,17 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
-            padding-top: 80px;
+            padding-top: 80px; /* ปกติเผื่อไว้ให้ Header */
             overflow: hidden;
             overscroll-behavior: none;
+        }
+        
+        /* [ซ่อน Header ซ้ำซ้อน และดันกระดานขึ้นไปเมื่อเป็น Mockup] */
+        .mockup-active body {
+            padding-top: 10px !important;
+        }
+        .mockup-active .main-container {
+            height: 95vh !important;
         }
 
         /* [Fix 5] Landscape Lock Overlay - Expanded coverage for Tablets */
@@ -522,6 +530,8 @@
         }
 
         .r-value {
+            display: block;
+            width: 100%;
             font-weight: 800;
             text-align: right;
             color: var(--primary-color);
@@ -825,6 +835,25 @@
             }
         }
 
+        /* =========================================
+           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ========================================= */
+        @media (max-width: 1024px) {
+
+            body.is-mockup .header {
+                display: none !important;
+            }
+
+            body.is-mockup .container {
+                padding-top: 10px !important;
+                height: 100vh !important;
+            }
+
+            body.is-mockup .test-container {
+                margin-top: 0 !important;
+            }
+        }
+
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -857,7 +886,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <div id="mobileTimer" class="header-timer">00:00</div>
-            <button id="headerBackBtn" class="btn btn-primary hidden" onclick="backToResults()" style="padding: 5px 15px; font-size: 0.9rem; margin-right: 0;">Back</button>
+            <button id="headerBackBtn" class="btn btn-primary hidden" onclick="backToResults()" style="padding: 5px 15px; font-size: 0.9rem; margin-right: 0;">Results</button>
         </div>
     </div>
 
@@ -901,7 +930,7 @@
                 <p style="margin-top: 10px; text-align: center;">Find the Triangle with number 5. Answer is <strong>C</strong>.</p>
             </div>
 
-            <button onclick="backToMenu()" class="btn btn-primary">Back</button>
+            <button onclick="backToMenu()" class="btn btn-primary">Menu</button>
         </div>
 
         <div id="difficulty-screen" class="panel-content panel-menu hidden">
@@ -941,6 +970,7 @@
                         <span class="r-label">Accuracy</span><span id="current-accuracy-text" class="r-value">N/A</span>
                         <span class="r-label">Avg. Time / Q</span><span id="avg-time-text" class="r-value">N/A</span>
                         <span class="r-label practice-only hidden">Total Time</span><span id="total-time-text" class="r-value practice-only hidden">N/A</span>
+                        <span class="r-label percentile-row hidden">Rank</span><strong id="current-rank-text" class="r-value percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label percentile-row hidden">Percentile</span><span id="current-percentile-text" class="r-value percentile-row hidden">N/A</span>
                     </div>
                 </div>
@@ -949,6 +979,7 @@
                     <div class="result-grid">
                         <span class="r-label">Score</span><span id="best-score-text" class="r-value">N/A</span>
                         <span class="r-label">Accuracy</span><span id="best-accuracy-text" class="r-value">N/A</span>
+                        <span class="r-label percentile-row hidden">Rank</span><strong id="best-rank-text" class="r-value percentile-row hidden" style="font-size: 1.5rem; font-weight: 900;">N/A</strong>
                         <span class="r-label">Percentile</span><span id="best-percentile-text" class="r-value">N/A</span>
                     </div>
                 </div>
@@ -999,7 +1030,7 @@
                 <h3>Review Answers</h3>
                 <div id="review-list">
                 </div>
-                <button onclick="backToResults()" class="btn btn-primary" style="margin-top: 1rem;">Back to Results</button>
+                <button onclick="backToResults()" class="btn btn-primary" style="margin-top: 1rem;">Results</button>
             </div>
         </div>
     </div>
@@ -1016,6 +1047,10 @@
     </div>
 
     <script>
+        // For Mockup Test
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMockup = urlParams.get('mode') === 'mockup';
+        // End for Mockup Test
         const SHAPE_MAP = { 'triangle': '△', 'square': '□', 'circle': '○', 'pentagon': '⬠', 'hexagon': '⬡', 'octagon': '🛑' };
         const TOTAL_QUESTIONS = 40;
         const TIME_LIMIT = 360;
@@ -1048,39 +1083,68 @@
         overlay.addEventListener('click', toggleMobileMenu);
 
         const loader = document.getElementById('loader-overlay');
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                state.userEmail = user.email || user.providerData[0]?.email;
-                if (state.userEmail) {
-                    state.userEmail = state.userEmail.trim().toLowerCase();
-                    const parts = state.userEmail.split("@");
-                    if (parts.length === 2 && parts[1] === "gmail.com") {
-                        state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+        
+        // ==========================================
+        // 🚀 MOCKUP AUTO-START SYSTEM (FOOLPROOF VERSION)
+        // ==========================================
+        const currentUrl = window.location.href.toLowerCase();
+        window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
+
+        if (window.isMockupMode) {
+            // โหมด Mockup: บังคับซ่อน Header และเข้าเกมทันที ไม่ต้องรอ Login
+            document.addEventListener("DOMContentLoaded", () => {
+                document.body.classList.add('mockup-active'); // เติม Class ให้ CSS จัดการ
+                document.getElementById('center-container').classList.add('hidden');
+                
+                const mainHeader = document.getElementById('mainHeader');
+                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+                
+                document.body.style.setProperty('padding-top', '0', 'important'); // ดันกระดานขึ้น
+                loader.style.display = 'flex';
+            });
+            
+            // รอโหลดเสร็จแล้วพุ่งเข้าเกมเลย
+            window.addEventListener('load', () => {
+                state.mode = 'quiz';
+                state.difficulty = urlParams.get('difficulty') || 'normal';
+                startGame();
+            });
+        } else {
+            // โหมดเล่นเดี่ยวปกติ: รอเช็ค Login
+            auth.onAuthStateChanged(async user => {
+                if (user) {
+                    state.userEmail = user.email || user.providerData[0]?.email;
+                    if (state.userEmail) {
+                        state.userEmail = state.userEmail.trim().toLowerCase();
+                        const parts = state.userEmail.split("@");
+                        if (parts.length === 2 && parts[1] === "gmail.com") {
+                            state.userEmail = parts[0].replace(/\./g, "") + "@gmail.com";
+                        }
                     }
-                }
-                try {
-                    const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
-                    const response = await fetch(checkAccessUrl, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: state.userEmail, courseId: 'scs' })
-                    });
-                    const result = await response.json();
-                    if (result.hasAccess) {
-                        loader.classList.add('hidden');
-                        document.getElementById('mainHeader').classList.remove('hidden');
-                    } else {
-                        alert(`Access Denied: ${result.reason}. Redirecting...`);
+                    try {
+                        const checkAccessUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/checkUserAccess";
+                        const response = await fetch(checkAccessUrl, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: state.userEmail, courseId: 'scs' })
+                        });
+                        const result = await response.json();
+                        if (result.hasAccess) {
+                            loader.classList.add('hidden');
+                            document.getElementById('mainHeader').classList.remove('hidden');
+                        } else {
+                            alert(`Access Denied: ${result.reason}. Redirecting...`);
+                            window.location.href = '/index.html';
+                        }
+                    } catch (error) {
+                        console.error("Auth Error:", error);
+                        alert("Connection Error. Redirecting...");
                         window.location.href = '/index.html';
                     }
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                    alert("Connection Error. Redirecting...");
-                    window.location.href = '/index.html';
+                } else {
+                    window.location.href = '/Auth.html';
                 }
-            } else {
-                window.location.href = '/Auth.html';
-            }
-        });
+            });
+        }
 
         function setMode(mode) {
             state.mode = mode;
@@ -1340,8 +1404,11 @@
                 const now = Date.now();
                 const elapsed = Math.floor((now - state.startTime) / 1000);
                 let timeText = "";
+                let remainSeconds = 0;
+
                 if (state.mode === 'quiz') {
                     const remain = TIME_LIMIT - elapsed;
+                    remainSeconds = remain;
                     if (remain <= 0) {
                         clearInterval(state.timerInterval);
                         finishGame(true);
@@ -1362,6 +1429,15 @@
                 }
                 display.innerText = timeText;
                 mobileDisplay.innerText = timeText;
+
+                // ✅ เพิ่มส่วนนี้: ส่งเวลาไปหน้าหลัก เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
+                if (window.parent && window.innerWidth <= 1024 && state.mode === 'quiz') {
+                    window.parent.postMessage({
+                        type: 'TICK_TIMER',
+                        timeLeft: timeText,
+                        rawSeconds: remainSeconds
+                    }, '*');
+                }
             }, 1000);
         }
 
@@ -1369,6 +1445,12 @@
 
         async function finishGame(timeUp) {
             clearInterval(state.timerInterval);
+
+            // ✅ เพิ่มส่วนนี้: สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
+
             loader.classList.remove('hidden');
             let isFailBySkip = false;
             if (state.mode === 'quiz') {
@@ -1388,9 +1470,27 @@
             const timeUsed = Math.floor((Date.now() - state.startTime) / 1000);
 
             if (state.mode === 'quiz') {
+                const finalTimeUsed = (timeUsed > TIME_LIMIT ? TIME_LIMIT : timeUsed);
+
+                // [ส่งคะแนนกลับยานแม่ตอนสอบเสร็จ]
+                if (window.isMockupMode) {
+                    window.parent.postMessage({
+                        type: 'MOCKUP_SUBTEST_COMPLETED',
+                        result: {
+                            score: isFailBySkip ? 0 : correct, // กฎห้ามข้าม ถ้าข้ามให้ 0 คะแนนเลย
+                            totalQuestions: TOTAL_QUESTIONS,
+                            accuracy: parseFloat(accuracy.toFixed(2)),
+                            timeUsed: finalTimeUsed,
+                            answers: state.userAnswers,
+                            isFail: isFailBySkip // ✅ เพิ่มบรรทัดนี้ เพื่อส่งสถานะข้ามข้อไปบอก Mockup
+                        }
+                    }, '*');
+                    return; // สั่งหยุดตรงนี้ ไม่ต้องส่งขึ้น Firebase แยก
+                }
+
                 const scoreData = {
                     score: correct, questionsAnswered: answered, accuracy: parseFloat(accuracy.toFixed(2)),
-                    timeUsed: (timeUsed > TIME_LIMIT ? TIME_LIMIT : timeUsed),
+                    timeUsed: finalTimeUsed,
                     isFail: isFailBySkip, difficulty: state.difficulty, userEmail: state.userEmail
                 };
                 try {
@@ -1400,61 +1500,120 @@
                         body: JSON.stringify(scoreData)
                     });
                     const json = await res.json();
-                    const bestUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/getBestSCSScore";
-                    const resBest = await fetch(`${bestUrl}?email=${state.userEmail}&difficulty=${state.difficulty}`);
-                    const jsonBest = await resBest.json();
-                    showResults(scoreData, json.percentile, jsonBest.data, isFailBySkip);
+                    
+                    if (!json.success) throw new Error(json.message || "Failed to save score");
+                    
+                    showResultsObj(json, scoreData);
                 } catch (e) {
                     console.error(e);
-                    showResults(scoreData, 'Error', null, isFailBySkip);
+                    alert("Error saving score: " + e.message);
+                    loader.classList.add('hidden');
                 }
             } else {
                 setTimeout(() => {
-                    showResults({ score: correct, accuracy: accuracy, timeUsed: timeUsed }, 'N/A', null, false);
+                    showResultsObj({
+                        current: { score: correct, accuracy: accuracy, timeSpent: timeUsed }
+                    }, { timeUsed: timeUsed, totalAnswered: answered, isFail: false });
                 }, 500);
             }
         }
 
-        function showResults(current, percentile, best, isFail = false) {
-            const answered = state.userAnswers.filter(x => x).length;
-            document.getElementById('instruction-screen').classList.add('hidden');
-            document.getElementById('game-container').classList.add('hidden');
-            document.getElementById('center-container').classList.remove('hidden');
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1
+            if (p >= 90) return '#166534'; // Tier Top 10
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal
+            return 'var(--primary-color)'; // Tier Low
+        }
 
-            document.getElementById('mobileTimer').classList.remove('active');
+        // ฟังก์ชันแสดงผลคะแนนและแรงค์ (รุ่นกันกระสุน 100%)
+        function showResultsObj(resultData, payload) {
+            if(document.getElementById('instruction-screen')) document.getElementById('instruction-screen').classList.add('hidden');
+            if(document.getElementById('game-container')) document.getElementById('game-container').classList.add('hidden');
+            if(document.getElementById('center-container')) document.getElementById('center-container').classList.remove('hidden');
+            if(document.getElementById('mobileTimer')) document.getElementById('mobileTimer').classList.remove('active');
 
             const resultsScreen = document.getElementById('results-screen');
-            resultsScreen.classList.remove('hidden');
-            const failBox = document.getElementById('fail-message-box');
-            if (isFail) { failBox.classList.remove('hidden'); } else { failBox.classList.add('hidden'); }
+            if(resultsScreen) resultsScreen.classList.remove('hidden');
 
-            if (state.mode !== 'quiz') {
-                resultsScreen.classList.add('practice-result-card');
-                failBox.classList.add('hidden');
-            } else {
-                resultsScreen.classList.remove('practice-result-card');
+            const failBox = document.getElementById('fail-message-box');
+            if(failBox) {
+                if (payload && payload.isFail) failBox.classList.remove('hidden');
+                else failBox.classList.add('hidden');
             }
-            document.getElementById('results-title').innerText = state.mode === 'quiz' ? "Quiz Results" : "Practice Finished";
-            document.getElementById('current-score-text').innerText = `${current.score || current.correctCount || 0}/40`;
-            document.getElementById('current-accuracy-text').innerText = `${(current.accuracy || 0).toFixed(2)}%`;
-            document.getElementById('avg-time-text').innerText = `${answered > 0 ? (current.timeUsed / answered).toFixed(2) : 0}s`;
-            document.getElementById('current-percentile-text').innerText = (percentile === -1 || percentile === 'N/A') ? 'N/A' : percentile + '%';
-            if (state.mode === 'quiz' && best) {
-                document.getElementById('best-score-column').classList.remove('hidden');
-                document.getElementById('best-score-text').innerText = `${best.bestScore}/40`;
-                document.getElementById('best-accuracy-text').innerText = `${best.bestAccuracy.toFixed(2)}%`;
-                document.getElementById('best-percentile-text').innerText = `${best.bestPercentile}%`;
+
+            if(document.getElementById('results-title')) {
+                document.getElementById('results-title').textContent = state.mode === 'quiz' ? "Test Complete!" : "Practice Finished";
+            }
+
+            const m = Math.floor((payload?.timeUsed || 0) / 60).toString().padStart(2, '0');
+            const s = ((payload?.timeUsed || 0) % 60).toString().padStart(2, '0');
+            const avgTime = (payload?.totalAnswered && payload.totalAnswered > 0) ? ((payload.timeUsed || 0) / payload.totalAnswered).toFixed(2) + 's' : '0.00s';
+
+            if (state.mode === 'practice') {
+                if(resultsScreen) resultsScreen.classList.add('practice-result-card');
+                if(document.getElementById('best-score-column')) document.getElementById('best-score-column').classList.add('hidden');
+                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.practice-only').forEach(el => el.classList.remove('hidden'));
+
+                if(document.getElementById('current-score-text')) document.getElementById('current-score-text').textContent = `${resultData.current?.score || 0}/${TOTAL_QUESTIONS}`;
+                if(document.getElementById('current-accuracy-text')) document.getElementById('current-accuracy-text').textContent = `${Number(resultData.current?.accuracy || 0).toFixed(2)}%`;
+                if(document.getElementById('avg-time-text')) document.getElementById('avg-time-text').textContent = avgTime;
+                if(document.getElementById('total-time-text')) document.getElementById('total-time-text').textContent = `${m}:${s}`;
+            } else {
+                if(resultsScreen) resultsScreen.classList.remove('practice-result-card');
+                if(document.getElementById('best-score-column')) document.getElementById('best-score-column').classList.remove('hidden');
                 document.querySelectorAll('.percentile-row').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.practice-only').forEach(el => el.classList.add('hidden'));
-            } else {
-                document.getElementById('best-score-column').classList.add('hidden');
-                document.querySelectorAll('.percentile-row').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.practice-only').forEach(el => {
-                    el.classList.remove('hidden');
-                    if (el.id === 'total-time-text') el.innerText = `${Math.floor(current.timeUsed / 60).toString().padStart(2, '0')}:${(current.timeUsed % 60).toString().padStart(2, '0')}`;
-                });
+
+                if (resultData.current) {
+                    if(document.getElementById('current-score-text')) document.getElementById('current-score-text').textContent = `${resultData.current.score}/${TOTAL_QUESTIONS}`;
+                    if(document.getElementById('current-accuracy-text')) document.getElementById('current-accuracy-text').textContent = `${Number(resultData.current.accuracy).toFixed(2)}%`;
+                    if(document.getElementById('avg-time-text')) document.getElementById('avg-time-text').textContent = avgTime;
+
+                    const curPercentile = resultData.current.percentile !== undefined ? Number(resultData.current.percentile) : 'N/A';
+                    const curRank = resultData.current.rank !== undefined ? resultData.current.rank : '-';
+                    const curTotalUsers = resultData.current.totalUsers !== undefined ? resultData.current.totalUsers : '-';
+                    const curTierColor = getColorByPercentile(curPercentile);
+
+                    const rankEl = document.getElementById('current-rank-text');
+                    if (rankEl) {
+                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                        rankEl.style.color = curTierColor;
+                    }
+
+                    const percentileEl = document.getElementById('current-percentile-text');
+                    if (percentileEl) {
+                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                        percentileEl.style.color = curTierColor;
+                    }
+                }
+
+                if (resultData.best) {
+                    if(document.getElementById('best-score-text')) document.getElementById('best-score-text').textContent = `${resultData.best.score}/${TOTAL_QUESTIONS}`;
+                    if(document.getElementById('best-accuracy-text')) document.getElementById('best-accuracy-text').textContent = `${Number(resultData.best.accuracy).toFixed(2)}%`;
+
+                    const bestPercentile = resultData.best.percentile !== undefined ? Number(resultData.best.percentile) : 'N/A';
+                    const bestRank = resultData.best.rank !== undefined ? resultData.best.rank : '-';
+                    const bestTotalUsers = resultData.best.totalUsers !== undefined ? resultData.best.totalUsers : '-';
+                    const bestTierColor = getColorByPercentile(bestPercentile);
+
+                    const bestRankEl = document.getElementById('best-rank-text');
+                    if (bestRankEl) {
+                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                        bestRankEl.style.color = bestTierColor;
+                    }
+
+                    const bestPercentileEl = document.getElementById('best-percentile-text');
+                    if (bestPercentileEl) {
+                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                        bestPercentileEl.style.color = bestTierColor;
+                    }
+                }
             }
-            loader.classList.add('hidden');
+            if(loader) loader.classList.add('hidden');
         }
 
         function showReview() {
@@ -1514,6 +1673,25 @@
                 document.getElementById('hamburgerBtn').classList.remove('hidden');
                 document.getElementById('headerBackBtn').classList.add('hidden');
             }
+        }
+
+        // ==========================================
+        // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
+        // ==========================================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TOGGLE_MENU') {
+                // เรียกใช้ฟังก์ชันเปิดเมนูที่มีอยู่แล้วในไฟล์วิชานั้นๆ
+                if (typeof toggleMenu === 'function') {
+                    toggleMenu(); 
+                } else if (typeof toggleMobileMenu === 'function') {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // ✅ ระบบตรวจสอบ Mockup Mode
+        if (window.self !== window.top) { 
+            document.body.classList.add('is-mockup'); 
         }
 
     </script>

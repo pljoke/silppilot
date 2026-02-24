@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>General Science Quiz</title>
+    <title>Series Picture Test</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -30,7 +30,8 @@
             box-sizing: border-box;
             /* เพิ่มส่วนนี้: ทำให้ฟีลลิ่งการกดเหมือนแอป Native */
             -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none; /* ห้ามเลือก Text */
+            -webkit-user-select: none;
+            /* ห้ามเลือก Text */
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
@@ -97,7 +98,7 @@
             padding: 20px;
             flex-grow: 1;
             display: flex;
-            align-items: flex-start; /* ✅ เปลี่ยนเป็น flex-start */
+            align-items: flex-start; /* ✅ เปลี่ยนจาก center เป็น flex-start เพื่อให้ Scroll ได้ */
             justify-content: center;
         }
 
@@ -108,7 +109,7 @@
             box-shadow: 0 10px 30px rgba(139,69,19,0.1);
             border: 1px solid #E8DDD4;
             width: 100%;
-            margin: 20px auto 40px auto; /* ✅ เพิ่มระยะห่างบน-ล่าง */
+            margin: 20px auto 40px auto; /* ✅ เพิ่มระยะห่างบน-ล่าง ให้กล่องไม่ชิดขอบจอเกินไป */
         }
 
         .screen {
@@ -446,7 +447,7 @@
             padding: 1.5rem;
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            background: var(--background-color-dark); /* สีเบจเข้มแบบ APR */
+            background: var(--background-color-dark);
             text-align: left;
         }
 
@@ -521,13 +522,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (min-width: 768px) {
@@ -635,9 +631,6 @@
         RESPONSIVE DESIGN (แยก Mobile / Tablet)
         ========================================= */
 
-        /* =========================================
-           1. MAIN HEADER (Fixed Top like FoldingBox)
-           ========================================= */
         .main-header {
             display: flex;
             justify-content: space-between;
@@ -647,10 +640,10 @@
             border-bottom: 2px solid var(--primary-color);
             height: 60px;
             width: 100%;
-            position: fixed; /* Fix ติดบนสุด */
+            position: fixed;
             top: 0;
             left: 0;
-            z-index: 2000; /* Layer สูงสุด ทับทุกอย่าง */
+            z-index: 2000;
         }
 
         .header-left {
@@ -670,7 +663,7 @@
             font-family: monospace;
             font-size: 1.2rem;
             font-weight: bold;
-            color: var(--primary-color); /* สีเดียวกับ Theme */
+            color: var(--primary-color);
             background: transparent;
             padding: 0;
         }
@@ -683,7 +676,7 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
-            z-index: 2001; /* สูงกว่า Header */
+            z-index: 2001;
         }
 
             .hamburger-btn div {
@@ -693,21 +686,16 @@
                 border-radius: 2px;
             }
 
-        /* Container หลัก (เว้นที่ให้ Header) */
         .container {
             margin-top: 60px;
             height: calc(100vh - 60px);
             width: 100%;
-            overflow-y: auto; /* ✅ เปลี่ยนเป็น overflow-y: auto */
+            overflow-y: auto; /* ✅ แก้จาก hidden เป็น auto เพื่อให้ Desktop สามารถ Scroll ลงได้ */
             position: relative;
             z-index: 1;
         }
 
-        /* =========================================
-           2. MOBILE (< 768px) - Compact Mode
-           ========================================= */
         @media (max-width: 767.98px) {
-            /* 1. แก้หน้าเลือก Mode ตัวใหญ่เกินไป */
             #instruction-screen h1 {
                 font-size: 1.5rem !important;
                 margin-bottom: 1rem;
@@ -722,12 +710,10 @@
                 font-size: 0.95rem;
             }
 
-            /* 2. ซ่อน Sidebar และ Header เก่า */
             #nav-panel, .header, #review-nav-panel {
                 display: none !important;
             }
 
-            /* 3. ปรับ Layout ให้เต็มจอ และ Scroll ได้ */
             .quiz-layout, .review-layout {
                 display: flex;
                 flex-direction: column;
@@ -737,15 +723,14 @@
             }
 
             .question-content {
-                flex: 1; /* ยืดเต็มพื้นที่ */
+                flex: 1;
                 padding: 15px;
-                overflow-y: auto; /* <--- หัวใจสำคัญ: ให้ Scroll ได้ */
+                overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                padding-bottom: 80px; /* เผื่อที่ให้ปุ่มด้านล่าง */
+                padding-bottom: 80px;
                 width: 100%;
             }
 
-            /* 4. ลดขนาด Font และรูปภาพ */
             #quiz-question-number, #review-question-number {
                 font-size: 0.85rem !important;
                 color: #888;
@@ -753,7 +738,7 @@
             }
 
             #question-text, #review-question-text {
-                font-size: 0.95rem !important; /* ปรับขนาดตัวอักษรโจทย์ตรงนี้ */
+                font-size: 0.95rem !important;
                 line-height: 1.4;
                 margin-bottom: 15px;
             }
@@ -764,10 +749,9 @@
                 display: block;
             }
 
-            /* 5. ปุ่มตัวเลือก */
             .options-container {
                 display: grid;
-                grid-template-columns: 1fr; /* แก้เป็น 1fr ให้เต็มจอ อ่านง่ายขึ้น */
+                grid-template-columns: 1fr;
                 gap: 8px;
                 width: 100%;
             }
@@ -778,7 +762,6 @@
                 padding: 5px;
             }
 
-            /* 6. ปุ่ม Navigation ด้านล่าง */
             .navigation-controls {
                 margin-top: 20px;
                 display: flex;
@@ -792,7 +775,6 @@
                     font-size: 0.9rem;
                 }
 
-            /* 7. หน้า Result */
             #result-screen {
                 padding: 1rem;
                 overflow-y: auto;
@@ -803,16 +785,11 @@
                 }
         }
 
-        /* =========================================
-           3. TABLET PORTRAIT (768px - 1024px)
-           ========================================= */
         @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-            /* 1. ซ่อน Sidebar */
             #nav-panel, #review-nav-panel {
                 display: none !important;
             }
 
-            /* 2. ปรับ Layout ให้เหมือน Mobile แต่ใหญ่กว่า */
             .quiz-layout, .review-layout {
                 display: flex;
                 flex-direction: column;
@@ -823,12 +800,11 @@
 
             .question-content {
                 flex: 1;
-                padding: 2rem; /* เพิ่ม Padding ให้ไม่ชิดขอบจอเกินไป */
-                overflow-y: auto; /* ให้ Scroll ได้ */
+                padding: 2rem;
+                overflow-y: auto;
                 width: 100%;
             }
 
-            /* 3. Font Size Tablet (พอดีสายตา) */
             #question-text, #review-question-text {
                 font-size: 1.25rem !important;
                 line-height: 1.6;
@@ -848,14 +824,12 @@
                 font-size: 1.1rem !important;
             }
 
-            /* ปุ่ม Navigation */
             .navigation-controls .btn {
                 padding: 12px;
                 font-size: 1.1rem;
             }
         }
 
-        /* บังคับหมุนจอ */
         @media screen and (max-width: 1024px) and (orientation: landscape) {
             #rotate-warning {
                 display: flex;
@@ -866,11 +840,7 @@
             }
         }
 
-        /* --- CSS สำหรับ Hamburger และ Side Menu --- */
-        .mobile-header {
-            display: none;
-        }
-        /* ซ่อนบน Desktop */
+        .mobile-header { display: none; }
 
         .hamburger-btn {
             background: none;
@@ -889,7 +859,6 @@
                 border-radius: 2px;
             }
 
-        /* Side Menu Styles */
         .side-menu-overlay {
             position: fixed;
             top: 0;
@@ -904,28 +873,27 @@
         .side-menu {
             position: fixed;
             top: 0;
-            left: -280px; /* ✅ แก้จาก right: -280px เป็น left */
+            left: -280px;
             width: 260px;
             height: 100%;
             background: var(--background-color-light);
             z-index: 3000;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* ✅ แก้เงาให้ตกไปทางขวา (2px) */
-            transition: left 0.3s ease; /* ✅ แก้ transition เป็น left */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            transition: left 0.3s ease;
             display: flex;
             flex-direction: column;
             padding: 1rem;
         }
 
         .side-menu.active {
-            left: 0; /* ✅ แก้จาก right: 0 เป็น left: 0 */
+            left: 0;
         }
 
         .side-menu-header {
             display: flex;
             justify-content: space-between;
-            align-items: center; /* แก้ตรงนี้ */
+            align-items: center;
             margin-bottom: 1rem;
-            /* ... */
         }
 
         .question-nav-grid {
@@ -934,7 +902,7 @@
             gap: 0.5rem;
             overflow-y: auto;
         }
-        /* ปุ่มใน Side Menu */
+        
         .mobile-nav-btn {
             width: 35px;
             height: 35px;
@@ -958,7 +926,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #722F37;;
+            background: #722F37;
             color: white;
             z-index: 9999;
             flex-direction: column;
@@ -967,26 +935,22 @@
             text-align: center;
             padding: 20px;
         }
+
         #rotate-warning .rotate-icon { font-size: 4rem; margin-bottom: 20px; animation: rotatePhone 2s infinite ease-in-out; }
         #rotate-warning h2 { font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; color: white; }
         #rotate-warning p { font-size: 1.1rem; color: white; max-width: 80%; line-height: 1.5; opacity: 0.9; }
         @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
-        /* --- MOBILE RESPONSIVE (จุดสำคัญ) --- */
         @media (max-width: 768px) {
             body, html {
                 height: 100%;
                 overflow: hidden;
             }
 
-            /* 1. ซ่อน Sidebar เดิม */
-            #nav-panel {
-                display: none !important;
-            }
+            #nav-panel { display: none !important; }
 
-            /* 2. ปรับ Layout หลักให้เต็มจอ */
             .quiz-layout {
-                grid-template-columns: 1fr; /* ให้เหลือคอลัมน์เดียว */
+                grid-template-columns: 1fr;
                 height: 100%;
                 padding: 0.5rem;
             }
@@ -997,68 +961,41 @@
                 flex-direction: column;
             }
 
-            /* 3. แสดง Mobile Header */
-            .mobile-header {
-                display: flex;
-                justify-content: space-between;
-            }
-
-            /* 4. ปรับขนาด Font และรูป */
-            #quiz-question-number {
-                font-size: 1.2rem;
-            }
-
-            #question-text {
-                font-size: 1rem;
-                margin-top: 0.5rem;
-            }
-
+            .mobile-header { display: flex; justify-content: space-between; }
+            #quiz-question-number { font-size: 1.2rem; }
+            #question-text { font-size: 1rem; margin-top: 0.5rem; }
             #question-image {
-                max-height: 25vh; /* รูปสูงไม่เกิน 25% ของจอ */
+                max-height: 25vh;
                 width: auto;
                 max-width: 100%;
                 object-fit: contain;
                 margin: 0 auto;
             }
-
-            /* 5. ปุ่มตัวเลือก (Choices) เรียง 2 คอลัมน์ */
             .options-container {
                 display: grid;
-                grid-template-columns: 1fr !important; /* แก้เป็น 1fr เพื่อให้เหลือ 1 ช่องเต็มๆ */
+                grid-template-columns: 1fr !important;
                 gap: 0.5rem;
             }
-
             .option-card {
                 min-height: 50px;
                 font-size: 0.9rem;
                 padding: 0.5rem;
-                margin-bottom: 0; /* ลบ margin เดิมทิ้ง */
+                margin-bottom: 0;
             }
         }
 
-        /* บังคับหมุนจอ */
         @media screen and (max-width: 1024px) and (orientation: landscape) {
-            #rotate-warning {
-                display: flex;
-            }
-
-            .quiz-layout {
-                display: none;
-            }
+            #rotate-warning { display: flex; }
+            .quiz-layout { display: none; }
         }
 
-        /* --- START: MOBILE & TABLET FIXES (Rev 27 Final) --- */
-
-        /* 1. Global Reset for Mobile Scroll */
         @media (max-width: 1024px) {
             html, body {
                 overflow: hidden !important;
                 height: 100% !important;
-                /* position: fixed;  <-- ลบออก หรือ Comment ไว้ */
                 width: 100%;
             }
 
-            /* Container หลัก: Scroll ได้ และมีพื้นที่ด้านล่าง */
             .container {
                 margin-top: 60px;
                 height: calc(100% - 60px) !important;
@@ -1066,50 +1003,36 @@
                 overflow-x: hidden !important;
                 display: block !important;
                 padding: 15px !important;
-                padding-bottom: 150px !important; /* ดันปุ่ม Next ให้พ้นขอบ */
+                padding-bottom: 150px !important;
                 -webkit-overflow-scrolling: touch;
             }
 
             .test-container {
-                /* box-shadow: none !important; */
-                /* border: none !important; */
-                /* padding: 0 !important; */
-                /* background: transparent !important; */ /* นำกลับมาเพื่อให้มีพื้นหลังสีขาว */
                 width: 100% !important;
-                margin-bottom: 20px; /* เพิ่มระยะห่างด้านล่างนิดหน่อย */
+                margin-bottom: 20px;
             }
 
-            /* ซ่อน Sidebar และปุ่ม Back to Results ด้านล่าง (Review) */
-            .nav-panel {
-                display: none !important;
-            }
-
-            #back-to-results-button-review {
-                display: none !important;
-            }
-            /* ซ่อนปุ่มล่าง ตามข้อ 4 */
+            .nav-panel { display: none !important; }
+            #back-to-results-button-review { display: none !important; }
 
             .quiz-layout, .review-layout {
                 flex-direction: column !important;
                 width: 100% !important;
             }
 
-            .question-content {
-                width: 100% !important;
-            }
+            .question-content { width: 100% !important; }
         }
 
-        /* 2. Hamburger & Timer (FoldingBox Style) */
         .hamburger-btn {
             display: none;
-            font-size: 30px; /* ใหญ่ขึ้น */
+            font-size: 30px;
             background: none;
             border: none;
             cursor: pointer;
             color: var(--primary-color);
-            padding: 5px 15px 5px 0; /* เพิ่มพื้นที่สัมผัส */
+            padding: 5px 15px 5px 0;
             position: relative;
-            z-index: 9999 !important; /* สูงทะลุเพดาน เพื่อแก้ปัญหากดไม่ได้ */
+            z-index: 9999 !important;
             pointer-events: auto !important;
         }
 
@@ -1124,12 +1047,9 @@
             display: none;
         }
 
-            #header-timer-display.active {
-                display: block;
-            }
+            #header-timer-display.active { display: block; }
 
         @media (max-width: 1024px) {
-            /* Hamburger โชว์เฉพาะตอน JS สั่ง (ผ่าน display block) */
             .main-header {
                 padding: 0 15px !important;
                 z-index: 2001 !important;
@@ -1139,92 +1059,48 @@
                 display: flex;
                 align-items: center;
                 flex: 1;
-                z-index: 2002; /* ให้พื้นที่ซ้ายอยู่สูงกว่า Title */
+                z-index: 2002;
             }
 
             .header-title {
                 font-size: 1.1rem !important;
                 white-space: nowrap;
-                z-index: 1; /* ต่ำกว่าปุ่ม Hamburger */
+                z-index: 1;
             }
         }
 
-        /* 3. Font Size & Layout (Mobile) */
         @media (max-width: 768px) {
-            #instruction-screen h1 {
-                font-size: 1.6rem !important;
-                line-height: 1.3;
-            }
-
-            #question-text, #review-question-text {
-                font-size: 1.1rem !important;
-                line-height: 1.5;
-                margin-top: 10px;
-                color: #000;
-            }
-
-            .option {
-                padding: 10px !important; /* ลด padding */
-                font-size: 0.85rem !important; /* ลดขนาด font ลงเล็กน้อย */
-            }
-
-            .navigation-controls {
-                gap: 10px !important;
-                margin-top: 20px !important;
-            }
-
-            .btn {
-                padding: 10px 20px !important; /* ลด Padding */
-                font-size: 0.9rem !important; /* ลดขนาดตัวอักษร */
-                width: 100%;
-            }
-
-            #result-screen h1 {
-                font-size: 1.2rem !important;
-            }
-
-            .result-column h3 {
-                font-size: 1rem !important; /* ปรับเลขตรงนี้ให้เล็กลงตามใจชอบ (เดิมน่าจะใหญ่กว่านี้) */
-                margin-bottom: 0.5rem !important;
-            }
-
-            .result-grid {
-                font-size: 0.8rem !important; /* เดิม 1rem -> แก้เป็น 0.85rem หรือ 0.9rem */
-                gap-x: 0.5rem !important; /* ลดช่องว่างระหว่าง Label กับตัวเลข */
-                gap-y: 0.5rem !important; /* ลดช่องว่างระหว่างบรรทัด */
-            }
+            #instruction-screen h1 { font-size: 1.6rem !important; line-height: 1.3; }
+            #question-text, #review-question-text { font-size: 1.1rem !important; line-height: 1.5; margin-top: 10px; color: #000; }
+            .option { padding: 10px !important; font-size: 0.85rem !important; }
+            .navigation-controls { gap: 10px !important; margin-top: 20px !important; }
+            .btn { padding: 10px 20px !important; font-size: 0.9rem !important; width: 100%; }
+            #result-screen h1 { font-size: 1.2rem !important; }
+            .result-column h3 { font-size: 1rem !important; margin-bottom: 0.5rem !important; }
+            .result-grid { font-size: 0.8rem !important; gap-x: 0.5rem !important; gap-y: 0.5rem !important; }
         }
-        /* --- END: MOBILE & TABLET FIXES --- */
 
-        /* =========================================
-           4. TABLET SPECIFIC FIXES (แก้ปัญหา Tablet ชิดขอบ/ไม่กลาง)
-           ========================================= */
         @media (min-width: 768px) and (max-width: 1024px) {
-
-            /* 1. ดึง Container กลับมาอยู่กึ่งกลาง (แก้ปัญหาชิด Header) */
             .container {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding-bottom: 0 !important; /* ลบค่าเผื่อของมือถือออก */
+                padding-bottom: 0 !important;
             }
 
-            /* 2. ปรับกล่องข้อสอบให้เป็นการ์ดสวยงาม (แก้ปัญหากว้างเกินไป) */
             .test-container {
-                width: 85% !important; /* ไม่กว้างเต็ม 100% ให้เหลือขอบข้าง */
-                max-width: 650px !important; /* จำกัดความกว้างสูงสุด */
-                background: #FFFEF9 !important; /* เอาสีพื้นหลังการ์ดกลับมา */
-                box-shadow: 0 10px 30px rgba(139,69,19,0.1) !important; /* เอาเงากลับมา */
+                width: 85% !important;
+                max-width: 650px !important;
+                background: #FFFEF9 !important;
+                box-shadow: 0 10px 30px rgba(139,69,19,0.1) !important;
                 border-radius: 15px !important;
                 padding: 30px !important;
-                margin: 0 auto !important; /* จัดกึ่งกลางแนวนอน/แนวตั้ง */
-                /* จัดการ Scroll กรณีเนื้อหายาวเกินจอ Tablet */
+                margin: 0 auto !important;
                 max-height: 85vh !important;
                 overflow-y: auto !important;
-                display: block !important; /* ให้ Content ไหลลงมาตามปกติ */
+                display: block !important;
             }
 
-            /* 3. ปรับ Layout ข้างในให้เหมาะสมกับ Tablet */
             .quiz-layout, .review-layout {
                 flex-direction: column !important;
                 height: auto !important;
@@ -1233,65 +1109,32 @@
             .question-content {
                 width: 100% !important;
                 padding: 0 !important;
-                overflow-y: visible !important; /* ปล่อยให้ Scroll ที่ตัวการ์ดแม่แทน */
+                overflow-y: visible !important;
             }
 
-            /* ปรับปุ่ม Mode Selection ให้ดูดีขึ้นบน Tablet */
             .mode-selection .btn {
                 width: 100%;
-                max-width: 400px; /* จำกัดความกว้างปุ่มไม่ให้ยาวเกินไป */
-                margin: 0 auto; /* จัดปุ่มกลาง */
+                max-width: 400px;
+                margin: 0 auto;
             }
 
-            /* --- [เพิ่มใหม่] ปรับขนาดตัวอักษรหน้า Result สำหรับ Tablet --- */
-
-            /* 1. ลดขนาดหัวข้อ "Current Score" และ "Your Best Score" */
-            .result-column h3 {
-                font-size: 1.1rem !important; /* ปรับขนาดหัวข้อ */
-                margin-bottom: 0.75rem !important;
-            }
-
-            /* 2. ลดขนาดตัวเลขคะแนนและ Label */
-            .result-grid {
-                font-size: 1rem !important; /* ปรับขนาดตัวเลข */
-                gap-x: 1rem !important;
-            }
-
-            /* 3. ลดขนาดปุ่ม Action (Review, Back to Menu, etc.) */
-            .action-buttons .btn {
-                font-size: 1rem !important; /* ลดขนาดตัวหนังสือในปุ่ม */
-                padding: 10px 20px !important; /* ลดความอูมของปุ่ม */
-                margin: 5px !important; /* จัดระยะห่างระหว่างปุ่ม */
-            }
+            .result-column h3 { font-size: 1.1rem !important; margin-bottom: 0.75rem !important; }
+            .result-grid { font-size: 1rem !important; gap-x: 1rem !important; }
+            .action-buttons .btn { font-size: 1rem !important; padding: 10px 20px !important; margin: 5px !important; }
         }
 
         /* =========================================
-           FIX: RESPONSIVE TIMER & HAMBURGER
-           ========================================= */
-        /* ในคอม/iPad แนวนอน ให้ซ่อน Header Timer และ Hamburger แล้วโชว์ Desktop Timer */
-        @media (min-width: 1025px) {
-            .hamburger-btn { display: none !important; }
-            #header-timer-display { display: none !important; }
-            #timer-display { display: block !important; }
-        }
-        
-        /* ในมือถือ/iPad แนวตั้ง ให้ซ่อน Desktop Timer */
-        @media (max-width: 1024px) {
-            #timer-display { display: none !important; }
-        }
-
-        /* =========================================
-           ✅ FIX: ซ่อน Header iFrame ในโหมด Mockup
+           ✅ FIX: ดึงนาฬิกาขึ้นไปทับ Header หน้าหลัก (Mockup Mode)
            ========================================= */
         @media (max-width: 1024px) {
-
-            body.is-mockup .header {
+            body.is-mockup .main-header {
                 display: none !important;
             }
 
             body.is-mockup .container {
-                padding-top: 10px !important;
+                margin-top: 0 !important;
                 height: 100vh !important;
+                padding-top: 10px !important;
             }
 
             body.is-mockup .test-container {
@@ -1305,12 +1148,11 @@
     <div class="main-header" id="main-header">
         <div class="header-left" style="display:flex; align-items:center;">
             <button id="hamburgerBtn" class="hamburger-btn">☰</button>
-            <h1 class="header-title" style="margin-left: 10px;">⚙️ General Science Quiz</h1>
+            <h1 class="header-title" style="margin-left: 10px;">🖼️ Series Picture Test</h1>
         </div>
 
         <div class="header-right" style="display:flex; align-items:center;">
             <div id="header-timer-display" class="timer-badge hidden">00:00</div>
-
             <button id="back-to-menu-btn" class="btn secondary-btn header-btn hidden" style="padding:5px 15px; font-size:0.9rem;">Menu</button>
             <button id="back-to-results-button" class="btn secondary-btn header-btn hidden" style="padding:5px 15px; font-size:0.9rem;">Results</button>
         </div>
@@ -1320,11 +1162,11 @@
         <div id="app" class="test-container">
 
             <div id="instruction-screen" class="screen active">
-                <h1 style="color: var(--primary-color);">General Science Test</h1>
-                <p class="text-lg mb-6" style="color: var(--text-color-secondary);">This test will evaluate your general science knowledge.</p>
+                <h1 style="color: var(--primary-color);">Series Picture Test</h1>
+                <p class="text-lg mb-6" style="color: var(--text-color-secondary);">This test will evaluate your logical reasoning with picture series.</p>
                 <div class="mode-selection">
                     <button id="practice-mode-btn" class="btn secondary-btn">Practice Mode</button>
-                    <button id="test-mode-btn" class="btn btn-primary">Test Mode</button>
+                    <button id="test-mode-btn" class="btn submit-btn">Test Mode</button>
                     <button id="how-to-play-btn" class="btn outline-btn">How to Play</button>
                     <button onclick="window.location.href='index.html'" class="btn outline-btn back-to-system-link">Back to Main Page</button>
                 </div>
@@ -1342,7 +1184,7 @@
                 </ul>
 
                 <div class="action-buttons" style="margin-top: 2rem;">
-                    <button id="back-to-instructions-btn" class="btn btn-primary">Back</button>
+                    <button id="back-to-instructions-btn" class="btn submit-btn">Back</button>
                 </div>
             </div>
 
@@ -1350,7 +1192,7 @@
                 <div class="quiz-layout">
                     <div id="nav-panel" class="nav-panel">
                         <div class="timer-container">
-                            <div id="timer-display" class="timer">06:00</div>
+                            <div id="timer-display" class="timer">03:00</div>
                         </div>
                         <h2 class="text-xl font-semibold">Questions</h2>
                         <div id="nav-items" class="question-nav-container"></div>
@@ -1362,11 +1204,8 @@
                     </div>
                     <div class="question-content">
                         <div class="question-header w-full">
-
                             <div class="question-number" id="quiz-question-number">Question 1</div>
-
                             <div id="img-loader" class="img-loader"></div>
-
                             <img id="question-image" src="" alt="Question Image" style="display: none;" />
                             <p id="question-text" class="text-xl mt-4"></p>
                         </div>
@@ -1443,6 +1282,21 @@
         </div>
     </div>
 
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div id="side-menu" class="side-menu">
+        <div class="side-menu-header">
+            <h3 style="color: var(--primary-color); font-weight: bold; font-size: 1.2rem; margin: 0;">Question Map</h3>
+            <button id="close-side-menu" style="background:none; border:none; font-size:1.8rem; color:var(--text-color-secondary); cursor:pointer;">&times;</button>
+        </div>
+        <div id="mobile-nav-grid" class="question-nav-grid"></div>
+    </div>
+
+    <div id="rotate-warning">
+        <div class="rotate-icon">📱</div>
+        <h2>Please Rotate Your Device</h2>
+        <p>This test is best experienced in portrait mode. Please rotate your device to continue.</p>
+    </div>
+
     <div id="confirmModal" class="modal">
         <div class="modal-content">
             <h2>Confirm Submission</h2>
@@ -1460,7 +1314,7 @@
 
     <script>
         // ===============================================
-        // ⚠️ สำคัญ: อย่าลืมใส่ apiKey ของจริงที่นี่! ⚠️
+        // Firebase Config ของคุณ
         // ===============================================
         const firebaseConfig = {
             apiKey: "AIzaSyBAVwsclZj7DhBGSB05ZJ0jtEPIlCi6zGA",
@@ -1471,8 +1325,8 @@
             appId: "1:307814159914:web:b6b47ab4ac9d7c3816d553",
             measurementId: "G-PLWSHCRFGY"
         };
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        
         const db = firebase.firestore();
         const auth = firebase.auth();
         const functions = firebase.functions();
@@ -1495,62 +1349,54 @@
         const bestPercentileDisplay = document.getElementById('best-percentile-display');
         const retakeButton = document.getElementById('retake-button');
         const reviewButton = document.getElementById('review-button');
+        
         let state = {};
 
-        function resetState() { state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 180, startTime: null, finalResult: {}, mode: null }; }
+        function resetState() { 
+            state = { questions: [], userAnswers: [], currentQuestionIndex: 0, reviewQuestionIndex: 0, quizTimerInterval: null, timeRemaining: 180, startTime: null, finalResult: {}, mode: null };
+        }
         resetState();
 
-        // --- RANKING & TIER COLOR LOGIC ---
-        function getColorByPercentile(percentile) {
-            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
-            const p = Number(percentile);
-            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
-            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
-            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
-            return 'var(--primary-color)'; // Tier Low (แดง)
-        }
-
-        // ==========================================
-        // 🚀 MOCKUP AUTO-START SYSTEM (FOOLPROOF VERSION)
-        // ==========================================
-        const currentUrl = window.location.href.toLowerCase();
+        // [แก้หน้ากระพริบ] ซ่อนหน้าจอ Start ทันทีเมื่อเป็นโหมด Mockup
         const urlParams = new URLSearchParams(window.location.search);
-        window.isMockupMode = urlParams.get('mode') === 'mockup' || currentUrl.includes('mode=mockup');
-
-        if (window.isMockupMode) {
-            // บังคับซ่อน UI ทั้งหมดทันที
-            document.addEventListener("DOMContentLoaded", () => {
-                const instrScreen = document.getElementById('instruction-screen');
-                if (instrScreen) instrScreen.classList.remove('active');
-                
-                const mainHeader = document.getElementById('main-header');
-                if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
-                
-                const mainContainer = document.querySelector('.container');
-                if (mainContainer) {
-                    mainContainer.style.setProperty('margin-top', '0', 'important');
-                    mainContainer.style.setProperty('height', '100vh', 'important');
-                }
-                
-                if (loader) loader.style.display = 'flex';
-            });
-
-            // ข้ามระบบ Login แล้วเริ่มเกมทันที
-            window.addEventListener('load', () => {
-                startTest();
-            });
+        if (urlParams.get('mode') === 'mockup') {
+            const activeScreen = document.querySelector('.screen.active') || document.getElementById('start-screen');
+            if (activeScreen) activeScreen.classList.remove('active');
+            
+            const mainHeader = document.getElementById('main-header');
+            if (mainHeader) mainHeader.style.display = 'none';
+            
+            const mainContainer = document.querySelector('.container');
+            if (mainContainer) {
+                mainContainer.style.marginTop = '0';
+                mainContainer.style.height = '100vh';
+            }
+            const loaderOverlay = document.getElementById('loader-overlay');
+            if (loaderOverlay) loaderOverlay.style.display = 'flex';
         }
-
-        // --- AUTH CHECK (ทำงานเฉพาะตอนเล่นแยกปกติ) ---
-        if (!window.isMockupMode) {
-            auth.onAuthStateChanged(user => {
-                if (!user) {
-                    document.getElementById('auth-status').innerText = 'Not Logged In. Redirecting...';
-                    document.getElementById('auth-status').style.color = 'red';
-                    setTimeout(() => { window.location.href = 'Auth.html'; }, 1500);
+        // --- AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Logged in
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'mockup') {
+                    const mainHeader = document.getElementById('main-header');
+                    if (mainHeader) mainHeader.style.display = 'none';
+                    
+                    const mainContainer = document.querySelector('.container');
+                    if (mainContainer) {
+                        mainContainer.style.marginTop = '0';
+                        mainContainer.style.height = '100vh';
+                    }
+                    startTest();
                 }
-            });
-        }
+            } else {
+                document.getElementById('auth-status').innerText = 'Not Logged In. Redirecting...';
+                document.getElementById('auth-status').style.color = 'red';
+                document.getElementById('auth-status').style.display = 'block';
+                setTimeout(() => { window.location.href = 'Auth.html'; }, 1500);
+            }
+        });
 
         function switchScreen(screenName) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1569,22 +1415,16 @@
 
             if (screenName === 'quiz') {
                 if (state.mode === 'test') {
-                    if (hamburgerBtn) hamburgerBtn.style.display = 'block';
-                    // ปลดล็อกให้แสดงผลเสมอ แล้วให้ CSS เป็นตัวซ่อนตอนจอใหญ่แทน
-                    if (headerTimer) { 
-                        headerTimer.classList.remove('hidden'); 
-                        headerTimer.style.display = 'block'; 
-                        headerTimer.classList.add('active'); 
-                    }
+                    if (window.innerWidth <= 1024 && hamburgerBtn) hamburgerBtn.style.display = 'block';
+                    if (headerTimer && window.innerWidth <= 1024) { headerTimer.style.display = 'block'; headerTimer.classList.add('active'); }
                 } else if (state.mode === 'practice') {
                     if (backMenuBtn) backMenuBtn.classList.remove('hidden');
                 }
             } else if (screenName === 'review') {
                 if (resultsBtn) resultsBtn.classList.remove('hidden');
-                if (hamburgerBtn) hamburgerBtn.style.display = 'block';
+                if (window.innerWidth <= 1024 && hamburgerBtn) hamburgerBtn.style.display = 'block';
             }
 
-            // [จุดสำคัญ] กำหนดความกว้าง Container ให้เหมือน APR
             const mainContainer = document.querySelector('.container');
             if (['quiz', 'review'].includes(screenName)) {
                 appContainer.style.maxWidth = '1400px';
@@ -1607,30 +1447,35 @@
 
         function backToMenu() {
             if (state.quizTimerInterval) clearInterval(state.quizTimerInterval);
-            appContainer.classList.remove('practice-mode-active'); resetState(); switchScreen('instruction');
+            appContainer.classList.remove('practice-mode-active'); 
+            resetState(); 
+            switchScreen('instruction');
         }
+
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60; return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            const remainingSeconds = seconds % 60; 
+            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
         }
 
         // --- FETCH DATA ---
         async function fetchQuestionsFromFirebase(mode) {
-            const snapshot = await db.collection('Exam_GSC').orderBy('id').get();
+            // ✅ เปลี่ยน Collection เป็น Exam_SRP 
+            const snapshot = await db.collection('Exam_SRP').get();
             const allQs = snapshot.docs.map(doc => doc.data());
 
             let formattedQs = allQs.map(q => ({
-                id: q.id,
-                questionText: q.text,
-                questionImage: q.hasImage ? `GSC_Images/${q.id}.jpg` : '',
-                optionA: q.choices.A,
-                optionB: q.choices.B,
-                optionC: q.choices.C,
-                optionD: q.choices.D,
-                correctAnswer: q.correctAnswer,
-                explanation: q.description || '',
-                rawImageId: String(q.id),
-                hasImage: q.hasImage
+                id: q.id || q.QuestionID,
+                questionText: q.text || q.QuestionText || '',
+                rawImageId: String(q.id || q.QuestionID),
+                optionA: q.choices ? q.choices.A : (q.OptionA || ''),
+                optionB: q.choices ? q.choices.B : (q.OptionB || ''),
+                optionC: q.choices ? q.choices.C : (q.OptionC || ''),
+                optionD: q.choices ? q.choices.D : (q.OptionD || ''),
+                optionE: q.choices ? q.choices.E : (q.OptionE || ''), // ✅ รองรับ E
+                correctAnswer: q.correctAnswer ? q.correctAnswer.trim().toUpperCase() : (q.CorrectAnswer ? q.CorrectAnswer.trim().toUpperCase() : ''),
+                explanation: q.description || q.Description || '',
+                hasImage: true // ✅ บังคับให้โหลดรูปภาพทุกข้อ
             }));
 
             // Shuffle
@@ -1647,57 +1492,45 @@
         }
 
         async function submitAnswersToFirebase(userAnswersObj, timeUsed) {
-            // เช็คว่า User Login หรือยัง
             const user = auth.currentUser;
             if (!user) throw new Error("You must be logged in to submit scores.");
-
-            // --- แก้ไขจุดที่ทำให้เกิด Error 400 ---
-            // หา Email ให้เจอ ถ้า user.email เป็น null ให้ลองหาใน providerData หรือใช้ค่าสำรอง
+            
             const safeEmail = user.email || (user.providerData && user.providerData[0] && user.providerData[0].email) || "no-email-found@example.com";
-
-            // เช็ค UID ด้วยเพื่อความชัวร์
             const safeUid = user.uid;
             if (!safeUid) throw new Error("User ID not found.");
-            // ----------------------------------------
 
             let correctCount = 0;
             let attemptedCount = 0;
             let total = state.questions.length;
+            
             state.questions.forEach(q => {
-                // เช็คว่ามีการตอบข้อนี้ไหม (ใน state.userAnswers หรือ userAnswersObj)
                 if (userAnswersObj[q.id] !== null && userAnswersObj[q.id] !== undefined) {
-                    attemptedCount++; // <--- นับว่าทำแล้ว
+                    attemptedCount++;
                 }
                 if (userAnswersObj[q.id] === q.correctAnswer) correctCount++;
             });
 
-            // URL ของ Cloud Function
-            const functionUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/submitGSCScore";
-
+            // ✅ เปลี่ยนเป็น submitSRPScore 
+            const functionUrl = "https://us-central1-silp-pilot-platform.cloudfunctions.net/submitSRPScore";
             const payload = {
                 uid: safeUid,
                 email: safeEmail,
                 score: correctCount,
                 total: total,
-                attempted: attemptedCount, // <--- ส่งค่านี้ไปให้ Server
+                attempted: attemptedCount,
                 answers: userAnswersObj,
                 mode: state.mode === 'practice' ? 'Practice' : 'Test',
                 timeSpent: timeUsed
             };
 
-            console.log("Submitting Payload:", payload); // Debug ดูข้อมูลก่อนส่ง
-
             try {
                 const response = await fetch(functionUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
-                    // ถ้า Server ตอบกลับมาว่า Error (เช่น 400, 500) ให้ดึงข้อความออกมาดู
                     const errorText = await response.text();
                     try {
                         const errorJson = JSON.parse(errorText);
@@ -1708,11 +1541,9 @@
                 }
 
                 const result = await response.json();
-
                 if (!result.success) {
                     throw new Error(result.message || "Unknown error from server");
                 }
-
                 return result;
             } catch (error) {
                 console.error("Submission Error Details:", error);
@@ -1720,32 +1551,22 @@
             }
         }
 
-        async function getBestScoreFromFirebase() {
-            if (!auth.currentUser) return null;
-            const snapshot = await db.collection('Results')
-                .where('UID', '==', auth.currentUser.uid)
-                .where('SetID', '==', 'GSC')
-                .where('TestType', '==', 'Test')
-                .orderBy('CorrectCount', 'desc')
-                .limit(1)
-                .get();
-
-            if (snapshot.empty) return null;
-            const data = snapshot.docs[0].data();
-            return {
-                bestScore: data.CorrectCount,
-                totalQuestions: data.TotalQuestions,
-                bestAccuracy: data.Accuracy,
-                bestPercentile: 0
-            };
+        // --- RANKING & TIER COLOR LOGIC ---
+        function getColorByPercentile(percentile) {
+            if (percentile === 'N/A' || percentile === null || percentile === undefined) return 'var(--text-color)';
+            const p = Number(percentile);
+            if (p >= 97) return '#1E3A8A'; // Tier Top 1 (น้ำเงินเข้ม)
+            if (p >= 90) return '#166534'; // Tier Top 10 (เขียวเข้ม)
+            if (p >= 60) return 'var(--secondary-color)'; // Tier Normal (น้ำตาล)
+            return 'var(--primary-color)'; // Tier Low (แดง)
         }
 
         // --- MAIN LOGIC ---
         async function startTest() {
-            if (!window.isMockupMode && !auth.currentUser) { alert("Please login first"); return; }
+            if (!auth.currentUser) { alert("Please login first"); return; }
             resetState();
             state.mode = 'test';
-            state.timeRemaining = 180;
+            state.timeRemaining = 180; // 3 นาที
             appContainer.classList.remove('practice-mode-active');
             state.startTime = new Date();
             loader.style.display = 'flex';
@@ -1777,21 +1598,15 @@
             console.log("Start preloading images & caching URLs...");
             state.questions.forEach(q => {
                 if (q.hasImage) {
-                    // โหลด JPG
-                    storage.ref(`GSC_Images/${q.rawImageId}.jpg`).getDownloadURL()
+                    // ✅ ลบตัว s ออก เปลี่ยนเป็น SRP_Image
+                    storage.ref(`SRP_Image/${q.rawImageId}.png`).getDownloadURL()
                         .then(url => {
-                            q.cachedUrl = url; // <--- บรรทัดนี้สำคัญมาก! ต้องจำ URL ไว้
+                            q.cachedUrl = url; 
                             const img = new Image();
                             img.src = url;
                         })
-                        .catch(() => {
-                            // ถ้าไม่มี JPG ให้โหลด PNG
-                            storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL()
-                                .then(url => {
-                                    q.cachedUrl = url; // <--- จำ URL ไว้เหมือนกัน
-                                    const img = new Image();
-                                    img.src = url;
-                                });
+                        .catch(err => {
+                            console.error("Preload error for image:", q.rawImageId, err);
                         });
                 }
             });
@@ -1821,39 +1636,48 @@
         }
 
         function startTimer() {
-            const timerDisplay = document.getElementById('timer-display');
-            const headerTimerDisplay = document.getElementById('header-timer-display');
+            const headerTimer = document.getElementById('header-timer-display');
+            const desktopTimer = document.getElementById('timer-display'); 
 
-            state.timeLeft = 180;
-            const timeStr = formatTime(state.timeLeft);
+            // ตรวจสอบขนาดจอเพื่อซ่อน/โชว์ Timer ให้ถูกที่
+            if (window.innerWidth <= 1024) {
+                if (headerTimer) { headerTimer.classList.remove('hidden'); headerTimer.style.display = 'block'; }
+                if (desktopTimer) desktopTimer.classList.add('hidden');
+            } else {
+                if (headerTimer) { headerTimer.classList.add('hidden'); headerTimer.style.display = 'none'; }
+                if (desktopTimer) desktopTimer.classList.remove('hidden');
+            }
 
-            timerDisplay.textContent = timeStr;
-            headerTimerDisplay.textContent = timeStr;
+            const updateDisplay = (val) => {
+                const str = formatTime(val);
+                if (headerTimer) {
+                    headerTimer.textContent = str;
+                    if (val <= 30) headerTimer.style.color = 'var(--danger-color)';
+                    else headerTimer.style.color = 'var(--primary-color)';
+                }
+                if (desktopTimer) {
+                    desktopTimer.textContent = str;
+                    if (val <= 30) desktopTimer.classList.add('danger');
+                    else desktopTimer.classList.remove('danger');
+                }
+            };
 
-            timerDisplay.classList.remove('hidden');
+            updateDisplay(state.timeRemaining);
 
             state.quizTimerInterval = setInterval(() => {
-                state.timeRemaining--; // ใช้ตัวแปรให้ตรงกับ state ของ GSC
-                const newTimeStr = formatTime(state.timeRemaining);
+                state.timeRemaining--;
+                updateDisplay(state.timeRemaining);
 
-                timerDisplay.textContent = newTimeStr;
-                headerTimerDisplay.textContent = newTimeStr;
-
-                // ✅ ส่งเวลาไปหน้าหลัก (MockupTest) เฉพาะเมื่อเป็น Mobile/Tablet
+                // ✅ FIX: ส่งเวลาไปหน้าหลัก เฉพาะเมื่อเป็น Mobile/Tablet (จอไม่เกิน 1024px)
                 if (window.parent && window.innerWidth <= 1024) {
                     window.parent.postMessage({
                         type: 'TICK_TIMER',
-                        timeLeft: newTimeStr,
+                        timeLeft: formatTime(state.timeRemaining),
                         rawSeconds: state.timeRemaining
                     }, '*');
                 }
 
-                const isDanger = state.timeRemaining <= 30;
-                timerDisplay.classList.toggle('danger', isDanger);
-                headerTimerDisplay.classList.toggle('danger', isDanger);
-
                 if (state.timeRemaining <= 0) {
-                    clearInterval(state.quizTimerInterval);
                     finishQuiz();
                 }
             }, 1000);
@@ -1879,52 +1703,41 @@
             const q = state.questions[index];
             const qScreen = screens.quiz;
             qScreen.querySelector('#quiz-question-number').textContent = `Question ${index + 1} of ${state.questions.length}`;
-            qScreen.querySelector('#question-text').textContent = q.questionText || 'No question text';
+            qScreen.querySelector('#question-text').textContent = q.questionText || '';
             document.getElementById('explanation-container').style.display = 'none';
 
             const qImageEl = qScreen.querySelector('#question-image');
             const imgLoader = qScreen.querySelector('#img-loader');
+            
             if (q.hasImage) {
                 qImageEl.style.display = 'none';
                 imgLoader.style.display = 'block';
 
-                // --- แก้ไข: เช็คว่ามี URL ที่โหลดมารอไว้แล้วหรือยัง ---
                 if (q.cachedUrl) {
-                    // ถ้ามี URL แล้ว ใช้เลย (เร็วทันที ไม่ต้องรอ Firebase)
                     qImageEl.src = q.cachedUrl;
                     qImageEl.onload = () => {
                         imgLoader.style.display = 'none';
                         qImageEl.style.display = 'block';
                     };
-                    // กรณีรูปอยู่ใน Cache Browser แล้ว
                     if (qImageEl.complete) {
                         imgLoader.style.display = 'none';
                         qImageEl.style.display = 'block';
                     }
                 } else {
-                    // ถ้ายังไม่มี URL (โหลดสดแบบเดิม)
-                    const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                    // ✅ ลบตัว s ออก เปลี่ยนเป็น SRP_Image
+                    const storagePath = `SRP_Image/${q.rawImageId}.png`;
                     storage.ref(storagePath).getDownloadURL().then(url => {
-                        q.cachedUrl = url; // จำไว้ใช้ครั้งหน้า
+                        q.cachedUrl = url; 
                         qImageEl.src = url;
                         qImageEl.onload = () => {
                             imgLoader.style.display = 'none';
                             qImageEl.style.display = 'block';
                         };
                     }).catch(e => {
-                        storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
-                            q.cachedUrl = url;
-                            qImageEl.src = url;
-                            qImageEl.onload = () => {
-                                imgLoader.style.display = 'none';
-                                qImageEl.style.display = 'block';
-                            };
-                        }).catch(() => {
-                            imgLoader.style.display = 'none';
-                        });
+                        imgLoader.style.display = 'none';
+                        console.error("Image not found in Storage:", storagePath, e);
                     });
                 }
-                // ---------------------------------
             } else {
                 qImageEl.style.display = 'none';
                 imgLoader.style.display = 'none';
@@ -1937,6 +1750,9 @@
             if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({ key: 'B', value: q.optionB });
             if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({ key: 'C', value: q.optionC });
             if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({ key: 'D', value: q.optionD });
+            // ✅ ดึงช้อยส์ E มาแสดง (ถ้ามี) [cite: 899, 902]
+            if (q.optionE && q.optionE.trim() !== '' && q.optionE !== '-') availableOptions.push({ key: 'E', value: q.optionE }); 
+            
             availableOptions.forEach(option => {
                 const optionEl = document.createElement('div');
                 optionEl.className = 'option';
@@ -1951,20 +1767,18 @@
         }
 
         function selectAnswer(optionKey) {
-            if (state.mode === 'practice' && state.isAnswerChecked) return; // ป้องกันกดซ้ำใน Practice
+            if (state.mode === 'practice' && state.isAnswerChecked) return;
             
             state.userAnswers[state.currentQuestionIndex] = optionKey;
             document.querySelectorAll('.option').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.dataset.value === optionKey) opt.classList.add('selected');
             });
-
             if (state.mode === 'practice') {
                 updateNavigationControls();
             } else {
                 renderNavPanel();
                 if (state.currentQuestionIndex < state.questions.length - 1) {
-                    // [จุดสำคัญ] Blur เพื่อแก้ Sticky Hover บน iPhone
                     if (document.activeElement) document.activeElement.blur();
                     setTimeout(() => { jumpToQuestion(state.currentQuestionIndex + 1); }, 250);
                 } else {
@@ -1978,6 +1792,7 @@
             const q = state.questions[state.currentQuestionIndex];
             const correctAnswer = q.correctAnswer;
             const explanationEl = document.getElementById('explanation-container');
+            
             document.querySelectorAll('.option').forEach(opt => {
                 opt.classList.add('disabled');
                 const optionKey = opt.dataset.value;
@@ -2036,11 +1851,13 @@
                 prevBtn.disabled = state.currentQuestionIndex === 0;
                 prevBtn.onclick = () => jumpToQuestion(state.currentQuestionIndex - 1);
                 navContainer.appendChild(prevBtn);
+                
                 const submitBtn = document.createElement('button');
                 submitBtn.className = 'btn submit-btn';
                 submitBtn.textContent = 'Submit';
                 submitBtn.onclick = () => confirmModal.classList.add('active');
                 navContainer.appendChild(submitBtn);
+                
                 const nextBtn = document.createElement('button');
                 nextBtn.className = 'btn secondary-btn';
                 nextBtn.textContent = 'Next';
@@ -2069,7 +1886,7 @@
             if (state.mode !== 'test') return;
             clearInterval(state.quizTimerInterval);
 
-            // ✅ สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
+            // ✅ เพิ่มบรรทัดนี้: สั่งซ่อนนาฬิกาหน้าหลักทันทีเมื่อจบหรือกดส่ง
             if (window.parent) {
                 window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
             }
@@ -2089,11 +1906,15 @@
                     }
                 }
             });
-            const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
-            state.finalResult = { totalScore: correctCount, accuracy, timeUsed, totalQuestions: state.questions.length };
+            
+            // ✅ สั่งให้หน้าหลักซ่อนนาฬิกาทันที
+            if (window.parent) {
+                window.parent.postMessage({ type: 'HIDE_TIMER' }, '*');
+            }
 
-            // [ส่งคะแนนกลับยานแม่ตอนสอบเสร็จ]
-            if (window.isMockupMode) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'mockup') {
+                const accuracy = attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0;
                 window.parent.postMessage({
                     type: 'MOCKUP_SUBTEST_COMPLETED',
                     result: {
@@ -2104,11 +1925,10 @@
                         answers: userAnswerObj
                     }
                 }, '*');
-                return; // สั่งหยุดตรงนี้ ไม่ต้องส่งขึ้น Firebase แยก
+                return;
             }
 
             try {
-                // Submit and get back { current, best }
                 const result = await submitAnswersToFirebase(userAnswerObj, timeUsed);
                 onScoreReceived(result);
             } catch (error) {
@@ -2118,93 +1938,68 @@
             }
         }
 
-        // ฟังก์ชันแสดงผลคะแนนและแรงค์ (รุ่นกันกระสุน 100%)
         function showResults(resultData) {
             switchScreen('result');
-            if (state.quizTimerInterval) clearInterval(state.quizTimerInterval);
-            
-            const headerTimer = document.getElementById('header-timer-display');
-            if(headerTimer) headerTimer.style.display = 'none';
-            
-            const titleEl = document.getElementById('result-title');
-            if(titleEl) titleEl.textContent = (state.mode === 'practice') ? "Practice Complete!" : "Test Complete!";
-            
-            if (state.mode === 'practice') {
-                document.getElementById('practice-result-summary')?.classList.remove('hidden');
-                document.getElementById('test-result-details')?.classList.add('hidden');
-                document.getElementById('review-button')?.classList.add('hidden');
-                
-                const pScore = document.getElementById('practice-score-display');
-                if(pScore) pScore.textContent = `${resultData.correctCount} / ${state.questions.length}`;
-                
-                const pAcc = document.getElementById('practice-accuracy-display');
-                if(pAcc) pAcc.textContent = `${resultData.accuracy.toFixed(2)}%`;
-            } else {
-                document.getElementById('practice-result-summary')?.classList.add('hidden');
-                document.getElementById('test-result-details')?.classList.remove('hidden');
-                document.getElementById('review-button')?.classList.remove('hidden');
-                
-                if (resultData.current) {
-                    const cScore = document.getElementById('score-display');
-                    if(cScore) cScore.textContent = `${resultData.current.score} / ${state.questions.length}`;
-                    
-                    const cAcc = document.getElementById('accuracy-display');
-                    if(cAcc) cAcc.textContent = `${resultData.current.accuracy.toFixed(2)}%`;
-                    
-                    const tUsed = document.getElementById('time-display');
-                    if(tUsed) tUsed.textContent = formatTime(resultData.current.timeSpent || resultData.current.timeUsed || 0) + 's';
+            loader.style.display = 'none';
 
+            if (state.mode === 'practice') {
+                document.getElementById('practice-result-summary').classList.remove('hidden');
+                document.getElementById('test-result-details').classList.add('hidden');
+                document.getElementById('review-button').classList.add('hidden');
+
+                document.getElementById('result-title').textContent = 'Practice Complete!';
+                document.getElementById('practice-score-display').textContent = `${resultData.correctCount} / ${state.questions.length}`;
+                document.getElementById('practice-accuracy-display').textContent = `${resultData.accuracy.toFixed(2)}%`;
+            } else {
+                document.getElementById('practice-result-summary').classList.add('hidden');
+                document.getElementById('test-result-details').classList.remove('hidden');
+                document.getElementById('review-button').classList.remove('hidden');
+                document.getElementById('result-title').textContent = 'Test Complete!';
+
+                if (resultData.current) {
+                    document.getElementById('score-display').textContent = `${resultData.current.score} / ${state.questions.length}`;
+                    document.getElementById('accuracy-display').textContent = `${resultData.current.accuracy.toFixed(2)}%`;
+                    document.getElementById('time-display').textContent = formatTime(resultData.current.timeSpent || resultData.current.timeUsed || 0) + 's';
+                    
+                    // --- Current Ranking & Colors Logic ---
                     const curPercentile = resultData.current.percentile !== undefined ? Number(resultData.current.percentile) : 'N/A';
+                    // ✅ ใช้ parseInt เพื่อลบช่องว่าง และดัก N/A ให้แสดงตัวเลขที่ถูกต้อง
                     const curRank = resultData.current.rank !== undefined ? resultData.current.rank : '-';
                     const curTotalUsers = resultData.current.totalUsers !== undefined ? resultData.current.totalUsers : '-';
                     const curTierColor = getColorByPercentile(curPercentile);
-
+                    
                     const rankEl = document.getElementById('rank-display');
-                    if (rankEl) {
-                        rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
-                        rankEl.style.color = curTierColor;
-                    }
+                    rankEl.innerHTML = `${curRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${curTotalUsers}</span>`;
+                    rankEl.style.color = curTierColor;
 
                     const percentileEl = document.getElementById('percentile-display');
-                    if (percentileEl) {
-                        percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
-                        percentileEl.style.color = curTierColor;
-                    }
+                    percentileEl.textContent = curPercentile !== 'N/A' ? `${curPercentile.toFixed(2)}%` : 'N/A';
+                    percentileEl.style.color = curTierColor;
                 }
 
                 if (resultData.best) {
-                    const bScore = document.getElementById('best-score-display');
-                    if(bScore) bScore.textContent = `${resultData.best.score} / ${state.questions.length}`;
+                    document.getElementById('best-score-display').textContent = `${resultData.best.score} / ${state.questions.length}`;
+                    document.getElementById('best-accuracy-display').textContent = `${resultData.best.accuracy.toFixed(2)}%`;
                     
-                    const bAcc = document.getElementById('best-accuracy-display');
-                    if(bAcc) bAcc.textContent = `${resultData.best.accuracy.toFixed(2)}%`;
-
+                    // --- Best Ranking & Colors Logic ---
                     const bestPercentile = resultData.best.percentile !== undefined ? Number(resultData.best.percentile) : 'N/A';
                     const bestRank = resultData.best.rank !== undefined ? resultData.best.rank : '-';
                     const bestTotalUsers = resultData.best.totalUsers !== undefined ? resultData.best.totalUsers : '-';
                     const bestTierColor = getColorByPercentile(bestPercentile);
-
+                    
                     const bestRankEl = document.getElementById('best-rank-display');
-                    if (bestRankEl) {
-                        bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
-                        bestRankEl.style.color = bestTierColor;
-                    }
+                    bestRankEl.innerHTML = `${bestRank} <span style="font-size: 0.9rem; color: var(--text-color-secondary); font-weight: normal;">from ${bestTotalUsers}</span>`;
+                    bestRankEl.style.color = bestTierColor;
 
                     const bestPercentileEl = document.getElementById('best-percentile-display');
-                    if (bestPercentileEl) {
-                        bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
-                        bestPercentileEl.style.color = bestTierColor;
-                    }
-                    
-                    const bestCol = document.getElementById('best-score-column');
-                    if(bestCol) bestCol.style.display = 'block';
+                    bestPercentileEl.textContent = bestPercentile !== 'N/A' ? `${bestPercentile.toFixed(2)}%` : 'N/A';
+                    bestPercentileEl.style.color = bestTierColor;
+
+                    document.getElementById('best-score-column').style.display = 'block';
                 } else {
-                    const bestCol = document.getElementById('best-score-column');
-                    if(bestCol) bestCol.style.display = 'none';
+                    document.getElementById('best-score-column').style.display = 'none';
                 }
             }
-            
-            if(loader) loader.style.display = 'none';
         }
 
         function onScoreReceived(result) {
@@ -2213,72 +2008,109 @@
 
         function showReview() {
             state.mode = 'review';
-            // บังคับโชว์ Hamburger ในหน้า Review ถ้าเป็น Mobile/Tablet
             if (window.innerWidth <= 1024) {
                 document.getElementById('hamburgerBtn').classList.remove('hidden');
-                document.getElementById('header-timer-display').classList.add('hidden'); // ซ่อน Timer ตอน Review
+                document.getElementById('header-timer-display').classList.add('hidden'); 
             }
             state.reviewQuestionIndex = 0;
             renderReviewNavPanel(); renderReviewQuestion(0); switchScreen('review');
         }
+        
         function renderReviewNavPanel() {
             const navItemsContainer = screens.review.querySelector('#review-nav-items');
-            navItemsContainer.innerHTML = ''; state.questions.forEach((q, index) => { const btn = document.createElement('button'); btn.textContent = index + 1; btn.className = 'question-nav-btn'; const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; if (userAnswer === null) { btn.classList.add('unanswered'); } else if (userAnswer === correctAnswer) { btn.classList.add('correct'); } else { btn.classList.add('incorrect'); } if (index === state.reviewQuestionIndex) { btn.classList.add('current'); } btn.addEventListener('click', () => jumpToReviewQuestion(index)); navItemsContainer.appendChild(btn); });
+            navItemsContainer.innerHTML = ''; 
+            state.questions.forEach((q, index) => { 
+                const btn = document.createElement('button'); 
+                btn.textContent = index + 1; 
+                btn.className = 'question-nav-btn'; 
+                const userAnswer = state.userAnswers[index]; 
+                const correctAnswer = q.correctAnswer; 
+                if (userAnswer === null) { btn.classList.add('unanswered'); } 
+                else if (userAnswer === correctAnswer) { btn.classList.add('correct'); } 
+                else { btn.classList.add('incorrect'); } 
+                if (index === state.reviewQuestionIndex) { btn.classList.add('current'); } 
+                btn.addEventListener('click', () => jumpToReviewQuestion(index)); 
+                navItemsContainer.appendChild(btn); 
+            });
         }
+        
         function renderReviewQuestion(index) {
-            state.reviewQuestionIndex = index; const q = state.questions[index];
-            const userAnswer = state.userAnswers[index]; const correctAnswer = q.correctAnswer; const rScreen = screens.review; rScreen.querySelector('#review-question-number').textContent = `Question ${index + 1}`;
-            rScreen.querySelector('#review-question-text').textContent = q.questionText;
+            state.reviewQuestionIndex = index;
+            const q = state.questions[index];
+            const userAnswer = state.userAnswers[index]; 
+            const correctAnswer = q.correctAnswer; 
+            const rScreen = screens.review;
+            rScreen.querySelector('#review-question-number').textContent = `Question ${index + 1}`;
+            rScreen.querySelector('#review-question-text').textContent = q.questionText || '';
 
             const rImageEl = rScreen.querySelector('#review-question-image');
             const rImgLoader = rScreen.querySelector('#review-img-loader');
-
+            
             if (q.hasImage) {
                 rImageEl.style.display = 'none';
                 rImageEl.src = "";
                 rImgLoader.style.display = 'block';
 
-                const storagePath = `GSC_Images/${q.rawImageId}.jpg`;
+                // ✅ ลบตัว s ออก เปลี่ยนเป็น SRP_Image
+                const storagePath = `SRP_Image/${q.rawImageId}.png`;
                 storage.ref(storagePath).getDownloadURL().then(url => {
                     rImageEl.src = url;
                     rImageEl.onload = () => {
                         rImgLoader.style.display = 'none';
                         rImageEl.style.display = 'block';
                     };
-                }).catch(() => {
-                    storage.ref(`GSC_Images/${q.rawImageId}.png`).getDownloadURL().then(url => {
-                        rImageEl.src = url;
-                        rImageEl.onload = () => {
-                            rImgLoader.style.display = 'none';
-                            rImageEl.style.display = 'block';
-                        };
-                    }).catch(() => {
-                        rImgLoader.style.display = 'none';
-                    });
+                }).catch(e => {
+                    rImgLoader.style.display = 'none';
+                    console.error("Review image not found:", storagePath, e);
                 });
             } else {
                 rImageEl.style.display = 'none';
                 rImgLoader.style.display = 'none';
             }
 
-            const optionsContainer = rScreen.querySelector('#review-options-container'); optionsContainer.innerHTML = '';
-            const availableOptions = []; if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({ key: 'A', value: q.optionA });
+            const optionsContainer = rScreen.querySelector('#review-options-container');
+            optionsContainer.innerHTML = '';
+            const availableOptions = []; 
+            if (q.optionA && q.optionA.trim() !== '' && q.optionA !== '-') availableOptions.push({ key: 'A', value: q.optionA });
             if (q.optionB && q.optionB.trim() !== '' && q.optionB !== '-') availableOptions.push({ key: 'B', value: q.optionB });
             if (q.optionC && q.optionC.trim() !== '' && q.optionC !== '-') availableOptions.push({ key: 'C', value: q.optionC });
             if (q.optionD && q.optionD.trim() !== '' && q.optionD !== '-') availableOptions.push({ key: 'D', value: q.optionD });
-            availableOptions.forEach(option => { const optionEl = document.createElement('div'); optionEl.className = 'option disabled'; optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; if (option.key === correctAnswer) { optionEl.classList.add('correct'); } if (option.key === userAnswer) { optionEl.classList.add('user-selected'); if (userAnswer !== correctAnswer) { optionEl.classList.add('incorrect'); } } optionsContainer.appendChild(optionEl); });
-            const explanationEl = rScreen.querySelector('#review-explanation'); if (q.explanation && q.explanation.trim() !== '') {
-                explanationEl.style.display = 'block'; explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
-            } else { explanationEl.style.display = 'none'; } updateReviewNavButtons(); renderReviewNavPanel();
+            // ✅ ดึงช้อยส์ E มาแสดงตอนตรวจคำตอบ (ถ้ามี) [cite: 969, 972]
+            if (q.optionE && q.optionE.trim() !== '' && q.optionE !== '-') availableOptions.push({ key: 'E', value: q.optionE }); 
+
+            availableOptions.forEach(option => { 
+                const optionEl = document.createElement('div'); 
+                optionEl.className = 'option disabled'; 
+                optionEl.innerHTML = `<div class="option-letter">${option.key}</div><span>${option.value}</span>`; 
+                if (option.key === correctAnswer) { optionEl.classList.add('correct'); } 
+                if (option.key === userAnswer) { 
+                    optionEl.classList.add('user-selected'); 
+                    if (userAnswer !== correctAnswer) { optionEl.classList.add('incorrect'); } 
+                } 
+                optionsContainer.appendChild(optionEl); 
+            });
+            
+            const explanationEl = rScreen.querySelector('#review-explanation'); 
+            if (q.explanation && q.explanation.trim() !== '') {
+                explanationEl.style.display = 'block';
+                explanationEl.innerHTML = `<h4>Explanation:</h4><p>${q.explanation}</p>`;
+            } else { 
+                explanationEl.style.display = 'none'; 
+            } 
+            updateReviewNavButtons(); 
+            renderReviewNavPanel();
         }
+        
         function jumpToReviewQuestion(index) {
             if (index >= 0 && index < state.questions.length) {
                 renderReviewQuestion(index);
             }
         }
+        
         function updateReviewNavButtons() {
-            const rScreen = screens.review; const navControls = rScreen.querySelector('.navigation-controls');
-            rScreen.querySelector('#review-prev-button').disabled = state.reviewQuestionIndex === 0; rScreen.querySelector('#review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
+            const rScreen = screens.review;
+            rScreen.querySelector('#review-prev-button').disabled = state.reviewQuestionIndex === 0; 
+            rScreen.querySelector('#review-next-button').disabled = state.reviewQuestionIndex === state.questions.length - 1;
         }
 
         // --- EVENT LISTENERS ---
@@ -2302,55 +2134,36 @@
                 confirmModal.classList.remove('active');
                 finishQuiz();
             });
-            // ✅ เพิ่มบรรทัดนี้ครับ: เพื่อสั่งให้จัดหน้าจอ Instruction ให้แคบ (600px) ทันทีที่เปิดเว็บ
-            if (!window.isMockupMode) {
-                switchScreen('instruction');
-            }
+            
+            switchScreen('instruction');
         });
 
-        // --- [เพิ่มใหม่] ส่วนจัดการ Mobile Menu และ Hamburger ---
-        // ==========================================
-        // 1. HAMBURGER & SIDE MENU LOGIC (FIXED)
-        // ==========================================
-        // ประกาศตัวแปร Global ไว้ตรงนี้เลย เพื่อให้เรียกใช้ได้แน่นอน 100%
+        // --- HAMBURGER MENU LOGIC ---
         let sideMenu = null;
         let sideMenuOverlay = null;
 
-        // รอให้ Web โหลดเสร็จก่อนค่อยจับคู่ตัวแปรกับ HTML ID
         document.addEventListener('DOMContentLoaded', () => {
             sideMenu = document.getElementById('side-menu');
             sideMenuOverlay = document.getElementById('side-menu-overlay');
-
-            // ปุ่มปิดในเมนู
             const closeBtn = document.getElementById('close-side-menu');
             if (closeBtn) closeBtn.addEventListener('click', toggleMenu);
-
-            // กดที่พื้นหลังเพื่อปิด
             if (sideMenuOverlay) sideMenuOverlay.addEventListener('click', toggleMenu);
         });
 
-        // ฟังก์ชันเปิด/ปิดเมนู (เรียกได้จาก onclick="toggleMenu()" ใน HTML หรือ Event Listener)
         function toggleMenu() {
-            // ป้องกัน Error กรณีตัวแปรยังไม่พร้อม
             if (!sideMenu || !sideMenuOverlay) {
                 sideMenu = document.getElementById('side-menu');
                 sideMenuOverlay = document.getElementById('side-menu-overlay');
             }
 
             if (sideMenu && sideMenuOverlay) {
-                // เช็คสถานะปัจจุบัน
                 const isActive = sideMenu.classList.contains('active');
-
                 if (isActive) {
-                    // สั่งปิด
                     sideMenu.classList.remove('active');
                     sideMenuOverlay.style.display = 'none';
                 } else {
-                    // สั่งเปิด
                     sideMenu.classList.add('active');
                     sideMenuOverlay.style.display = 'block';
-
-                    // Render ปุ่มข้อสอบใหม่ทุกครั้งที่เปิด (เพื่อให้สีสถานะอัปเดต)
                     if (state.mode === 'review') {
                         renderMobileNavGrid('review');
                     } else {
@@ -2362,24 +2175,19 @@
             }
         }
 
-        // ฟังก์ชันสร้างปุ่มใน Side Menu (เอามาไว้ตรงนี้ให้ชัดเจน)
         function renderMobileNavGrid(mode) {
             const mobileNavContainer = document.getElementById('mobile-nav-grid');
             if (!mobileNavContainer) return;
 
             mobileNavContainer.innerHTML = '';
-
-            // วนลูปสร้างปุ่มตามจำนวนข้อ
             state.questions.forEach((q, index) => {
                 const btn = document.createElement('button');
                 btn.textContent = index + 1;
-                btn.className = 'mobile-nav-btn'; // ใช้ CSS Class ที่เตรียมไว้
-
-                // Logic สีปุ่ม (เหมือน Desktop)
+                btn.className = 'mobile-nav-btn'; 
+                
                 const userAnswer = state.userAnswers[index];
                 const isCurrent = (mode === 'review') ? (index === state.reviewQuestionIndex) : (index === state.currentQuestionIndex);
 
-                // ใส่สีตามสถานะ
                 if (isCurrent) {
                     btn.style.border = '2px solid var(--primary-color)';
                     btn.style.fontWeight = 'bold';
@@ -2387,42 +2195,38 @@
                 }
 
                 if (mode === 'review') {
-                    // โหมดเฉลย
                     if (userAnswer === q.correctAnswer) {
-                        btn.style.backgroundColor = 'var(--success-color)'; // ถูก (เขียว)
+                        btn.style.backgroundColor = 'var(--success-color)'; 
                         btn.style.color = 'white';
                     } else if (userAnswer !== null) {
-                        btn.style.backgroundColor = 'var(--danger-color)'; // ผิด (แดง)
+                        btn.style.backgroundColor = 'var(--danger-color)';
                         btn.style.color = 'white';
                     } else {
-                        btn.style.backgroundColor = 'transparent'; // ไม่ได้ตอบ
+                        btn.style.backgroundColor = 'transparent';
                     }
                 } else {
-                    // โหมดสอบ (Quiz / Test)
                     if (index === state.currentQuestionIndex) {
-                        btn.style.backgroundColor = 'var(--secondary-color)'; // ข้อปัจจุบัน
+                        btn.style.backgroundColor = 'var(--secondary-color)';
                         btn.style.color = 'white';
                     } else if (userAnswer !== null) {
-                        btn.style.backgroundColor = 'var(--primary-color)'; // ทำแล้ว
+                        btn.style.backgroundColor = 'var(--primary-color)';
                         btn.style.color = 'white';
                     }
                 }
 
-                // กดปุ่มแล้วข้ามไปข้อนั้น
                 btn.addEventListener('click', () => {
-                    // เช็คจาก state.mode โดยตรง เพื่อความชัวร์ 100%
                     if (state.mode === 'review') {
                         jumpToReviewQuestion(index);
                     } else {
                         jumpToQuestion(index);
                     }
-                    toggleMenu(); // ปิดเมนูหลังเลือกเสร็จ
+                    toggleMenu(); 
                 });
                 mobileNavContainer.appendChild(btn);
             });
         }
 
-                // ==========================================
+        // ==========================================
         // ✅ ระบบรับคำสั่งเปิดเมนูจากยานแม่ (Mockup)
         // ==========================================
         window.addEventListener('message', (event) => {
@@ -2436,27 +2240,22 @@
             }
         });
 
-        // ✅ ระบบตรวจสอบ Mockup Mode
+        // ==========================================
+        // ✅ ระบบตรวจสอบและเปิดนาฬิกาสำหรับ Mockup Mode
+        // ==========================================
         if (window.self !== window.top) { 
+            // 1. ใส่ Class ที่ Body เพื่อเปิดการทำงานของ CSS ด้านบน
             document.body.classList.add('is-mockup'); 
+
+            // 2. สั่งแสดงนาฬิกาผ่าน JS อีกครั้งเพื่อความชัวร์
+            const timerBadge = document.getElementById('header-timer-display');
+            if (timerBadge) {
+                timerBadge.classList.remove('hidden', 'timer-badge'); // ล้างคลาสที่อาจมีคำสั่งซ่อน
+                timerBadge.style.display = 'block';
+                timerBadge.style.visibility = 'visible';
+            }
         }
 
     </script>
-
-    <div id="side-menu-overlay" class="side-menu-overlay"></div>
-    <div id="side-menu" class="side-menu">
-        <div class="side-menu-header">
-            <h3>Question Map</h3>
-            <button id="close-side-menu" class="close-menu-btn">&times;</button>
-        </div>
-        <div id="mobile-nav-grid" class="question-nav-grid"></div>
-    </div>
-
-    <div id="rotate-warning">
-        <div class="rotate-icon">📱</div>
-        <h2>Please Rotate Your Device</h2>
-        <p>This test is best experienced in portrait mode. Please rotate your device to continue.</p>
-    </div>
-
 </body>
 </html>
